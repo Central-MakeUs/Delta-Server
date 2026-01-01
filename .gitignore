@@ -38,4 +38,8 @@ out/
 
 *.env
 *.DS_Store
+
+logs/
+*.log
 *.log.*
+*.gz
