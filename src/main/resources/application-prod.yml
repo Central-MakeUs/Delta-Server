@@ -1,9 +1,17 @@
-server:
-  forward-headers-strategy: framework
-
 spring:
+  config:
+    activate:
+      on-profile: prod
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${PROD_DB_URL}
     username: ${PROD_DB_USERNAME}
     password: ${PROD_DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    show-sql: false
+    generate-ddl: false
