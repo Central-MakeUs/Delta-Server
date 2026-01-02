@@ -10,8 +10,11 @@
 
     <property name="LOG_FILE" value="${LOG_PATH}/${APP_NAME}.log"/>
 
-    <property name="PATTERN_CONSOLE" value="%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([%thread]){faint} %clr(%logger{36}){cyan} %clr(profiles=${ACTIVE_PROFILES}){faint} - %msg%n%wex"/>
-    <property name="PATTERN_FILE" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} profiles=${ACTIVE_PROFILES} traceId=%X{traceId:-} - %msg%n"/>
+    <property name="PATTERN_CONSOLE"
+              value="%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5level) %clr([%thread]){faint} %clr(%logger{36}){cyan} %clr(profiles=${ACTIVE_PROFILES}){faint} %clr(traceId=%X{traceId:-}){faint} - %msg%n%wex"/>
+
+    <property name="PATTERN_FILE"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} profiles=${ACTIVE_PROFILES} traceId=%X{traceId:-} - %msg%n%wex"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -52,6 +55,8 @@
             <destination>${LOGSTASH_DEST}</destination>
             <encoder class="net.logstash.logback.encoder.LogstashEncoder">
                 <customFields>{"app":"${APP_NAME}","profiles":"${ACTIVE_PROFILES}"}</customFields>
+
+                <includeMdcKeyName>traceId</includeMdcKeyName>
             </encoder>
         </appender>
 
