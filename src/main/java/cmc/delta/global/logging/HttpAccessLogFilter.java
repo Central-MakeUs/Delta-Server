@@ -22,9 +22,12 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
     private static final String ACCESS_LOG_FORMAT = "[HTTP] {} {} | status={} | {}ms | ip={} | ua={}";
 
+    private static final int USER_AGENT_MAX_LEN = 200;
+
     private static final Set<String> SKIP_PATH_PREFIXES = Set.of(
             "/actuator",
             "/swagger",
+            "/swagger-ui",
             "/v3/api-docs",
             "/favicon.ico"
     );
@@ -62,7 +65,7 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
     private AccessLogContext createAccessLogContext(HttpServletRequest request, HttpServletResponse response, long durationMs) {
         return new AccessLogContext(
                 request.getMethod(),
-                buildFullPath(request),
+                buildSafePath(request),
                 response.getStatus(),
                 durationMs,
                 resolveClientIp(request),
@@ -70,16 +73,17 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
         );
     }
 
-    private String buildFullPath(HttpServletRequest request) {
-        String path = request.getRequestURI();
-        String query = request.getQueryString();
-        return (query == null || query.isBlank()) ? path : path + "?" + query;
+    /**
+     * 민감정보 유출 방지를 위해 queryString은 기본 로그에서 제외.
+     */
+    private String buildSafePath(HttpServletRequest request) {
+        return request.getRequestURI();
     }
 
     private void writeAccessLog(AccessLogContext ctx) {
         logByHttpStatus(ctx.status(),
                 ACCESS_LOG_FORMAT,
-                ctx.method(), ctx.fullPath(), ctx.status(), ctx.durationMs(), ctx.clientIp(), ctx.userAgent()
+                ctx.method(), ctx.path(), ctx.status(), ctx.durationMs(), ctx.clientIp(), ctx.userAgent()
         );
     }
 
@@ -111,12 +115,21 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
     private String resolveUserAgent(HttpServletRequest request) {
         String ua = request.getHeader(LoggingConstants.Header.USER_AGENT);
-        return (ua == null || ua.isBlank()) ? LoggingConstants.Header.UNKNOWN : ua;
+        if (ua == null || ua.isBlank()) {
+            return LoggingConstants.Header.UNKNOWN;
+        }
+        return sanitize(ua, USER_AGENT_MAX_LEN);
+    }
+
+    private String sanitize(String raw, int maxLen) {
+        String s = raw.replace("\n", " ").replace("\r", " ").trim();
+        if (s.length() > maxLen) return s.substring(0, maxLen);
+        return s;
     }
 
     private record AccessLogContext(
             String method,
-            String fullPath,
+            String path,
             int status,
             long durationMs,
             String clientIp,
