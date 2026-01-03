@@ -8,6 +8,7 @@ public record JwtProperties(
         String issuer,
         String secretBase64,
         long accessTtlSeconds,
+        long refreshTtlSeconds,
         Blacklist blacklist
 ) {
     /** 블랙리스트(옵션) 설정을 보관한다. */
