@@ -12,6 +12,7 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.reactive.resource.NoResourceFoundException;
 
 import java.util.Map;
 
@@ -66,6 +67,13 @@ public class GlobalExceptionHandler {
                 ec.defaultMessage(),
                 Map.of(DATA_KEY_SUPPORTED_METHODS, ex.getSupportedHttpMethods())
         );
+        return logAndRespond(ec, ex, request, body);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Object>> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        ErrorCode ec = ErrorCode.RESOURCE_NOT_FOUND;
+        ApiResponse<Object> body = errorResponseFactory.defaultError(ec);
         return logAndRespond(ec, ex, request, body);
     }
 
