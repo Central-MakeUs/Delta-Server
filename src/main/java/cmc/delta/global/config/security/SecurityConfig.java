@@ -1,13 +1,14 @@
 package cmc.delta.global.config.security;
 
+import cmc.delta.global.config.security.jwt.JwtProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
-@EnableWebSecurity
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
     /**
      * 개발전이기때문에 테스트로 다 열어둠,

@@ -10,7 +10,7 @@ public class JwtAuthenticationException extends AuthenticationException {
     private final ErrorCode errorCode;
 
     public JwtAuthenticationException(ErrorCode errorCode) {
-        super(errorCode.message());
+        super(errorCode.defaultMessage());
         this.errorCode = errorCode;
     }
 
