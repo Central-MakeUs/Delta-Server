@@ -1,4 +1,7 @@
 package cmc.delta.global.config.security.principal;
 
-public class UserPrincipal {
+public record UserPrincipal(
+        Long userId,
+        String role
+) {
 }

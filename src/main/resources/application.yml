@@ -13,3 +13,16 @@ spring:
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+jwt:
+  issuer: cmc-delta
+  secret-base64: ${JWT_SECRET_BASE64}
+  access-ttl-seconds: 900
+  blacklist:
+    enabled: false
+
