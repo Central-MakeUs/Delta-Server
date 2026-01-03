@@ -8,6 +8,16 @@ public enum ErrorCode {
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_001", "인증에 실패했습니다.", LogLevel.WARN),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH_002", "접근 권한이 없습니다.", LogLevel.WARN),
 
+    // JWT (Access)
+    TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_010", "토큰이 필요합니다.", LogLevel.WARN), // access 누락
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_011", "유효하지 않은 토큰입니다.", LogLevel.WARN), // 서명/형식 오류
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_012", "만료된 토큰입니다.", LogLevel.WARN), // exp 만료
+    BLACKLISTED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_013", "폐기된 토큰입니다.", LogLevel.WARN), // (옵션) 블랙리스트
+
+    // JWT (Refresh)
+    REFRESH_TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_020", "리프레시 토큰이 필요합니다.", LogLevel.WARN),
+    INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_021", "유효하지 않은 리프레시 토큰입니다.", LogLevel.WARN),
+
     // REQUEST
     INVALID_REQUEST(HttpStatus.BAD_REQUEST, "REQ_001", "요청이 올바르지 않습니다.", LogLevel.WARN),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "REQ_002", "허용되지 않은 메서드입니다.", LogLevel.WARN),
