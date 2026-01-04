@@ -6,16 +6,19 @@ import cmc.delta.domain.auth.application.port.TokenIssuer;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/** 카카오 로그인 플로우를 오케스트레이션. */
+/** 소셜 로그인 플로우를 오케스트레이션. */
 @Service
 @RequiredArgsConstructor
 public class SocialAuthFacade {
-
-	private static final String DEFAULT_ROLE = "USER"; // role claim용(실서비스는 DB 조회로 교체)
+	// TODO: 실서비스는 DB 조회/Role 정책으로 교체
+	private static final String DEFAULT_ROLE_FOR_DEV = "USER";
 
 	private final SocialOAuthClient socialOAuthClient;
 	private final TokenIssuer tokenIssuer;
@@ -24,27 +27,40 @@ public class SocialAuthFacade {
 		SocialOAuthClient.OAuthToken oauthToken = socialOAuthClient.exchangeCode(code);
 		SocialOAuthClient.OAuthProfile profile = socialOAuthClient.fetchProfile(oauthToken.accessToken());
 
-		String email = requireText(profile.email(), "카카오 이메일 제공 동의가 필요합니다.");
-		String nickname = requireText(profile.nickname(), "카카오 프로필(닉네임) 제공 동의가 필요합니다.");
+		String email = requireProvided(profile.email(), "소셜 이메일 제공 동의가 필요합니다.");
+		String nickname = requireProvided(profile.nickname(), "소셜 프로필(닉네임) 제공 동의가 필요합니다.");
 
-		// 후에: providerUserId로 내부 userId를 조회/생성하고 그 userId로 principal 구성하면 됨.
-		long userId = parseUserId(profile.providerUserId());
+		// TODO: 실서비스는 providerUserId로 내부 userId를 조회/생성하고, 그 userId로 principal 구성
+		long userId = issueTemporaryUserId(profile.providerUserId());
 
-		UserPrincipal principal = new UserPrincipal(userId, DEFAULT_ROLE);
+		UserPrincipal principal = new UserPrincipal(userId, DEFAULT_ROLE_FOR_DEV);
 		TokenIssuer.IssuedTokens tokens = tokenIssuer.issue(principal);
 
 		return new LoginResult(SocialLoginData.of(email, nickname, false), tokens);
 	}
 
-	private long parseUserId(String providerUserId) {
+	/**
+	 * 임시 구현:
+	 * - providerUserId가 문자열일 수 있어서(Long.parseLong 불가)
+	 */
+	private long issueTemporaryUserId(String providerUserId) {
+		if (!StringUtils.hasText(providerUserId)) {
+			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "소셜 사용자 식별자가 비어있습니다.");
+		}
+
 		try {
-			return Long.parseLong(providerUserId);
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hash = digest.digest(providerUserId.getBytes(StandardCharsets.UTF_8));
+
+			long value = ByteBuffer.wrap(hash, 0, Long.BYTES).getLong() & Long.MAX_VALUE;
+			return (value == 0L) ? 1L : value;
+
 		} catch (Exception e) {
 			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "소셜 사용자 식별자 처리 실패");
 		}
 	}
 
-	private String requireText(String value, String message) {
+	private String requireProvided(String value, String message) {
 		if (!StringUtils.hasText(value)) {
 			throw new BusinessException(ErrorCode.INVALID_REQUEST, message);
 		}
