@@ -5,9 +5,12 @@ import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.persistence.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
@@ -29,6 +32,8 @@ public class UserServiceImpl implements UserService {
 			throw UserException.userWithdrawn();
 		}
 		user.withdraw();
+
+		log.info("event=user.withdrawal userId={} result=success", userId);
 	}
 }
 
