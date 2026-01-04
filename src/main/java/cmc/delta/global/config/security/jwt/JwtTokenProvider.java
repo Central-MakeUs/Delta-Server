@@ -26,8 +26,7 @@ public class JwtTokenProvider {
     private static final String TYP_ACCESS = "access";
     private static final String TYP_REFRESH = "refresh";
 
-    // refresh TTL 설정을 properties에 넣기 전(최소 변경)에는 의미 있는 상수로 둔다.
-    private static final long DEFAULT_REFRESH_TTL_SECONDS = 60L * 60 * 24 * 14; // 14 days
+    private static final long DEFAULT_REFRESH_TTL_SECONDS = 60L * 60 * 24 * 14;
 
     private final JwtProperties properties;
     private final SecretKey signingKey;
@@ -37,17 +36,14 @@ public class JwtTokenProvider {
         this.signingKey = createSigningKey(properties.secretBase64());
     }
 
-    /** Access 토큰을 발급한다. */
     public String issueAccessToken(UserPrincipal principal) {
         return issueToken(principal, TYP_ACCESS, properties.accessTtlSeconds());
     }
 
-    /** Refresh 토큰을 발급한다. (최소 변경: TTL은 상수, 필요 시 properties로 승격) */
     public String issueRefreshToken(UserPrincipal principal) {
         return issueToken(principal, TYP_REFRESH, DEFAULT_REFRESH_TTL_SECONDS);
     }
 
-    /** Access 토큰을 파싱하고 필요한 정보를 반환한다(실패 시 예외). */
     public ParsedAccessToken parseAccessTokenOrThrow(String token) {
         if (token == null || token.isBlank()) {
             throw new JwtAuthenticationException(ErrorCode.TOKEN_REQUIRED);
@@ -75,7 +71,6 @@ public class JwtTokenProvider {
         }
     }
 
-    /** Refresh 토큰을 파싱하고 필요한 정보를 반환한다(실패 시 예외). */
     public ParsedRefreshToken parseRefreshTokenOrThrow(String token) {
         if (token == null || token.isBlank()) {
             throw new JwtAuthenticationException(ErrorCode.REFRESH_TOKEN_REQUIRED);
@@ -162,9 +157,7 @@ public class JwtTokenProvider {
         if (expiresAt == null) throw new JwtAuthenticationException(errorCode);
     }
 
-    /** 필터에서 사용할 Access 파싱 결과를 담는다. */
     public record ParsedAccessToken(UserPrincipal principal, String jti, Instant expiresAt) {}
 
-    /** 필터/재발급에서 사용할 Refresh 파싱 결과를 담는다. */
     public record ParsedRefreshToken(UserPrincipal principal, String jti, Instant expiresAt) {}
 }

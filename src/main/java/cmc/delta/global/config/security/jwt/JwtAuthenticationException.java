@@ -4,7 +4,6 @@ import org.springframework.security.core.AuthenticationException;
 
 import cmc.delta.global.error.ErrorCode;
 
-/** JWT 인증 실패를 ErrorCode와 함께 전달한다. */
 public class JwtAuthenticationException extends AuthenticationException {
 
     private final ErrorCode errorCode;

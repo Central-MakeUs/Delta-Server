@@ -21,7 +21,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-/** 요청의 Bearer 토큰으로 Authentication을 세팅한다. */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -71,12 +70,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (JwtAuthenticationException ex) {
-            // 4xx는 WARN(스택 생략)로 남기고 entrypoint로 위임한다.
+            // 4xx는 WARN스택 남김, entrypoint로 위임.
             clearAuthentication();
             logWarnAuthFail(request, ex);
             throw ex;
         } catch (Exception ex) {
-            // 예상치 못한 오류는 ERROR(스택 포함)로 남긴다.
             clearAuthentication();
             log.error("event=auth_error traceId={} path={} message={}",
                     MDC.get("traceId"), request.getRequestURI(), ex.getMessage(), ex);
@@ -85,24 +83,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isBlacklistEnabled() {
-        // 설정 기반으로 블랙리스트 사용 여부를 판단한다.
         return jwtProperties.blacklist() != null && jwtProperties.blacklist().enabled();
     }
 
+    // principal/authority로 Authentication을 구성해 SecurityContext에 넣는다.
     private void setAuthentication(UserPrincipal principal) {
-        // principal/authority로 Authentication을 구성해 SecurityContext에 넣는다.
         var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + principal.role()));
         var auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
     private void clearAuthentication() {
-        // 인증 컨텍스트를 정리한다.
         SecurityContextHolder.clearContext();
     }
 
+    // 토큰 값은 절대 로깅하지 않고 원인 코드만 남긴다.
     private void logWarnAuthFail(HttpServletRequest request, JwtAuthenticationException ex) {
-        // 토큰 값은 절대 로깅하지 않고 원인 코드만 남긴다.
         log.warn("event=auth_fail traceId={} path={} reasonCode={}",
                 MDC.get("traceId"), request.getRequestURI(), ex.getErrorCode().code());
     }

@@ -11,6 +11,6 @@ public record JwtProperties(
         long refreshTtlSeconds,
         Blacklist blacklist
 ) {
-    /** 블랙리스트(옵션) 설정을 보관한다. */
+    /** 블랙리스트 설정 보관. */
     public record Blacklist(boolean enabled) {}
 }
