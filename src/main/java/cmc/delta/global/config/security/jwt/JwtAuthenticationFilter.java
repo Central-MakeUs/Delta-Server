@@ -28,6 +28,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	private final AccessBlacklistStore blacklistStore;
 	private final JwtProperties jwtProperties;
 
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		return uri.startsWith("/api/v1/auth/reissue")
+			|| uri.startsWith("/api/v1/auth/kakao");
+	}
+
 	public JwtAuthenticationFilter(
 		BearerTokenResolver tokenResolver,
 		JwtTokenProvider tokenProvider,
