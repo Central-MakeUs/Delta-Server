@@ -37,9 +37,8 @@ public class AuthTokenController {
 	@PostMapping("/logout")
 	public ActionResultData logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = tokenValidator.extractAccessToken(request);
-		String refreshToken = tokenValidator.extractRefreshToken(request);
-
-		tokenService.logout(principal.userId(), accessToken, refreshToken);
+		tokenService.invalidateAll(principal.userId(), accessToken);
 		return ActionResultData.success();
 	}
+
 }

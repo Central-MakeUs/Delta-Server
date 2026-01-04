@@ -28,5 +28,5 @@ jwt:
   secret-base64: ${JWT_SECRET_BASE64}
   access-ttl-seconds: 900
   blacklist:
-    enabled: false
+    enabled: true
 

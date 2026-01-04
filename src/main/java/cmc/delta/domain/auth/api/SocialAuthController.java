@@ -17,13 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class SocialAuthController {
 
-	private final SocialAuthFacade kakaoAuthService;
+	private final SocialAuthFacade socialAuthFacade;
 
 	@PostMapping("/kakao")
-	public SocialLoginData login(
-		@Valid @RequestBody
-		SocialLoginRequest request, HttpServletResponse response) {
-		SocialAuthFacade.LoginResult result = kakaoAuthService.loginWithCode(request.code());
+	public SocialLoginData login(@Valid @RequestBody SocialLoginRequest request, HttpServletResponse response) {
+		SocialAuthFacade.LoginResult result = socialAuthFacade.loginWithCode(request.code());
 
 		TokenIssuer.IssuedTokens tokens = result.tokens();
 		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
@@ -32,9 +30,7 @@ public class SocialAuthController {
 			response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
 		}
 
-		response.setHeader(
-			HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
-
+		response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
 		return result.data();
 	}
 }
