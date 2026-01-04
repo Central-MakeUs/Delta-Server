@@ -17,10 +17,18 @@ java {
 
 spotless {
     java {
-        importOrder()
+        eclipse().configFile("$rootDir/tools/naver-eclipse-formatter.xml")
+
         removeUnusedImports()
-        googleJavaFormat()
+        trimTrailingWhitespace()
+        endWithNewline()
+
+        importOrder()
     }
+}
+
+tasks.named('check') {
+    dependsOn 'spotlessCheck'
 }
 
 repositories {

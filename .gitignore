@@ -43,3 +43,5 @@ logs/
 *.log
 *.log.*
 *.gz
+
+tools

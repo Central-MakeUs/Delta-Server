@@ -8,11 +8,10 @@ import io.swagger.v3.oas.models.media.MediaType;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
+import java.util.*;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
-
-import java.util.*;
 
 @Component
 public class ApiErrorCodeOperationCustomizer implements OperationCustomizer {
@@ -87,10 +86,10 @@ public class ApiErrorCodeOperationCustomizer implements OperationCustomizer {
 		example.setValue(body);
 
 		return ExampleHolder.builder()
-				.name(errorCode.name())
-				.status(errorCode.status().value())
-				.code(errorCode.code())
-				.holder(example)
-				.build();
+			.name(errorCode.name())
+			.status(errorCode.status().value())
+			.code(errorCode.code())
+			.holder(example)
+			.build();
 	}
 }
