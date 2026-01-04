@@ -7,12 +7,17 @@ import cmc.delta.domain.auth.api.dto.response.ActionResultData;
 import cmc.delta.domain.auth.api.support.HttpTokenExtractor;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
+import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.error.ErrorCode;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "인증")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
@@ -21,6 +26,11 @@ public class AuthTokenController {
 	private final TokenService tokenService;
 	private final HttpTokenExtractor httpTokenExtractor;
 
+	@Operation(summary = "토큰 재발급")
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.AUTHENTICATION_FAILED
+	})
 	@PostMapping("/reissue")
 	public ActionResultData reissue(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
@@ -34,6 +44,11 @@ public class AuthTokenController {
 		return ActionResultData.success();
 	}
 
+	@Operation(summary = "로그아웃")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.ACCESS_DENIED
+	})
 	@PostMapping("/logout")
 	public ActionResultData logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
