@@ -1,9 +1,9 @@
 package cmc.delta.domain.user.api;
 
-import cmc.delta.domain.user.application.dto.response.UserActionResultData;
-import cmc.delta.domain.user.application.dto.response.UserMeData;
-import cmc.delta.domain.user.application.withdrawal.UserWithdrawalService;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.api.dto.response.UserMeData;
+import cmc.delta.domain.user.application.service.UserService;
+import cmc.delta.global.api.response.ApiResponse;
+import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -14,19 +14,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-	private final UserJpaRepository userJpaRepository;
-	private final UserWithdrawalService userWithdrawalService;
+	private final UserService userService;
 
 	@GetMapping("/me")
-	public UserMeData me(@CurrentUser UserPrincipal principal) {
-		return userJpaRepository.findById(principal.userId())
-			.map(u -> new UserMeData(u.getId(), u.getEmail(), u.getNickname()))
-			.orElseThrow(() -> cmc.delta.domain.user.application.exception.UserException.userNotFound());
+	public UserMeData getMyProfile(@CurrentUser UserPrincipal principal) {
+		return userService.getMyProfile(principal.userId());
 	}
 
 	@PostMapping("/withdrawal")
-	public UserActionResultData withdraw(@CurrentUser UserPrincipal principal) {
-		userWithdrawalService.withdraw(principal.userId());
-		return UserActionResultData.success();
+	public ApiResponse<Void> withdrawMyAccount(@CurrentUser UserPrincipal principal) {
+		userService.withdrawAccount(principal.userId());
+		return ApiResponses.success(200);
 	}
 }

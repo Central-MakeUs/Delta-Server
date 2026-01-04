@@ -1,5 +1,7 @@
 package cmc.delta.global.config.security;
 
+import cmc.delta.global.config.security.handler.RestAccessDeniedHandler;
+import cmc.delta.global.config.security.handler.RestAuthenticationEntryPoint;
 import cmc.delta.global.config.security.jwt.JwtAuthenticationFilter;
 import cmc.delta.global.config.security.jwt.JwtProperties;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,8 @@ public class SecurityConfig {
 	private static final String[] PUBLIC_POST_PATHS = {"/api/v1/auth/**"};
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+	private final RestAccessDeniedHandler restAccessDeniedHandler;
 
 	@Bean
 	public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(
@@ -44,13 +48,15 @@ public class SecurityConfig {
 			.cors(Customizer.withDefaults())
 			.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-			.authorizeHttpRequests(
-				auth -> auth.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
-					.permitAll()
-					.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
-					.permitAll()
-					.anyRequest()
-					.authenticated());
+			.exceptionHandling(e -> e
+				.authenticationEntryPoint(restAuthenticationEntryPoint)
+				.accessDeniedHandler(restAccessDeniedHandler)
+			)
+			.authorizeHttpRequests(auth -> auth
+				.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
+				.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
+				.anyRequest().authenticated()
+			);
 
 		return http.build();
 	}

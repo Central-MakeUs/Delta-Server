@@ -5,6 +5,8 @@ import cmc.delta.domain.auth.api.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.application.token.TokenService;
 import cmc.delta.domain.auth.api.dto.response.ActionResultData;
 import cmc.delta.domain.auth.api.support.HttpTokenExtractor;
+import cmc.delta.global.api.response.ApiResponse;
+import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
@@ -15,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "인증")
@@ -32,16 +35,15 @@ public class AuthTokenController {
 		ErrorCode.AUTHENTICATION_FAILED
 	})
 	@PostMapping("/reissue")
-	public ActionResultData reissue(HttpServletRequest request, HttpServletResponse response) {
+	public ApiResponse<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
-
 		TokenIssuer.IssuedTokens tokens = tokenService.reissue(refreshToken);
 
 		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
 		response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
 		response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
 
-		return ActionResultData.success();
+		return ApiResponses.success(200);
 	}
 
 	@Operation(summary = "로그아웃")
@@ -50,10 +52,10 @@ public class AuthTokenController {
 		ErrorCode.ACCESS_DENIED
 	})
 	@PostMapping("/logout")
-	public ActionResultData logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
+	public ApiResponse<Void> logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
 		tokenService.invalidateAll(principal.userId(), accessToken);
-		return ActionResultData.success();
-	}
 
+		return ApiResponses.success(200);
+	}
 }

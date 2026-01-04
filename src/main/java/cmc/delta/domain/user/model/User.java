@@ -1,5 +1,6 @@
 package cmc.delta.domain.user.model;
 
+import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.util.Objects;
 import lombok.AccessLevel;

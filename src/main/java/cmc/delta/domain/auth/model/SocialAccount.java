@@ -1,6 +1,7 @@
 package cmc.delta.domain.auth.model;
 
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

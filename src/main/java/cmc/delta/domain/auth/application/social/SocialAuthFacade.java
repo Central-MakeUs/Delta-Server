@@ -38,7 +38,7 @@ public class SocialAuthFacade {
 
 		TokenIssuer.IssuedTokens tokens = tokenService.issue(principal);
 
-		return new LoginResult(SocialLoginData.of(email, nickname, false), tokens);
+		return new LoginResult(new SocialLoginData(email, nickname, false), tokens);
 	}
 
 	private long issueTemporaryUserId(String providerUserId) {
