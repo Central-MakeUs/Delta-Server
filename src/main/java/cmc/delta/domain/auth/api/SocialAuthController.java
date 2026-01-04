@@ -1,9 +1,9 @@
 package cmc.delta.domain.auth.api;
 
-import cmc.delta.domain.auth.api.dto.KakaoLoginData;
-import cmc.delta.domain.auth.api.dto.KakaoLoginRequest;
+import cmc.delta.domain.auth.api.dto.response.SocialLoginData;
+import cmc.delta.domain.auth.api.dto.request.SocialLoginRequest;
 import cmc.delta.domain.auth.application.AuthHeaderConstants;
-import cmc.delta.domain.auth.application.KakaoAuthService;
+import cmc.delta.domain.auth.application.SocialAuthFacade;
 import cmc.delta.domain.auth.application.port.TokenIssuer;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -15,15 +15,15 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class KakaoAuthController {
+public class SocialAuthController {
 
-	private final KakaoAuthService kakaoAuthService;
+	private final SocialAuthFacade kakaoAuthService;
 
 	@PostMapping("/kakao")
-	public KakaoLoginData login(
+	public SocialLoginData login(
 		@Valid @RequestBody
-		KakaoLoginRequest request, HttpServletResponse response) {
-		KakaoAuthService.LoginResult result = kakaoAuthService.loginWithCode(request.code());
+		SocialLoginRequest request, HttpServletResponse response) {
+		SocialAuthFacade.LoginResult result = kakaoAuthService.loginWithCode(request.code());
 
 		TokenIssuer.IssuedTokens tokens = result.tokens();
 		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());

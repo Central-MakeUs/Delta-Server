@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.infrastructure.oauth;
+package cmc.delta.domain.auth.infrastructure.oauth.kakao;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

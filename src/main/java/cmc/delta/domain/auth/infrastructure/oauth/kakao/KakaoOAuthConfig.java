@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.infrastructure.oauth;
+package cmc.delta.domain.auth.infrastructure.oauth.kakao;
 
 import java.time.Duration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.infrastructure.redis;
+package cmc.delta.domain.auth.infrastructure.oauth.token.redis;
 
 import cmc.delta.domain.auth.application.port.RefreshTokenStore;
 import java.time.Duration;

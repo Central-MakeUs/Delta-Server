@@ -1,6 +1,6 @@
 package cmc.delta.domain.auth.application;
 
-import cmc.delta.domain.auth.api.dto.KakaoLoginData;
+import cmc.delta.domain.auth.api.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.SocialOAuthClient;
 import cmc.delta.domain.auth.application.port.TokenIssuer;
 import cmc.delta.global.config.security.principal.UserPrincipal;
@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 /** 카카오 로그인 플로우를 오케스트레이션. */
 @Service
 @RequiredArgsConstructor
-public class KakaoAuthService {
+public class SocialAuthFacade {
 
 	private static final String DEFAULT_ROLE = "USER"; // role claim용(실서비스는 DB 조회로 교체)
 
@@ -33,7 +33,7 @@ public class KakaoAuthService {
 		UserPrincipal principal = new UserPrincipal(userId, DEFAULT_ROLE);
 		TokenIssuer.IssuedTokens tokens = tokenIssuer.issue(principal);
 
-		return new LoginResult(KakaoLoginData.of(email, nickname, false), tokens);
+		return new LoginResult(SocialLoginData.of(email, nickname, false), tokens);
 	}
 
 	private long parseUserId(String providerUserId) {
@@ -51,6 +51,6 @@ public class KakaoAuthService {
 		return value;
 	}
 
-	public record LoginResult(KakaoLoginData data, TokenIssuer.IssuedTokens tokens) {
+	public record LoginResult(SocialLoginData data, TokenIssuer.IssuedTokens tokens) {
 	}
 }

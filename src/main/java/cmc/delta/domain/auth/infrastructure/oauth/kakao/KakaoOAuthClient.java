@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.infrastructure.oauth;
+package cmc.delta.domain.auth.infrastructure.oauth.kakao;
 
 import cmc.delta.domain.auth.application.port.SocialOAuthClient;
 import cmc.delta.global.error.ErrorCode;
