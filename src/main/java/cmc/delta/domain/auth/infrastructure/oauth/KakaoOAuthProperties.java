@@ -9,9 +9,13 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 @ConfigurationProperties(prefix = "oauth.kakao")
 public record KakaoOAuthProperties(
-        @NotBlank String clientId,
-        String clientSecret,
-        @NotBlank String redirectUri,
-        @Min(100) int connectTimeoutMs,
-        @Min(100) int readTimeoutMs
-) {}
+	@NotBlank
+	String clientId,
+	String clientSecret,
+	@NotBlank
+	String redirectUri,
+	@Min(100)
+	int connectTimeoutMs,
+	@Min(100)
+	int readTimeoutMs) {
+}

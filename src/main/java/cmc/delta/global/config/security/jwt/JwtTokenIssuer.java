@@ -10,14 +10,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class JwtTokenIssuer implements TokenIssuer {
 
-    private static final String TOKEN_TYPE_BEARER = "Bearer";
+	private static final String TOKEN_TYPE_BEARER = "Bearer";
 
-    private final JwtTokenProvider jwtTokenProvider;
+	private final JwtTokenProvider jwtTokenProvider;
 
-    @Override
-    public IssuedTokens issue(UserPrincipal principal) {
-        String access = jwtTokenProvider.issueAccessToken(principal);
-        String refresh = jwtTokenProvider.issueRefreshToken(principal);
-        return new IssuedTokens(access, refresh, TOKEN_TYPE_BEARER);
-    }
+	@Override
+	public IssuedTokens issue(UserPrincipal principal) {
+		String access = jwtTokenProvider.issueAccessToken(principal);
+		String refresh = jwtTokenProvider.issueRefreshToken(principal);
+		return new IssuedTokens(access, refresh, TOKEN_TYPE_BEARER);
+	}
 }

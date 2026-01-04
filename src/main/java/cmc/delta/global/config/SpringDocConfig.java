@@ -14,36 +14,24 @@ public class SpringDocConfig {
 	@Bean
 	public OpenAPI openAPI() {
 		return new OpenAPI()
-				.components(new Components()
-						.addSchemas("ApiResponse", apiResponseSchema())
-				);
+			.components(new Components().addSchemas("ApiResponse", apiResponseSchema()));
 	}
 
 	private Schema<?> apiResponseSchema() {
 		Schema<?> schema = new Schema<>();
 		schema.setType("object");
 
-		schema.addProperty("status",
-				new IntegerSchema()
-						.description("HTTP status code (e.g., 200, 400, 500)")
-		);
+		schema.addProperty(
+			"status", new IntegerSchema().description("HTTP status code (e.g., 200, 400, 500)"));
 
-		schema.addProperty("code",
-				new StringSchema()
-						.description("Application-level code (e.g., AUTH_001, REQ_001)")
-		);
+		schema.addProperty(
+			"code", new StringSchema().description("Application-level code (e.g., AUTH_001, REQ_001)"));
 
-		schema.addProperty("data",
-				new Schema<>()
-						.type("object")
-						.nullable(true)
-						.description("Response payload (nullable)")
-		);
+		schema.addProperty(
+			"data",
+			new Schema<>().type("object").nullable(true).description("Response payload (nullable)"));
 
-		schema.addProperty("message",
-				new StringSchema()
-						.description("Human-readable message")
-		);
+		schema.addProperty("message", new StringSchema().description("Human-readable message"));
 
 		return schema;
 	}

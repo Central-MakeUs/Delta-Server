@@ -8,9 +8,9 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -20,44 +20,38 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_GET_PATHS = {
-            "/oauth/**",
-            "/favicon.ico",
-            "/error",
-            "/swagger-ui/**",
-            "/v3/api-docs/**"
-    };
+	private static final String[] PUBLIC_GET_PATHS = {
+		"/oauth/**", "/favicon.ico", "/error", "/swagger-ui/**", "/v3/api-docs/**"
+	};
 
-    private static final String[] PUBLIC_POST_PATHS = {
-            "/api/v1/auth/**"
-    };
+	private static final String[] PUBLIC_POST_PATHS = {"/api/v1/auth/**"};
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Bean
-    public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(JwtAuthenticationFilter filter) {
-        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
-        registration.setEnabled(false);
-        return registration;
-    }
+	@Bean
+	public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(
+		JwtAuthenticationFilter filter) {
+		FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
+		registration.setEnabled(false);
+		return registration;
+	}
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
-                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+		http.csrf(AbstractHttpConfigurer::disable)
+			.formLogin(AbstractHttpConfigurer::disable)
+			.httpBasic(AbstractHttpConfigurer::disable)
+			.cors(Customizer.withDefaults())
+			.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+			.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+			.authorizeHttpRequests(
+				auth -> auth.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS)
+					.permitAll()
+					.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS)
+					.permitAll()
+					.anyRequest()
+					.authenticated());
 
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
-                        .anyRequest().authenticated()
-                );
-
-        return http.build();
-    }
+		return http.build();
+	}
 }

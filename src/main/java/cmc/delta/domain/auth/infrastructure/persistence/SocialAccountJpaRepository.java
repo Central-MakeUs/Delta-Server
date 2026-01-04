@@ -1,4 +1,3 @@
 package cmc.delta.domain.auth.infrastructure.persistence;
 
-public class SocialAccountJpaRepository {
-}
+public class SocialAccountJpaRepository {}

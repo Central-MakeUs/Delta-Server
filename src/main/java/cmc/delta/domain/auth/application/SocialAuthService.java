@@ -1,4 +1,3 @@
 package cmc.delta.domain.auth.application;
 
-public class SocialAuthService {
-}
+public class SocialAuthService {}

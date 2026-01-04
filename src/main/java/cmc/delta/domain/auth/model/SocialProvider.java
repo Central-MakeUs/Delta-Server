@@ -1,4 +1,3 @@
 package cmc.delta.domain.auth.model;
 
-public class SocialProvider {
-}
+public class SocialProvider {}

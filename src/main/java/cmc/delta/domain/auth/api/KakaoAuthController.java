@@ -17,22 +17,25 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class KakaoAuthController {
 
-    private final KakaoAuthService kakaoAuthService;
+	private final KakaoAuthService kakaoAuthService;
 
-    @PostMapping("/kakao")
-    public KakaoLoginData login(@Valid @RequestBody KakaoLoginRequest request, HttpServletResponse response) {
-        KakaoAuthService.LoginResult result = kakaoAuthService.loginWithCode(request.code());
+	@PostMapping("/kakao")
+	public KakaoLoginData login(
+		@Valid @RequestBody
+		KakaoLoginRequest request, HttpServletResponse response) {
+		KakaoAuthService.LoginResult result = kakaoAuthService.loginWithCode(request.code());
 
-        TokenIssuer.IssuedTokens tokens = result.tokens();
-        response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
+		TokenIssuer.IssuedTokens tokens = result.tokens();
+		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
 
-        if (tokens.refreshToken() != null && !tokens.refreshToken().isBlank()) {
-            response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
-        }
+		if (tokens.refreshToken() != null && !tokens.refreshToken().isBlank()) {
+			response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
+		}
 
-        // 필요 시: 브라우저에서 Authorization/X-Refresh-Token을 읽을 수 있도록 노출
-        response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
+		// 필요 시: 브라우저에서 Authorization/X-Refresh-Token을 읽을 수 있도록 노출
+		response.setHeader(
+			HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
 
-        return result.data(); // ✅ DTO만 반환 -> ApiResponseAdvice가 래핑
-    }
+		return result.data(); // ✅ DTO만 반환 -> ApiResponseAdvice가 래핑
+	}
 }
