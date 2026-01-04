@@ -1,8 +1,9 @@
-package cmc.delta.domain.auth.application;
+package cmc.delta.domain.auth.application.social;
 
 import cmc.delta.domain.auth.api.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.SocialOAuthClient;
 import cmc.delta.domain.auth.application.port.TokenIssuer;
+import cmc.delta.domain.auth.application.token.TokenService;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
@@ -21,7 +22,7 @@ public class SocialAuthFacade {
 	private static final String DEFAULT_ROLE_FOR_DEV = "USER";
 
 	private final SocialOAuthClient socialOAuthClient;
-	private final TokenIssuer tokenIssuer;
+	private final TokenService tokenService;
 
 	public LoginResult loginWithCode(String code) {
 		SocialOAuthClient.OAuthToken oauthToken = socialOAuthClient.exchangeCode(code);
@@ -34,15 +35,12 @@ public class SocialAuthFacade {
 		long userId = issueTemporaryUserId(profile.providerUserId());
 
 		UserPrincipal principal = new UserPrincipal(userId, DEFAULT_ROLE_FOR_DEV);
-		TokenIssuer.IssuedTokens tokens = tokenIssuer.issue(principal);
+
+		TokenIssuer.IssuedTokens tokens = tokenService.issue(principal);
 
 		return new LoginResult(SocialLoginData.of(email, nickname, false), tokens);
 	}
 
-	/**
-	 * 임시 구현:
-	 * - providerUserId가 문자열일 수 있어서(Long.parseLong 불가)
-	 */
 	private long issueTemporaryUserId(String providerUserId) {
 		if (!StringUtils.hasText(providerUserId)) {
 			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "소셜 사용자 식별자가 비어있습니다.");

@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.application;
+package cmc.delta.domain.auth.application.token;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

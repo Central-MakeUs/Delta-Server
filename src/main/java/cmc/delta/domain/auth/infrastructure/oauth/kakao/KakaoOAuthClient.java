@@ -4,7 +4,6 @@ import cmc.delta.domain.auth.application.port.SocialOAuthClient;
 import cmc.delta.domain.auth.infrastructure.oauth.client.OAuthHttpClient;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
