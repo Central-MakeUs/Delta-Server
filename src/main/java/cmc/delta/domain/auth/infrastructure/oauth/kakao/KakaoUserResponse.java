@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.infrastructure.oauth;
+package cmc.delta.domain.auth.infrastructure.oauth.kakao;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
