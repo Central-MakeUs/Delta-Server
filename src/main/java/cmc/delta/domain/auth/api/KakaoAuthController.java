@@ -32,10 +32,9 @@ public class KakaoAuthController {
 			response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
 		}
 
-		// 필요 시: 브라우저에서 Authorization/X-Refresh-Token을 읽을 수 있도록 노출
 		response.setHeader(
 			HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
 
-		return result.data(); // ✅ DTO만 반환 -> ApiResponseAdvice가 래핑
+		return result.data();
 	}
 }
