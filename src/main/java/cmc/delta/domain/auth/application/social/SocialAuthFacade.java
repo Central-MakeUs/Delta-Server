@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.application;
+package cmc.delta.domain.auth.application.social;
 
 import cmc.delta.domain.auth.api.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.SocialOAuthClient;

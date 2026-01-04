@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.application;
+package cmc.delta.domain.auth.application.token;
 
 public final class AuthHeaderConstants {
 
