@@ -26,7 +26,12 @@ public enum ErrorCode {
 	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RES_404", "리소스를 찾을 수 없습니다.", LogLevel.WARN),
 
 	// SYSTEM
-	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SYS_500", "서버 오류가 발생했습니다.", LogLevel.ERROR);
+	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SYS_500", "서버 오류가 발생했습니다.", LogLevel.ERROR),
+
+	// USER
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.", LogLevel.WARN),
+	USER_WITHDRAWN(HttpStatus.FORBIDDEN, "USER_002", "탈퇴한 사용자입니다.", LogLevel.WARN);
+
 
 	private final HttpStatus status;
 	private final String code;

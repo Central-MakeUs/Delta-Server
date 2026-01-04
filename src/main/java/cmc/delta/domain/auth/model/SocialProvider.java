@@ -1,3 +1,6 @@
 package cmc.delta.domain.auth.model;
 
-public class SocialProvider {}
+public enum SocialProvider {
+	KAKAO,
+	APPLE
+}

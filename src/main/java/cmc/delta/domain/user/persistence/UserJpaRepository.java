@@ -1,4 +1,7 @@
 package cmc.delta.domain.user.persistence;
 
-public class UserJpaRepository {
+import cmc.delta.domain.user.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface UserJpaRepository extends JpaRepository<User, Long> {
 }
