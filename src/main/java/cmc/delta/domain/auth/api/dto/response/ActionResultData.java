@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.application.token.dto;
+package cmc.delta.domain.auth.api.dto.response;
 
 public record ActionResultData(boolean reissued) {
 

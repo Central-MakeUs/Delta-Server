@@ -1,6 +1,6 @@
-package cmc.delta.domain.auth.application.token.validator;
+package cmc.delta.domain.auth.api.support;
 
-import static cmc.delta.domain.auth.application.token.AuthHeaderConstants.*;
+import static cmc.delta.domain.auth.api.support.AuthHeaderConstants.*;
 
 import cmc.delta.domain.auth.application.token.exception.TokenException;
 import cmc.delta.global.error.ErrorCode;
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Component
-public class TokenValidator {
+public class HttpTokenExtractor {
 
 	public String extractRefreshToken(HttpServletRequest request) {
 		String refreshToken = request.getHeader(REFRESH_TOKEN_HEADER);

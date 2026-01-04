@@ -1,10 +1,10 @@
 package cmc.delta.domain.auth.api;
 
 import cmc.delta.domain.auth.application.port.TokenIssuer;
-import cmc.delta.domain.auth.application.token.AuthHeaderConstants;
+import cmc.delta.domain.auth.api.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.application.token.TokenService;
-import cmc.delta.domain.auth.application.token.dto.ActionResultData;
-import cmc.delta.domain.auth.application.token.validator.TokenValidator;
+import cmc.delta.domain.auth.api.dto.response.ActionResultData;
+import cmc.delta.domain.auth.api.support.HttpTokenExtractor;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthTokenController {
 
 	private final TokenService tokenService;
-	private final TokenValidator tokenValidator;
+	private final HttpTokenExtractor httpTokenExtractor;
 
 	@PostMapping("/reissue")
 	public ActionResultData reissue(HttpServletRequest request, HttpServletResponse response) {
-		String refreshToken = tokenValidator.extractRefreshToken(request);
+		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
 
 		TokenIssuer.IssuedTokens tokens = tokenService.reissue(refreshToken);
 
@@ -36,7 +36,7 @@ public class AuthTokenController {
 
 	@PostMapping("/logout")
 	public ActionResultData logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
-		String accessToken = tokenValidator.extractAccessToken(request);
+		String accessToken = httpTokenExtractor.extractAccessToken(request);
 		tokenService.invalidateAll(principal.userId(), accessToken);
 		return ActionResultData.success();
 	}

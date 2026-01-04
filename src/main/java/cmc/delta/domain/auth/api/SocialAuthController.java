@@ -2,7 +2,7 @@ package cmc.delta.domain.auth.api;
 
 import cmc.delta.domain.auth.api.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.api.dto.request.SocialLoginRequest;
-import cmc.delta.domain.auth.application.token.AuthHeaderConstants;
+import cmc.delta.domain.auth.api.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.application.social.SocialAuthFacade;
 import cmc.delta.domain.auth.application.port.TokenIssuer;
 import jakarta.servlet.http.HttpServletResponse;
