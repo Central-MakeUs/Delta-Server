@@ -55,7 +55,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
             return new OAuthToken(body.accessToken());
 
         } catch (HttpStatusCodeException e) {
-            // 민감정보(code/token) 로깅 금지: 여기선 throw만
+            // 민감정보 로깅 금지: 여기선 throw만
             if (e.getStatusCode().is4xxClientError()) {
                 throw new UnauthorizedException();
             }

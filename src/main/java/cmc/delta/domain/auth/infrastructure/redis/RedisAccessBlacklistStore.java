@@ -23,14 +23,13 @@ public class RedisAccessBlacklistStore implements AccessBlacklistStore {
 
     @Override
     public boolean isBlacklisted(String jti) {
-        // jti 키가 존재하면 블랙리스트로 판단한다.
         if (jti == null || jti.isBlank()) return false;
         return Boolean.TRUE.equals(redis.hasKey(KEY_PREFIX + jti));
     }
 
+    // 남은 만료 시간만큼만 블랙리스트를 유지한다.
     @Override
     public void blacklist(String jti, Duration ttl) {
-        // 남은 만료 시간만큼만 블랙리스트를 유지한다.
         if (jti == null || jti.isBlank()) return;
         if (ttl == null || ttl.isZero() || ttl.isNegative()) return;
         redis.opsForValue().set(KEY_PREFIX + jti, "1", ttl);

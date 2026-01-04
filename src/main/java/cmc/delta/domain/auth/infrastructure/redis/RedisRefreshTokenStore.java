@@ -24,7 +24,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public void save(Long userId, String sessionId, String refreshTokenHash, Duration ttl) {
+    public void refreshSave(Long userId, String sessionId, String refreshTokenHash, Duration ttl) {
         // Refresh 토큰 해시를 TTL로 저장한다.
         String key = key(userId, sessionId);
         if (invalid(key, refreshTokenHash, ttl)) return;
@@ -33,7 +33,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public RotationResult rotate(Long userId, String sessionId, String expectedHash, String newHash, Duration ttl) {
+    public RotationResult refreshRotate(Long userId, String sessionId, String expectedHash, String newHash, Duration ttl) {
         // 기존 해시와 일치할 때만 새 해시로 교체한다.
         String key = key(userId, sessionId);
         if (invalid(key, expectedHash, ttl) || newHash == null || newHash.isBlank()) return RotationResult.MISMATCH;
@@ -53,7 +53,7 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
     }
 
     @Override
-    public void delete(Long userId, String sessionId) {
+    public void refreshDelete(Long userId, String sessionId) {
         // 해당 세션의 Refresh 토큰을 삭제한다.
         redis.delete(key(userId, sessionId));
     }

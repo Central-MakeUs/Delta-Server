@@ -11,15 +11,14 @@ import cmc.delta.domain.auth.application.port.AccessBlacklistStore;
 @Component
 @ConditionalOnProperty(prefix = "jwt.blacklist", name = "enabled", havingValue = "false", matchIfMissing = true)
 public class NoOpAccessBlacklistStore implements AccessBlacklistStore {
-
+    // 블랙리스트 미사용 시 항상 false로 처리한다.
     @Override
     public boolean isBlacklisted(String jti) {
-        // 블랙리스트 미사용 시 항상 false로 처리한다.
         return false;
     }
 
+    // 블랙리스트 미사용 시 아무 것도 하지 않는다.
     @Override
     public void blacklist(String jti, Duration ttl) {
-        // 블랙리스트 미사용 시 아무 것도 하지 않는다.
     }
 }

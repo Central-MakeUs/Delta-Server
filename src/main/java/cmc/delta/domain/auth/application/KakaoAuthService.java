@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/** 카카오 로그인 플로우(코드→토큰→프로필→우리 토큰 발급)를 오케스트레이션한다. */
+/** 카카오 로그인 플로우를 오케스트레이션. */
 @Service
 @RequiredArgsConstructor
 public class KakaoAuthService {
@@ -27,7 +27,7 @@ public class KakaoAuthService {
         String email = requireText(profile.email(), "카카오 이메일 제공 동의가 필요합니다.");
         String nickname = requireText(profile.nickname(), "카카오 프로필(닉네임) 제공 동의가 필요합니다.");
 
-        // 2차에서: providerUserId로 내부 userId를 조회/생성하고 그 userId로 principal 구성하면 됨.
+        // 후에: providerUserId로 내부 userId를 조회/생성하고 그 userId로 principal 구성하면 됨.
         long userId = parseUserId(profile.providerUserId());
 
         UserPrincipal principal = new UserPrincipal(userId, DEFAULT_ROLE);
