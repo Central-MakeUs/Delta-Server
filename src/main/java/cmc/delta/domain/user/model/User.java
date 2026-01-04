@@ -1,5 +1,6 @@
 package cmc.delta.domain.user.model;
 
+import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
 import java.util.Objects;
@@ -50,11 +51,6 @@ public class User extends BaseTimeEntity {
 		this.status = UserStatus.WITHDRAWN;
 	}
 
-	/**
-	 * 소셜 제공자에서 받은 값으로 최소 동기화.
-	 * - null/blank는 무시
-	 * - 동일 값이면 변경하지 않음(불필요 dirty-check 방지)
-	 */
 	public void syncProfile(String email, String nickname) {
 		String nextEmail = normalize(email);
 		if (nextEmail != null && !Objects.equals(this.email, nextEmail)) {
