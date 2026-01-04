@@ -33,7 +33,6 @@ public class TokenServiceImpl implements TokenService {
 		String refreshToken = requireText(tokens.refreshToken(), "리프레시 토큰 발급에 실패했습니다.");
 		saveRefreshHash(principal.userId(), refreshToken);
 
-		// ✅ 성공 로그 제거(접근로그로 충분)
 		return tokens;
 	}
 
@@ -51,7 +50,6 @@ public class TokenServiceImpl implements TokenService {
 
 		rotateRefreshOrThrow(userId, expectedHash, newHash);
 
-		// ✅ 성공 로그 제거(접근로그로 충분)
 		return newTokens;
 	}
 
