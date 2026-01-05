@@ -1,4 +1,4 @@
-FROM gradle:8.5.0-jdk21 AS build
+FROM gradle:8.5.0-jdk17 AS build
 WORKDIR /app
 
 COPY --chown=gradle:gradle build.gradle settings.gradle gradlew /app/
@@ -14,7 +14,7 @@ COPY --chown=gradle:gradle . /app
 RUN --mount=type=cache,target=/home/gradle/.gradle \
     ./gradlew clean bootJar --no-daemon --warning-mode=none
 
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:17-jre
 WORKDIR /app
 
 COPY --from=build /app/build/libs/*.jar app.jar
