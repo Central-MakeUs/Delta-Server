@@ -9,6 +9,15 @@ spring:
     username: ${PROD_DB_USERNAME}
     password: ${PROD_DB_PASSWORD}
 
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: false
+      timeout: 2s
+
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}

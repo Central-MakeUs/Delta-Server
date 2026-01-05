@@ -14,15 +14,6 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      password: ${REDIS_PASSWORD}
-      ssl:
-        enabled: false
-      timeout: 2s
-
 jwt:
   issuer: cmc-delta
   secret-base64: ${JWT_SECRET_BASE64}
