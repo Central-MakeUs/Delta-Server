@@ -1,76 +1,70 @@
 package cmc.delta.global.api.storage;
 
-import cmc.delta.global.storage.ObjectStorage;
-import jakarta.validation.constraints.NotBlank;
-import java.time.Duration;
+import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
+import cmc.delta.global.api.storage.dto.StorageUploadData;
+import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.storage.StorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+@Tag(name = "스토리지")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/storage")
 public class StorageController {
 
-	private static final String DEFAULT_DIRECTORY = "temp";
+	private final StorageService storageService;
 
-	private final ObjectStorage objectStorage;
-
+	@Operation(summary = "이미지 업로드 (S3)")
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.INTERNAL_ERROR
+	})
 	@PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public UploadImageData uploadImage(
+	public StorageUploadData uploadImage(
 		@RequestPart("file") MultipartFile file,
 		@RequestParam(value = "directory", required = false) String directory
-	) throws Exception {
+	) {
+		StorageService.UploadImageResult result = storageService.uploadImage(file, directory);
 
-		ObjectStorage.StoredObject stored = objectStorage.upload(new ObjectStorage.UploadRequest(
-			(directory == null || directory.isBlank()) ? DEFAULT_DIRECTORY : directory,
-			file.getOriginalFilename(),
-			file.getContentType(),
-			file.getBytes()
-		));
-
-		String viewUrl = objectStorage.generateReadUrl(stored.storageKey(), null);
-
-		return new UploadImageData(
-			stored.storageKey(),
-			viewUrl,
-			stored.contentType(),
-			stored.sizeBytes(),
-			stored.width(),
-			stored.height()
+		return new StorageUploadData(
+			result.storageKey(),
+			result.viewUrl(),
+			result.contentType(),
+			result.sizeBytes(),
+			result.width(),
+			result.height()
 		);
 	}
 
+	@Operation(summary = "이미지 조회용 Presigned GET URL 발급")
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.INTERNAL_ERROR
+	})
 	@GetMapping("/images/presigned-get")
-	public PresignedGetData presignGet(
-		@RequestParam("key") @NotBlank String storageKey,
+	public StoragePresignedGetData presignGet(
+		@RequestParam("key") String storageKey,
 		@RequestParam(value = "ttlSeconds", required = false) Integer ttlSeconds
 	) {
-		Duration ttl = (ttlSeconds == null) ? null : Duration.ofSeconds(ttlSeconds);
-		String url = objectStorage.generateReadUrl(storageKey, ttl);
-		int expiresInSeconds = (ttlSeconds == null) ? 0 : ttlSeconds;
-		return new PresignedGetData(url, expiresInSeconds);
+		StorageService.PresignedGetUrlResult result = storageService.issueReadUrl(storageKey, ttlSeconds);
+		return new StoragePresignedGetData(result.url(), result.expiresInSeconds());
 	}
 
+	@Operation(summary = "이미지 삭제 (S3)")
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.INTERNAL_ERROR
+	})
 	@DeleteMapping("/images")
-	public Map<String, Object> deleteImage(@RequestParam("key") @NotBlank String storageKey) {
-		objectStorage.deleteObject(storageKey);
-		return Map.of(); // ApiResponseAdvice가 감싸서 data={}
+	public Map<String, Object> deleteImage(@RequestParam("key") String storageKey) {
+		storageService.deleteImage(storageKey);
+		return Map.of();
 	}
-
-	public record UploadImageData(
-		String storageKey,
-		String viewUrl,
-		String contentType,
-		long sizeBytes,
-		Integer width,
-		Integer height
-	) {}
-
-	public record PresignedGetData(
-		String url,
-		int expiresInSeconds
-	) {}
 }

@@ -4,24 +4,9 @@ import java.time.Duration;
 
 public interface ObjectStorage {
 
-	StoredObject upload(UploadRequest request);
+	void put(String storageKey, byte[] bytes, String contentType);
 
-	String generateReadUrl(String storageKey, Duration ttl);
+	String createPresignedGetUrl(String storageKey, Duration ttl);
 
-	void deleteObject(String storageKey);
-
-	record UploadRequest(
-		String directory,
-		String originalFilename,
-		String contentType,
-		byte[] bytes
-	) {}
-
-	record StoredObject(
-		String storageKey,
-		String contentType,
-		long sizeBytes,
-		Integer width,
-		Integer height
-	) {}
+	void delete(String storageKey);
 }
