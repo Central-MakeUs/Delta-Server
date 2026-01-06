@@ -18,11 +18,18 @@ spring:
         enabled: false
       timeout: 2s
 
+storage:
+  s3:
+    bucket: ${S3_BUCKET}
+    region: ${S3_REGION:ap-northeast-2}
+    key-prefix: ${S3_KEY_PREFIX:delta}
+    presign-get-ttl-seconds: ${S3_PRESIGN_GET_TTL_SECONDS:600}
+    max-upload-bytes: ${S3_MAX_UPLOAD_BYTES:10485760} # 10MB
+
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}
     client-secret: ${KAKAO_CLIENT_SECRET}
-#    redirect-uri: http://localhost:8080/oauth/kakao/callback
     redirect-uri: ${KAKAO_REDIRECT_URI}
     connect-timeout-ms: 2000
     read-timeout-ms: 4000
