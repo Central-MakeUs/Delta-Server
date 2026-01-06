@@ -1,3 +1,6 @@
+server:
+  forward-headers-strategy: framework
+
 spring:
   config:
     activate:
@@ -9,9 +12,19 @@ spring:
     username: ${PROD_DB_USERNAME}
     password: ${PROD_DB_PASSWORD}
 
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    open-in-view: false
-    show-sql: false
-    generate-ddl: false
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: false
+      timeout: 2s
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 4000

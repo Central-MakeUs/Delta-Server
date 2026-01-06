@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_GET_PATHS = {
-		"/oauth/**", "/favicon.ico", "/error", "/swagger-ui/**", "/v3/api-docs/**"
+		"/oauth/**", "/favicon.ico", "/error", "/swagger-ui/**", "/v3/api-docs/**","/actuator/health", "/health"
 	};
 
 	private static final String[] PUBLIC_POST_PATHS = {"/api/v1/auth/**"};
