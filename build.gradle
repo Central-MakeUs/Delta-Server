@@ -90,6 +90,10 @@ dependencies {
 
     // Env
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+    // Aws S3
+    implementation platform("software.amazon.awssdk:bom:2.25.67")
+    implementation "software.amazon.awssdk:s3"
 }
 
 tasks.named('test') {

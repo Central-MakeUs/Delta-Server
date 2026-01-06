@@ -21,6 +21,16 @@ spring:
         enabled: false
       timeout: 2s
 
+storage:
+  s3:
+    bucket: ${S3_BUCKET}
+    region: ${S3_REGION:ap-northeast-2}
+    key-prefix: ${S3_KEY_PREFIX:delta}
+    presign-get-ttl-seconds: ${S3_PRESIGN_GET_TTL_SECONDS:600}
+    max-upload-bytes: ${S3_MAX_UPLOAD_BYTES:10485760}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+
 oauth:
   kakao:
     client-id: ${KAKAO_CLIENT_ID}

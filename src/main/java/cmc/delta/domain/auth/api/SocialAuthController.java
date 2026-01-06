@@ -5,6 +5,9 @@ import cmc.delta.domain.auth.api.dto.request.SocialLoginRequest;
 import cmc.delta.domain.auth.api.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.application.social.SocialAuthFacade;
 import cmc.delta.domain.auth.application.port.TokenIssuer;
+import cmc.delta.global.api.response.ApiResponse;
+import cmc.delta.global.api.response.ApiResponses;
+import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +33,10 @@ public class SocialAuthController {
 		ErrorCode.AUTHENTICATION_FAILED
 	})
 	@PostMapping("/kakao")
-	public SocialLoginData login(@Valid @RequestBody SocialLoginRequest request, HttpServletResponse response) {
+	public ApiResponse<SocialLoginData> login(
+		@Valid @RequestBody SocialLoginRequest request,
+		HttpServletResponse response
+	) {
 		SocialAuthFacade.LoginResult result = socialAuthFacade.loginWithCode(request.code());
 
 		TokenIssuer.IssuedTokens tokens = result.tokens();
@@ -41,6 +47,8 @@ public class SocialAuthController {
 		}
 
 		response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
-		return result.data();
+
+		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
+
 }

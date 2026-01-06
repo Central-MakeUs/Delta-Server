@@ -17,4 +17,12 @@ public final class ApiResponses {
 	public static ApiResponse<Object> fail(int status, String code, Object data, String message) {
 		return new ApiResponse<>(status, code, data, message);
 	}
+
+	public static <T> ApiResponse<T> success(SuccessCode successCode, T data) {
+		return new ApiResponse<>(successCode.status(), successCode.code(), data, successCode.message());
+	}
+
+	public static ApiResponse<Void> success(SuccessCode successCode) {
+		return new ApiResponse<>(successCode.status(), successCode.code(), null, successCode.message());
+	}
 }

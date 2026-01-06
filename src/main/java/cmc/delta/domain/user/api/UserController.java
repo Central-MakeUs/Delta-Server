@@ -4,6 +4,7 @@ import cmc.delta.domain.user.api.dto.response.UserMeData;
 import cmc.delta.domain.user.application.service.UserService;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
+import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
@@ -29,8 +30,9 @@ public class UserController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@GetMapping("/me")
-	public UserMeData getMyProfile(@CurrentUser UserPrincipal principal) {
-		return userService.getMyProfile(principal.userId());
+	public ApiResponse<UserMeData> getMyProfile(@CurrentUser UserPrincipal principal) {
+		UserMeData data = userService.getMyProfile(principal.userId());
+		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
 	@Operation(summary = "회원 탈퇴")
@@ -43,6 +45,6 @@ public class UserController {
 	@PostMapping("/withdrawal")
 	public ApiResponse<Void> withdrawMyAccount(@CurrentUser UserPrincipal principal) {
 		userService.withdrawAccount(principal.userId());
-		return ApiResponses.success(200);
+		return ApiResponses.success(SuccessCode.OK);
 	}
 }
