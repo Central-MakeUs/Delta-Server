@@ -12,5 +12,7 @@ public record S3Properties(
 	@NotBlank String region,
 	@NotBlank String keyPrefix,
 	@Min(60) int presignGetTtlSeconds,
-	@Min(1) long maxUploadBytes
+	@Min(1) long maxUploadBytes,
+	@NotBlank String accessKey,
+	@NotBlank String secretKey
 ) {}
