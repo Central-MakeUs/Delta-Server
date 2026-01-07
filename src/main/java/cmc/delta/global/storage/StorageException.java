@@ -21,8 +21,4 @@ public class StorageException extends BusinessException {
 	public static StorageException internalError(String message, Throwable cause) {
 		return new StorageException(ErrorCode.INTERNAL_ERROR, message, cause);
 	}
-
-	public static StorageException internalError(String message) {
-		return new StorageException(ErrorCode.INTERNAL_ERROR, message);
-	}
 }

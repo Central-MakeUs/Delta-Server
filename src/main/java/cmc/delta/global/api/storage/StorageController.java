@@ -39,17 +39,7 @@ public class StorageController {
 		@RequestPart("file") MultipartFile file,
 		@RequestParam(value = "directory", required = false) String directory
 	) {
-		StorageService.UploadImageResult result = storageService.uploadImage(file, directory);
-
-		StorageUploadData data = new StorageUploadData(
-			result.storageKey(),
-			result.viewUrl(),
-			result.contentType(),
-			result.sizeBytes(),
-			result.width(),
-			result.height()
-		);
-
+		StorageUploadData data = storageService.uploadImage(file, directory);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -63,8 +53,7 @@ public class StorageController {
 		@RequestParam("key") String storageKey,
 		@RequestParam(value = "ttlSeconds", required = false) Integer ttlSeconds
 	) {
-		StorageService.PresignedGetUrlResult result = storageService.issueReadUrl(storageKey, ttlSeconds);
-		StoragePresignedGetData data = new StoragePresignedGetData(result.url(), result.expiresInSeconds());
+		StoragePresignedGetData data = storageService.issueReadUrl(storageKey, ttlSeconds);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 

@@ -19,12 +19,14 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
 	private static final Logger log = LoggerFactory.getLogger(HttpAccessLogFilter.class);
 
-	private static final String ACCESS_LOG_FORMAT = "[HTTP] {} {} | status={} | {}ms | ip={} | ua={}";
+	private static final String ACCESS_LOG_FORMAT =
+		"[HTTP] 요청 처리 완료 method={} path={} status={} durationMs={} ip={} ua={}";
 
 	private static final int USER_AGENT_MAX_LEN = 200;
 
-	private static final Set<String> SKIP_PATH_PREFIXES = Set.of("/actuator", "/swagger", "/swagger-ui", "/v3/api-docs",
-		"/favicon.ico");
+	private static final Set<String> SKIP_PATH_PREFIXES = Set.of(
+		"/actuator", "/swagger", "/swagger-ui", "/v3/api-docs", "/favicon.ico"
+	);
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -59,16 +61,18 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
 	private AccessLogContext createAccessLogContext(
 		HttpServletRequest request, HttpServletResponse response, long durationMs) {
+
 		return new AccessLogContext(
 			request.getMethod(),
 			buildSafePath(request),
 			response.getStatus(),
 			durationMs,
 			resolveClientIp(request),
-			resolveUserAgent(request));
+			resolveUserAgent(request)
+		);
 	}
 
-	/** 민감정보 유출 방지를 위해 queryString은 기본 로그에서 제외. */
+	/** 민감정보 유출 방지를 위해 queryString은 기본 로그에서 제외 */
 	private String buildSafePath(HttpServletRequest request) {
 		return request.getRequestURI();
 	}
@@ -82,7 +86,8 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 			ctx.status(),
 			ctx.durationMs(),
 			ctx.clientIp(),
-			ctx.userAgent());
+			ctx.userAgent()
+		);
 	}
 
 	private void logByHttpStatus(int status, String format, Object... args) {
@@ -121,12 +126,14 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
 	private String sanitize(String raw, int maxLen) {
 		String s = raw.replace("\n", " ").replace("\r", " ").trim();
-		if (s.length() > maxLen)
+		if (s.length() > maxLen) {
 			return s.substring(0, maxLen);
+		}
 		return s;
 	}
 
 	private record AccessLogContext(
-		String method, String path, int status, long durationMs, String clientIp, String userAgent) {
+		String method, String path, int status, long durationMs, String clientIp, String userAgent
+	) {
 	}
 }

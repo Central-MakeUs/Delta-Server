@@ -1,86 +1,133 @@
 package cmc.delta.global.storage;
 
+import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
+import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.storage.s3.S3Properties;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
+import cmc.delta.global.storage.support.ImageMetadataExtractor;
+import cmc.delta.global.storage.support.StorageKeyGenerator;
+import cmc.delta.global.storage.support.StorageRequestValidator;
+import cmc.delta.global.storage.support.StorageUploadSource;
 import java.time.Duration;
 import java.util.Locale;
-import java.util.UUID;
-import javax.imageio.ImageIO;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class StorageService {
 
 	private static final String DEFAULT_DIRECTORY = "temp";
 	private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
-	private static final String PATH_SEPARATOR = "/";
-	private static final String DOT = ".";
 
 	private final ObjectStorage objectStorage;
 	private final S3Properties properties;
 
-	public UploadImageResult uploadImage(MultipartFile file, String directory) {
-		validateFile(file);
+	private final StorageRequestValidator validator;
+	private final StorageKeyGenerator keyGenerator;
 
-		String resolvedDirectory = resolveDirectory(directory);
-		String contentType = resolveContentType(file.getContentType());
-		byte[] bytes = readBytes(file);
+	public StorageUploadData uploadImage(MultipartFile file, String directory) {
+		long startedAt = System.nanoTime();
 
-		ImageSize imageSize = tryReadImageSize(bytes);
-		String storageKey = createStorageKey(resolvedDirectory, file.getOriginalFilename());
+		StorageUploadSource source = prepareUploadSource(file, directory);
+		String storageKey = keyGenerator.generate(source.getDirectory(), file.getOriginalFilename());
 
-		objectStorage.put(storageKey, bytes, contentType);
+		objectStorage.put(storageKey, source.getBytes(), source.getContentType());
 
-		Duration ttl = Duration.ofSeconds(properties.presignGetTtlSeconds());
-		String viewUrl = objectStorage.createPresignedGetUrl(storageKey, ttl);
+		String viewUrl = issueViewUrl(storageKey);
 
-		return new UploadImageResult(
+		long durationMs = elapsedMs(startedAt);
+
+		log.info(
+			"스토리지 업로드 완료 storageKey={} directory={} contentType={} sizeBytes={} width={} height={} durationMs={}",
+			storageKey,
+			source.getDirectory(),
+			source.getContentType(),
+			source.sizeBytes(),
+			source.getImageWidth(),
+			source.getImageHeight(),
+			durationMs
+		);
+
+		return new StorageUploadData(
 			storageKey,
 			viewUrl,
+			source.getContentType(),
+			source.sizeBytes(),
+			source.getImageWidth(),
+			source.getImageHeight()
+		);
+	}
+
+	public StoragePresignedGetData issueReadUrl(String storageKey, Integer ttlSecondsOrNull) {
+		long startedAt = System.nanoTime();
+
+		validator.validateStorageKey(storageKey);
+
+		int ttlSeconds = validator.resolveTtlSeconds(ttlSecondsOrNull, properties.presignGetTtlSeconds());
+		String url = objectStorage.createPresignedGetUrl(storageKey, Duration.ofSeconds(ttlSeconds));
+
+		long durationMs = elapsedMs(startedAt);
+
+		log.info(
+			"스토리지 조회 URL 발급 완료 storageKey={} ttlSeconds={} durationMs={}",
+			storageKey, ttlSeconds, durationMs
+		);
+
+		return new StoragePresignedGetData(url, ttlSeconds);
+	}
+
+	public void deleteImage(String storageKey) {
+		long startedAt = System.nanoTime();
+
+		validator.validateStorageKey(storageKey);
+		objectStorage.delete(storageKey);
+
+		long durationMs = elapsedMs(startedAt);
+
+		log.info("스토리지 삭제 완료 storageKey={} durationMs={}", storageKey, durationMs);
+	}
+
+	private StorageUploadSource prepareUploadSource(MultipartFile file, String directory) {
+		validator.validateUploadFile(file, properties.maxUploadBytes());
+
+		String resolvedDirectory = keyGenerator.resolveDirectoryOrDefault(directory, DEFAULT_DIRECTORY);
+		String contentType = resolveContentType(file.getContentType());
+
+		if (!isImage(contentType)) {
+			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
+		}
+
+		byte[] bytes = readBytes(file);
+
+		ImageMetadataExtractor.ImageSize imageSize = ImageMetadataExtractor.tryReadImageSize(bytes);
+		if (imageSize.width() == null || imageSize.height() == null) {
+			throw StorageException.invalidRequest("이미지 파일 형식이 올바르지 않습니다.");
+		}
+
+		return new StorageUploadSource(
+			resolvedDirectory,
 			contentType,
-			bytes.length,
+			bytes,
 			imageSize.width(),
 			imageSize.height()
 		);
 	}
 
-	public PresignedGetUrlResult issueReadUrl(String storageKey, Integer ttlSecondsOrNull) {
-		if (!StringUtils.hasText(storageKey)) {
-			throw StorageException.invalidRequest("storageKey가 비어있습니다.");
-		}
 
-		int ttlSeconds = (ttlSecondsOrNull == null)
-			? properties.presignGetTtlSeconds()
-			: ttlSecondsOrNull;
-
-		if (ttlSeconds < 60) {
-			throw StorageException.invalidRequest("ttlSeconds는 60 이상이어야 합니다.");
-		}
-
-		Duration ttl = Duration.ofSeconds(ttlSeconds);
-		String url = objectStorage.createPresignedGetUrl(storageKey, ttl);
-		return new PresignedGetUrlResult(url, ttlSeconds);
+	private boolean isImage(String contentType) {
+		return StringUtils.hasText(contentType)
+			&& contentType.toLowerCase(Locale.ROOT).startsWith("image/");
 	}
 
-	public void deleteImage(String storageKey) {
-		if (!StringUtils.hasText(storageKey)) {
-			throw StorageException.invalidRequest("storageKey가 비어있습니다.");
-		}
-		objectStorage.delete(storageKey);
-	}
 
-	private void validateFile(MultipartFile file) {
-		if (file == null || file.isEmpty()) {
-			throw StorageException.invalidRequest("파일이 비어있습니다.");
-		}
-		if (file.getSize() > properties.maxUploadBytes()) {
-			throw StorageException.invalidRequest("파일 용량이 너무 큽니다.");
-		}
+	private String issueViewUrl(String storageKey) {
+		Duration ttl = Duration.ofSeconds(properties.presignGetTtlSeconds());
+		return objectStorage.createPresignedGetUrl(storageKey, ttl);
 	}
 
 	private byte[] readBytes(MultipartFile file) {
@@ -91,77 +138,11 @@ public class StorageService {
 		}
 	}
 
-	private String resolveDirectory(String directory) {
-		return StringUtils.hasText(directory) ? directory : DEFAULT_DIRECTORY;
-	}
-
 	private String resolveContentType(String contentType) {
 		return StringUtils.hasText(contentType) ? contentType : DEFAULT_CONTENT_TYPE;
 	}
 
-	private String createStorageKey(String directory, String originalFilename) {
-		String prefix = normalizeDirectory(properties.keyPrefix());
-		String dir = normalizeDirectory(directory);
-
-		String extension = extractExtension(originalFilename);
-		String randomName = UUID.randomUUID().toString().replace("-", "");
-		String filename = (extension == null) ? randomName : randomName + DOT + extension;
-
-		return prefix + PATH_SEPARATOR + dir + PATH_SEPARATOR + filename;
-	}
-
-	private String normalizeDirectory(String directory) {
-		if (!StringUtils.hasText(directory)) {
-			throw StorageException.invalidRequest("directory가 비어있습니다.");
-		}
-		String d = directory.trim();
-		while (d.startsWith(PATH_SEPARATOR)) d = d.substring(1);
-		while (d.endsWith(PATH_SEPARATOR)) d = d.substring(0, d.length() - 1);
-
-		if (!StringUtils.hasText(d)) {
-			throw StorageException.invalidRequest("directory가 비어있습니다.");
-		}
-		return d;
-	}
-
-	private String extractExtension(String originalFilename) {
-		if (!StringUtils.hasText(originalFilename)) {
-			return null;
-		}
-		int idx = originalFilename.lastIndexOf(DOT);
-		if (idx < 0 || idx == originalFilename.length() - 1) {
-			return null;
-		}
-		return originalFilename.substring(idx + 1).toLowerCase(Locale.ROOT);
-	}
-
-	private ImageSize tryReadImageSize(byte[] bytes) {
-		try {
-			BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-			if (image == null) return ImageSize.empty();
-			return new ImageSize(image.getWidth(), image.getHeight());
-		} catch (Exception ignored) {
-			return ImageSize.empty();
-		}
-	}
-
-	public record UploadImageResult(
-		String storageKey,
-		String viewUrl,
-		String contentType,
-		long sizeBytes,
-		Integer width,
-		Integer height
-	) {}
-
-	public record PresignedGetUrlResult(
-		String url,
-		int expiresInSeconds
-	) {}
-
-	private record ImageSize(Integer width, Integer height) {
-		static ImageSize empty() {
-			return new ImageSize(null, null);
-		}
+	private long elapsedMs(long startedAtNano) {
+		return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startedAtNano);
 	}
 }
