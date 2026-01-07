@@ -14,10 +14,17 @@ spring:
     prefix: classpath:/templates/
     suffix: .html
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
 jwt:
   issuer: cmc-delta
   secret-base64: ${JWT_SECRET_BASE64}
   access-ttl-seconds: 900
   blacklist:
     enabled: true
+
+
 
