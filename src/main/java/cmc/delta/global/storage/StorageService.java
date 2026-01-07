@@ -8,6 +8,7 @@ import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
 import cmc.delta.global.storage.support.StorageUploadSource;
 import java.time.Duration;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,9 +97,17 @@ public class StorageService {
 
 		String resolvedDirectory = keyGenerator.resolveDirectoryOrDefault(directory, DEFAULT_DIRECTORY);
 		String contentType = resolveContentType(file.getContentType());
+
+		if (!isImage(contentType)) {
+			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
+		}
+
 		byte[] bytes = readBytes(file);
 
-		var imageSize = ImageMetadataExtractor.tryReadImageSize(bytes);
+		ImageMetadataExtractor.ImageSize imageSize = ImageMetadataExtractor.tryReadImageSize(bytes);
+		if (imageSize.width() == null || imageSize.height() == null) {
+			throw StorageException.invalidRequest("이미지 파일 형식이 올바르지 않습니다.");
+		}
 
 		return new StorageUploadSource(
 			resolvedDirectory,
@@ -108,6 +117,13 @@ public class StorageService {
 			imageSize.height()
 		);
 	}
+
+
+	private boolean isImage(String contentType) {
+		return StringUtils.hasText(contentType)
+			&& contentType.toLowerCase(Locale.ROOT).startsWith("image/");
+	}
+
 
 	private String issueViewUrl(String storageKey) {
 		Duration ttl = Duration.ofSeconds(properties.presignGetTtlSeconds());
