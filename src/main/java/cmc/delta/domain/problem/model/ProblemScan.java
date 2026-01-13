@@ -32,6 +32,12 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemScan extends BaseTimeEntity {
 
+	/**
+	 * TODO: Entity 수정 예정
+	 */
+	private static final int OCR_MAX_ATTEMPTS = 3;
+	private static final long OCR_BACKOFF_SECONDS = 30L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -146,11 +152,40 @@ public class ProblemScan extends BaseTimeEntity {
 		return s;
 	}
 
+	public static ProblemScan createUploaded(User user) {
+		return uploaded(user);
+	}
+
 	public void markOcrDone(String plainText, String rawJson, LocalDateTime completedAt) {
 		this.ocrPlainText = plainText;
 		this.ocrRawJson = rawJson;
 		this.ocrCompletedAt = completedAt;
 		this.status = ScanStatus.OCR_DONE;
+
+		this.failReason = null;
+		this.nextRetryAt = null;
+	}
+
+	public void markOcrSucceeded(String plainText, String rawJson, LocalDateTime completedAt) {
+		markOcrDone(plainText, rawJson, completedAt);
+	}
+
+	public void markOcrFailed(String reason) {
+		this.failReason = reason;
+		this.ocrAttemptCount += 1;
+	}
+
+	public void scheduleNextRetryForOcr(LocalDateTime now) {
+		if (this.ocrAttemptCount >= OCR_MAX_ATTEMPTS) {
+			this.status = ScanStatus.FAILED;
+			this.nextRetryAt = null;
+			return;
+		}
+
+		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount; // 30, 60, 90...
+		this.nextRetryAt = now.plusSeconds(delaySeconds);
+
+		this.status = ScanStatus.UPLOADED;
 	}
 
 	public void markAiDone(LocalDateTime completedAt) {
@@ -161,5 +196,6 @@ public class ProblemScan extends BaseTimeEntity {
 	public void markFailed(String reason) {
 		this.failReason = reason;
 		this.status = ScanStatus.FAILED;
+		this.nextRetryAt = null;
 	}
 }

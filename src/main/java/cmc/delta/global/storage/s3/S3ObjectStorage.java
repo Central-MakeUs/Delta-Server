@@ -8,10 +8,12 @@ import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
@@ -39,9 +41,26 @@ public class S3ObjectStorage implements ObjectStorage {
 
 			s3Client.putObject(put, RequestBody.fromBytes(bytes));
 
-			// 바이트/URL/원본파일명 등 민감정보는 로깅 금지
-			log.debug("S3 업로드 완료 storageKey={} sizeBytes={}", storageKey, (bytes == null ? 0 : bytes.length));
+			// 민감정보(바이트/원본파일명/URL 등) 로깅 금지
+			log.debug("S3 업로드 완료 storageKey={}", storageKey);
 			return null;
+		});
+	}
+
+	@Override
+	public byte[] readBytes(String storageKey) {
+		validator.validateStorageKey(storageKey);
+
+		return execute("S3 읽기", () -> {
+			GetObjectRequest get = GetObjectRequest.builder()
+				.bucket(properties.bucket())
+				.key(storageKey)
+				.build();
+
+			ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(get);
+
+			log.debug("S3 읽기 완료 storageKey={}", storageKey);
+			return objectBytes.asByteArray();
 		});
 	}
 
@@ -63,7 +82,7 @@ public class S3ObjectStorage implements ObjectStorage {
 
 			String url = s3Presigner.presignGetObject(presign).url().toString();
 
-			// URL 자체는 민감정보이므로 로깅 금지
+			// URL 자체는 민감정보로 취급(로깅 금지)
 			log.debug("S3 조회 URL 생성 완료 storageKey={} ttlSeconds={}", storageKey, ttl.toSeconds());
 			return url;
 		});

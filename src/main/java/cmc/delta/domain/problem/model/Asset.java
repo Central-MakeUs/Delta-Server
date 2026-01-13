@@ -13,7 +13,7 @@ import org.hibernate.type.SqlTypes;
 @Table(
 	name = "asset",
 	indexes = {
-		@Index(name = "uk_asset_storage_key", columnList = "storage_key", unique = true),
+		@Index(name = "idx_asset_storage_key", columnList = "storage_key", unique = true),
 		@Index(name = "idx_asset_scan_type", columnList = "scan_id, asset_type")
 	},
 	uniqueConstraints = {
@@ -22,6 +22,8 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Asset extends BaseCreatedEntity {
+
+	private static final int DEFAULT_SLOT = 0;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,10 +50,46 @@ public class Asset extends BaseCreatedEntity {
 	@Column(columnDefinition = "json")
 	private String meta;
 
-	public Asset(ProblemScan scan, AssetType assetType, int slot, String storageKey) {
+	private Asset(
+		ProblemScan scan,
+		AssetType assetType,
+		int slot,
+		String storageKey,
+		Integer width,
+		Integer height,
+		String meta
+	) {
 		this.scan = scan;
 		this.assetType = assetType;
 		this.slot = slot;
 		this.storageKey = storageKey;
+		this.width = width;
+		this.height = height;
+		this.meta = meta;
+	}
+
+	public static Asset createOriginal(ProblemScan scan, String storageKey, Integer width, Integer height) {
+		return new Asset(
+			scan,
+			AssetType.ORIGINAL,
+			DEFAULT_SLOT,
+			storageKey,
+			width,
+			height,
+			null
+		);
+	}
+
+	// 필요해지면 확장 (지금 당장 안 쓰면 안 만들어도 됨)
+	public static Asset createPreprocessed(ProblemScan scan, String storageKey, Integer width, Integer height) {
+		return new Asset(scan, AssetType.PREPROCESSED, DEFAULT_SLOT, storageKey, width, height, null);
+	}
+
+	public static Asset createDiagramCrop(ProblemScan scan, int slot, String storageKey, Integer width, Integer height) {
+		return new Asset(scan, AssetType.DIAGRAM_CROP, slot, storageKey, width, height, null);
+	}
+
+	public static Asset createFormulaCrop(ProblemScan scan, int slot, String storageKey, Integer width, Integer height) {
+		return new Asset(scan, AssetType.FORMULA_CROP, slot, storageKey, width, height, null);
 	}
 }

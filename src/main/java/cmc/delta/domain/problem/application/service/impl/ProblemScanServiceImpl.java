@@ -31,6 +31,7 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 	public ProblemScanCreateResponse createScan(Long userId, MultipartFile file) {
 		StorageUploadData uploaded = storageService.uploadImage(file, ORIGINAL_DIR);
 
+		// MVP에서는 getReferenceById로 OK (없으면 FK에서 터짐)
 		User userRef = userRepository.getReferenceById(userId);
 
 		ProblemScan scan = scanRepository.save(ProblemScan.createUploaded(userRef));
@@ -42,6 +43,10 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 			uploaded.height()
 		));
 
-		return new ProblemScanCreateResponse(scan.getId(), original.getId(), scan.getStatus().name());
+		return new ProblemScanCreateResponse(
+			scan.getId(),
+			original.getId(),
+			scan.getStatus().name()
+		);
 	}
 }
