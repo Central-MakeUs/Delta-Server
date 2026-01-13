@@ -1,4 +1,3 @@
-// src/main/java/cmc/delta/global/persistence/BaseCreatedEntity.java
 package cmc.delta.global.persistence;
 
 import jakarta.persistence.Column;
