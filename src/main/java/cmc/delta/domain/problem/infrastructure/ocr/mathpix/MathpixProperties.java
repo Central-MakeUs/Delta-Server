@@ -1,4 +1,4 @@
-package cmc.delta.global.ocr.mathpix;
+package cmc.delta.domain.problem.infrastructure.ocr.mathpix;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

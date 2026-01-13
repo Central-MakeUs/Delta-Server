@@ -1,4 +1,4 @@
 package cmc.delta.domain.problem.application.port;
 
-public class AiAnalyzer {
+public class ObjectStorageReader {
 }

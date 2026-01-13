@@ -1,4 +1,4 @@
 package cmc.delta.domain.problem.application.mapper;
 
-public class GraphMapper {
+public class ProblemScanMapper {
 }
