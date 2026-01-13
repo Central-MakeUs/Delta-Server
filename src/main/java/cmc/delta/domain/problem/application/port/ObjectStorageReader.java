@@ -1,4 +1,5 @@
 package cmc.delta.domain.problem.application.port;
 
-public class ObjectStorageReader {
+public interface ObjectStorageReader {
+	byte[] readBytes(String storageKey);
 }

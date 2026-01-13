@@ -30,7 +30,6 @@ mathpix:
   base-url: https://api.mathpix.com
   app-id: ${MATHPIX_APP_ID}
   app-key: ${MATHPIX_APP_KEY}
-  timeout-ms: 15000
 
 
 
