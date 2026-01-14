@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.application.worker;
 
-import java.util.UUID;
+import cmc.delta.domain.problem.application.worker.support.AiWorkerProperties;
+import cmc.delta.domain.problem.application.worker.support.LockOwnerProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,10 +13,15 @@ import org.springframework.stereotype.Component;
 public class AiWorkerScheduler {
 
 	private final AiScanWorker aiScanWorker;
+	private final LockOwnerProvider lockOwnerProvider;
+	private final AiWorkerProperties props;
 
 	@Scheduled(fixedDelayString = "${worker.ai.fixed-delay-ms:2000}")
 	public void tick() {
-		log.debug("AI 스케줄러 tick");
-		aiScanWorker.runOnce("ai-" + UUID.randomUUID());
+		aiScanWorker.runBatch(
+			lockOwnerProvider.get(),
+			props.batchSize(),
+			props.lockLeaseSeconds()
+		);
 	}
 }

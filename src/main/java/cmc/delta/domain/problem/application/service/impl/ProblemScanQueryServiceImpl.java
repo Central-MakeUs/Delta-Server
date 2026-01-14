@@ -2,9 +2,7 @@ package cmc.delta.domain.problem.application.service.impl;
 
 import cmc.delta.domain.problem.api.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.application.service.ProblemScanQueryService;
-import cmc.delta.domain.problem.model.Asset;
-import cmc.delta.domain.problem.model.ProblemScan;
-import cmc.delta.domain.problem.persistence.AssetJpaRepository;
+import cmc.delta.domain.problem.persistence.ProblemScanDetailProjection;
 import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.error.ErrorCode;
@@ -19,38 +17,38 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 
 	private final ProblemScanJpaRepository scanRepository;
-	private final AssetJpaRepository assetRepository;
 	private final StorageService storageService;
 
 	@Transactional(readOnly = true)
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
-		ProblemScan scan = scanRepository.findOwnedBy(scanId, userId)
+		ProblemScanDetailProjection p = scanRepository.findOwnedDetail(scanId, userId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_SCAN_NOT_FOUND, "스캔을 찾을 수 없습니다."));
 
-		Asset original = assetRepository.findOriginalByScanId(scanId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_ASSET_NOT_FOUND, "원본 이미지를 찾을 수 없습니다."));
+		if (p.getAssetId() == null || p.getStorageKey() == null) {
+			throw new BusinessException(ErrorCode.PROBLEM_ASSET_NOT_FOUND, "원본 이미지를 찾을 수 없습니다.");
+		}
 
-		StoragePresignedGetData presigned = storageService.issueReadUrl(original.getStorageKey(), null);
+		StoragePresignedGetData presigned = storageService.issueReadUrl(p.getStorageKey(), null);
 
 		return new ProblemScanDetailResponse(
-			scan.getId(),
-			scan.getStatus().name(),
-			scan.isHasFigure(),
-			scan.getRenderMode().name(),
+			p.getScanId(),
+			p.getStatus().name(),
+			Boolean.TRUE.equals(p.getHasFigure()),
+			p.getRenderMode().name(),
 			new ProblemScanDetailResponse.OriginalImage(
-				original.getId(),
+				p.getAssetId(),
 				presigned.url(),
-				original.getWidth(),
-				original.getHeight()
+				p.getWidth(),
+				p.getHeight()
 			),
-			scan.getOcrPlainText(),
-			scan.getAiProblemLatex(),
-			scan.getAiSolutionLatex(),
-			scan.getCreatedAt(),
-			scan.getOcrCompletedAt(),
-			scan.getAiCompletedAt(),
-			scan.getFailReason()
+			p.getOcrPlainText(),
+			p.getAiProblemLatex(),
+			p.getAiSolutionLatex(),
+			p.getCreatedAt(),
+			p.getOcrCompletedAt(),
+			p.getAiCompletedAt(),
+			p.getFailReason()
 		);
 	}
 }

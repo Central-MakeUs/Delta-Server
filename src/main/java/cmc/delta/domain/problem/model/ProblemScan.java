@@ -134,6 +134,9 @@ public class ProblemScan extends BaseTimeEntity {
 	@OneToOne(mappedBy = "scan", fetch = FetchType.LAZY)
 	private Problem problem;
 
+	@Column(name = "lock_token", length = 40)
+	private String lockToken;
+
 	// retry policy (MVP)
 	private static final int OCR_MAX_ATTEMPTS = 3;
 	private static final long OCR_BACKOFF_SECONDS = 30L;
