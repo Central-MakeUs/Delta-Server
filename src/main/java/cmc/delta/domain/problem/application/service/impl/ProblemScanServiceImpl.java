@@ -29,18 +29,17 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 	@Transactional
 	@Override
 	public ProblemScanCreateResponse createScan(Long userId, MultipartFile file) {
-		StorageUploadData uploaded = storageService.uploadImage(file, ORIGINAL_DIR);
+		StorageUploadData uploadData = storageService.uploadImage(file, ORIGINAL_DIR);
 
-		// MVP에서는 getReferenceById로 OK (없으면 FK에서 터짐)
 		User userRef = userRepository.getReferenceById(userId);
 
 		ProblemScan scan = scanRepository.save(ProblemScan.createUploaded(userRef));
 
 		Asset original = assetRepository.save(Asset.createOriginal(
 			scan,
-			uploaded.storageKey(),
-			uploaded.width(),
-			uploaded.height()
+			uploadData.storageKey(),
+			uploadData.width(),
+			uploadData.height()
 		));
 
 		return new ProblemScanCreateResponse(

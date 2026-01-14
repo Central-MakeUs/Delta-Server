@@ -115,46 +115,51 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
-	@Query("""
-		update ProblemScan s
-		   set s.lockedAt = null,
-		       s.lockOwner = null,
-		       s.lockToken = null
-		 where s.id = :scanId
-		   and s.lockOwner = :lockOwner
-		""")
-	int unlock(@Param("scanId") Long scanId, @Param("lockOwner") String lockOwner);
+	@Query(
+		value = """
+			update problem_scan
+			   set locked_at = null,
+			       lock_owner = null,
+			       lock_token = null
+			 where id = :scanId
+			   and lock_owner = :lockOwner
+			   and lock_token = :lockToken
+			""",
+		nativeQuery = true
+	)
+	int unlock(
+		@Param("scanId") Long scanId,
+		@Param("lockOwner") String lockOwner,
+		@Param("lockToken") String lockToken
+	);
 
 	@Override
 	Optional<ProblemScan> findById(Long scanId);
 
 	@Query("""
-	select
-	  s.id as scanId,
-	  s.status as status,
-	  s.hasFigure as hasFigure,
-	  s.renderMode as renderMode,
-
-	  a.id as assetId,
-	  a.storageKey as storageKey,
-	  a.width as width,
-	  a.height as height,
-
-	  s.ocrPlainText as ocrPlainText,
-	  s.aiProblemLatex as aiProblemLatex,
-	  s.aiSolutionLatex as aiSolutionLatex,
-
-	  s.createdAt as createdAt,
-	  s.ocrCompletedAt as ocrCompletedAt,
-	  s.aiCompletedAt as aiCompletedAt,
-	  s.failReason as failReason
-	from ProblemScan s
-	left join Asset a
-	  on a.scan = s
-	 and a.assetType = cmc.delta.domain.problem.model.enums.AssetType.ORIGINAL
-	where s.id = :scanId
-	  and s.user.id = :userId
-""")
+		select
+		  s.id as scanId,
+		  s.status as status,
+		  s.hasFigure as hasFigure,
+		  s.renderMode as renderMode,
+		  a.id as assetId,
+		  a.storageKey as storageKey,
+		  a.width as width,
+		  a.height as height,
+		  s.ocrPlainText as ocrPlainText,
+		  s.aiProblemLatex as aiProblemLatex,
+		  s.aiSolutionLatex as aiSolutionLatex,
+		  s.createdAt as createdAt,
+		  s.ocrCompletedAt as ocrCompletedAt,
+		  s.aiCompletedAt as aiCompletedAt,
+		  s.failReason as failReason
+		from ProblemScan s
+		left join Asset a
+		  on a.scan = s
+		 and a.assetType = cmc.delta.domain.problem.model.enums.AssetType.ORIGINAL
+		where s.id = :scanId
+		  and s.user.id = :userId
+	""")
 	Optional<ProblemScanDetailProjection> findOwnedDetail(
 		@Param("scanId") Long scanId,
 		@Param("userId") Long userId

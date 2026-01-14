@@ -96,7 +96,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 				log.error("OCR 처리 실패 scanId={} reason={}", scanId, reason, e);
 			}
 		} finally {
-			unlockBestEffort(scanId, lockOwner);
+			unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 
@@ -109,8 +109,6 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		tx.executeWithoutResult(status -> {
 			ProblemScan scan = scanRepository.findById(scanId)
 				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
-
-			// (선택) 이미 OCR_DONE이면 idempotent 처리
 			scan.markOcrSucceeded(result.plainText(), result.rawJson(), LocalDateTime.now());
 		});
 	}
@@ -122,16 +120,16 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 			scan.markOcrFailed(reason);
 
-			// retryable만 backoff 예약 (non-retryable이면 즉시 종료되도록 markOcrFailed가 FAILED로 가도록 설계 권장)
 			if (retryable) {
 				scan.scheduleNextRetryForOcr(LocalDateTime.now());
 			}
 		});
 	}
 
-	private void unlockBestEffort(Long scanId, String lockOwner) {
+	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner));
+			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
+
 		} catch (Exception unlockEx) {
 			log.error("OCR unlock 실패 scanId={}", scanId, unlockEx);
 		}

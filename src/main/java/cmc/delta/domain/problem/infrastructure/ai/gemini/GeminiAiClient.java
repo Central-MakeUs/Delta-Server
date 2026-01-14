@@ -21,12 +21,7 @@ public class GeminiAiClient implements AiClient {
 
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
-
-	private RestClient restClient() {
-		return RestClient.builder()
-			.baseUrl(props.baseUrl())
-			.build();
-	}
+	private final RestClient geminiRestClient;
 
 	@Override
 	public AiCurriculumResult classifyCurriculum(AiCurriculumPrompt prompt) {
@@ -34,9 +29,12 @@ public class GeminiAiClient implements AiClient {
 			String promptText = buildPromptText(prompt);
 			Map<String, Object> requestBody = buildRequestBody(promptText);
 
-			String rawResponseJson = restClient()
+			String rawResponseJson = geminiRestClient
 				.post()
-				.uri("/v1beta/models/{model}:generateContent?key={key}", props.model(), props.apiKey())
+				.uri(uriBuilder -> uriBuilder
+					.path("/v1beta/models/{model}:generateContent")
+					.queryParam("key", props.apiKey())
+					.build(props.model()))
 				.header("Content-Type", "application/json")
 				.body(requestBody)
 				.retrieve()
@@ -45,7 +43,6 @@ public class GeminiAiClient implements AiClient {
 			return parseResponse(rawResponseJson);
 
 		} catch (RestClientResponseException e) {
-			// 워커에서 4xx/5xx 분류/재시도 정책을 태움
 			throw e;
 		} catch (Exception e) {
 			throw new IllegalStateException("GEMINI_AI_FAILED", e);
@@ -88,7 +85,7 @@ public class GeminiAiClient implements AiClient {
 			subjectCandidatesJson,
 			unitCandidatesJson,
 			typeCandidatesJson,
-			modelJsonText // 모델이 만든 JSON 원문(재현/디버깅용)
+			modelJsonText
 		);
 	}
 

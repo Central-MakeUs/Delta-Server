@@ -134,7 +134,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 				log.error("AI 처리 실패 scanId={} reason={}", scanId, reason, e);
 			}
 		} finally {
-			unlockBestEffort(scanId, lockOwner);
+			unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 
@@ -183,9 +183,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		});
 	}
 
-	private void unlockBestEffort(Long scanId, String lockOwner) {
+	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner));
+			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
 		} catch (Exception unlockEx) {
 			log.error("AI unlock 실패 scanId={}", scanId, unlockEx);
 		}
