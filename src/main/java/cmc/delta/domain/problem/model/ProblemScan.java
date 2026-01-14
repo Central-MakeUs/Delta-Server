@@ -138,6 +138,9 @@ public class ProblemScan extends BaseTimeEntity {
 	private static final int OCR_MAX_ATTEMPTS = 3;
 	private static final long OCR_BACKOFF_SECONDS = 30L;
 
+	private static final int AI_MAX_ATTEMPTS = 3;
+	private static final long AI_BACKOFF_SECONDS = 60L;
+
 	public static ProblemScan uploaded(User user) {
 		ProblemScan s = new ProblemScan();
 		s.user = user;
@@ -167,9 +170,33 @@ public class ProblemScan extends BaseTimeEntity {
 		this.nextRetryAt = null;
 	}
 
-	public void markAiDone(LocalDateTime completedAt) {
+	/**
+	 * AI 단계: 단원/유형 분류 결과 저장 + AI_DONE 전이
+	 */
+	public void markAiSucceeded(
+		Unit predictedUnit,
+		ProblemType predictedType,
+		BigDecimal confidence,
+		boolean needsReview,
+		String aiUnitCandidatesJson,
+		String aiTypeCandidatesJson,
+		String aiDraftJson,
+		LocalDateTime completedAt
+	) {
+		this.predictedUnit = predictedUnit;
+		this.predictedType = predictedType;
+		this.confidence = confidence;
+		this.needsReview = needsReview;
+
+		this.aiUnitCandidatesJson = aiUnitCandidatesJson;
+		this.aiTypeCandidatesJson = aiTypeCandidatesJson;
+		this.aiDraftJson = aiDraftJson;
+
 		this.aiCompletedAt = completedAt;
 		this.status = ScanStatus.AI_DONE;
+
+		this.failReason = null;
+		this.nextRetryAt = null;
 	}
 
 	public void markFailed(String reason) {
@@ -189,8 +216,31 @@ public class ProblemScan extends BaseTimeEntity {
 			return;
 		}
 
-		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount; // 30s, 60s, 90s...
+		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount;
 		this.nextRetryAt = now.plusSeconds(delaySeconds);
-		this.status = ScanStatus.UPLOADED; // 재시도 대상으로 유지
+		this.status = ScanStatus.UPLOADED;
+	}
+
+	public void markAiFailed(String reason) {
+		this.failReason = reason;
+		this.aiAttemptCount += 1;
+	}
+
+	public void scheduleNextRetryForAi(LocalDateTime now) {
+		if (this.aiAttemptCount >= AI_MAX_ATTEMPTS) {
+			this.status = ScanStatus.FAILED;
+			this.nextRetryAt = null;
+			return;
+		}
+
+		long delaySeconds = AI_BACKOFF_SECONDS * this.aiAttemptCount;
+		this.nextRetryAt = now.plusSeconds(delaySeconds);
+		this.status = ScanStatus.OCR_DONE;
+	}
+
+	@Deprecated
+	public void markAiDone(LocalDateTime completedAt) {
+		this.aiCompletedAt = completedAt;
+		this.status = ScanStatus.AI_DONE;
 	}
 }
