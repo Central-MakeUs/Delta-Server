@@ -10,8 +10,11 @@ import cmc.delta.domain.problem.persistence.AssetJpaRepository;
 import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 public class OcrScanWorker extends AbstractScanWorker {
 
@@ -20,6 +23,7 @@ public class OcrScanWorker extends AbstractScanWorker {
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
 
+	// 생성자 1개만 (롬복 생성자 섞지 말기)
 	public OcrScanWorker(
 		Clock clock,
 		ProblemScanJpaRepository scanRepository,
@@ -32,6 +36,11 @@ public class OcrScanWorker extends AbstractScanWorker {
 		this.assetRepository = assetRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
+	}
+
+	@Transactional
+	public void runOnce(String lockOwner) {
+		super.runOnceInternal(lockOwner);
 	}
 
 	@Override
@@ -53,14 +62,21 @@ public class OcrScanWorker extends AbstractScanWorker {
 			.orElseThrow(() -> new IllegalStateException("ORIGINAL asset not found. scanId=" + scanId));
 
 		byte[] bytes = storageReader.readBytes(original.getStorageKey());
-
 		OcrResult result = ocrClient.recognize(bytes, "scan-" + scanId + ".jpg");
 
-		scan.markOcrSucceeded(result.plainText(), result.rawJson(), result.latexStyled(), now);
+		scan.markOcrSucceeded(
+			result.plainText(),
+			result.rawJson(),
+			"MATHPIX",
+			now
+		);
+		log.info("[OCR] done scanId={} status={}", scanId, scan.getStatus());
 	}
 
 	@Override
 	protected void handleFailure(Long scanId, LocalDateTime now, Exception e) {
+		log.warn("[OCR] failed scanId={}", scanId, e);
+
 		ProblemScan scan = scanRepository.findById(scanId)
 			.orElseThrow(() -> new IllegalStateException("problem_scan not found. id=" + scanId));
 
