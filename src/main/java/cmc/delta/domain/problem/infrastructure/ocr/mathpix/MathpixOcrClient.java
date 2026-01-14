@@ -47,7 +47,7 @@ public class MathpixOcrClient implements OcrClient {
 			LinkedHashMap<String, Object> options = new LinkedHashMap<>();
 			options.put("math_inline_delimiters", new String[] {"$", "$"});
 			options.put("rm_spaces", true);
-			options.put("formats", new String[] {"text"}); // 필요 최소
+			options.put("formats", new String[] {"text", "latex_styled"});
 			return objectMapper.writeValueAsString(options);
 		} catch (Exception e) {
 			throw new IllegalStateException("Mathpix options_json 생성 실패", e);
@@ -56,9 +56,10 @@ public class MathpixOcrClient implements OcrClient {
 
 	private OcrResult parse(String response) {
 		try {
-			JsonNode root = objectMapper.readTree(response);
-			String text = root.path("text").asText(null); // Mathpix Markdown
-			return new OcrResult(text, root.toString());
+			JsonNode root = objectMapper.readTree(response == null ? "{}" : response);
+			String text = root.path("text").asText(null);
+			String latex = root.path("latex_styled").asText(null);
+			return new OcrResult(text, latex, root.toString());
 		} catch (Exception e) {
 			throw new IllegalStateException("Mathpix 응답 파싱 실패", e);
 		}

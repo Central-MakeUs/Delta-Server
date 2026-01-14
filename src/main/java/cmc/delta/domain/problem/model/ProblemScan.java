@@ -32,12 +32,6 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemScan extends BaseTimeEntity {
 
-	/**
-	 * TODO: Entity 수정 예정
-	 */
-	private static final int OCR_MAX_ATTEMPTS = 3;
-	private static final long OCR_BACKOFF_SECONDS = 30L;
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -140,6 +134,10 @@ public class ProblemScan extends BaseTimeEntity {
 	@OneToOne(mappedBy = "scan", fetch = FetchType.LAZY)
 	private Problem problem;
 
+	// retry policy (MVP)
+	private static final int OCR_MAX_ATTEMPTS = 3;
+	private static final long OCR_BACKOFF_SECONDS = 30L;
+
 	public static ProblemScan uploaded(User user) {
 		ProblemScan s = new ProblemScan();
 		s.user = user;
@@ -152,22 +150,33 @@ public class ProblemScan extends BaseTimeEntity {
 		return s;
 	}
 
+	// 네 서비스에서 쓰던 네이밍 유지
 	public static ProblemScan createUploaded(User user) {
 		return uploaded(user);
 	}
 
-	public void markOcrDone(String plainText, String rawJson, LocalDateTime completedAt) {
+	public void markOcrSucceeded(String plainText, String rawJson, String latexStyled, LocalDateTime completedAt) {
 		this.ocrPlainText = plainText;
 		this.ocrRawJson = rawJson;
 		this.ocrCompletedAt = completedAt;
 		this.status = ScanStatus.OCR_DONE;
 
+		if (latexStyled != null && !latexStyled.isBlank()) {
+			this.aiProblemLatex = latexStyled;
+		}
+
 		this.failReason = null;
 		this.nextRetryAt = null;
 	}
 
-	public void markOcrSucceeded(String plainText, String rawJson, LocalDateTime completedAt) {
-		markOcrDone(plainText, rawJson, completedAt);
+	public void markAiDone(LocalDateTime completedAt) {
+		this.aiCompletedAt = completedAt;
+		this.status = ScanStatus.AI_DONE;
+	}
+
+	public void markFailed(String reason) {
+		this.failReason = reason;
+		this.status = ScanStatus.FAILED;
 	}
 
 	public void markOcrFailed(String reason) {
@@ -182,20 +191,8 @@ public class ProblemScan extends BaseTimeEntity {
 			return;
 		}
 
-		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount; // 30, 60, 90...
+		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount; // 30s, 60s, 90s...
 		this.nextRetryAt = now.plusSeconds(delaySeconds);
-
-		this.status = ScanStatus.UPLOADED;
-	}
-
-	public void markAiDone(LocalDateTime completedAt) {
-		this.aiCompletedAt = completedAt;
-		this.status = ScanStatus.AI_DONE;
-	}
-
-	public void markFailed(String reason) {
-		this.failReason = reason;
-		this.status = ScanStatus.FAILED;
-		this.nextRetryAt = null;
+		this.status = ScanStatus.UPLOADED; // 재시도 대상으로 유지
 	}
 }

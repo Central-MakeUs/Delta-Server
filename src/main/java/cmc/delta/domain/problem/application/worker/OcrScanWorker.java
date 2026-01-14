@@ -56,7 +56,7 @@ public class OcrScanWorker extends AbstractScanWorker {
 
 		OcrResult result = ocrClient.recognize(bytes, "scan-" + scanId + ".jpg");
 
-		scan.markOcrSucceeded(result.plainText(), result.rawJson(), now);
+		scan.markOcrSucceeded(result.plainText(), result.rawJson(), result.latexStyled(), now);
 	}
 
 	@Override

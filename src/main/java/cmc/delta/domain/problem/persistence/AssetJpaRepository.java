@@ -1,18 +1,15 @@
 package cmc.delta.domain.problem.persistence;
 
 import cmc.delta.domain.problem.model.Asset;
+import cmc.delta.domain.problem.model.enums.AssetType;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AssetJpaRepository extends JpaRepository<Asset, Long> {
 
-	@Query("""
-		select a from Asset a
-		where a.scan.id = :scanId
-		  and a.assetType = cmc.delta.domain.problem.model.enums.AssetType.ORIGINAL
-		  and a.slot = 0
-		""")
-	Optional<Asset> findOriginalByScanId(@Param("scanId") Long scanId);
+	Optional<Asset> findFirstByScan_IdAndAssetTypeAndSlot(Long scanId, AssetType assetType, int slot);
+
+	default Optional<Asset> findOriginalByScanId(Long scanId) {
+		return findFirstByScan_IdAndAssetTypeAndSlot(scanId, AssetType.ORIGINAL, 0);
+	}
 }

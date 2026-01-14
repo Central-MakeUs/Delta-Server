@@ -25,7 +25,9 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		   set locked_at = :now,
 		       lock_owner = :owner
 		 where id = :id
+		   and status = 'UPLOADED'
 		   and locked_at is null
+		   and (next_retry_at is null or next_retry_at <= :now)
 		""", nativeQuery = true)
 	int tryLock(@Param("id") Long id, @Param("owner") String owner, @Param("now") LocalDateTime now);
 
@@ -38,4 +40,6 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		   and lock_owner = :owner
 		""", nativeQuery = true)
 	int unlock(@Param("id") Long id, @Param("owner") String owner);
+
+	Optional<ProblemScan> findByIdAndUser_Id(Long id, Long userId);
 }

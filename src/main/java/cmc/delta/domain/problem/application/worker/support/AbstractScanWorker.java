@@ -10,14 +10,19 @@ public abstract class AbstractScanWorker {
 
 	private final Clock clock;
 
+	protected final LocalDateTime now() {
+		return LocalDateTime.now(clock);
+	}
+
 	@Transactional
 	public final void runOnce(String lockOwner) {
-		LocalDateTime now = LocalDateTime.now(clock);
+		LocalDateTime now = now();
 
 		Long scanId = pickCandidateId(now);
 		if (scanId == null) return;
 
-		if (!tryLock(scanId, lockOwner, now)) return;
+		boolean locked = tryLock(scanId, lockOwner, now);
+		if (!locked) return;
 
 		try {
 			processLocked(scanId, now);
@@ -29,8 +34,12 @@ public abstract class AbstractScanWorker {
 	}
 
 	protected abstract Long pickCandidateId(LocalDateTime now);
+
 	protected abstract boolean tryLock(Long scanId, String lockOwner, LocalDateTime now);
+
 	protected abstract void processLocked(Long scanId, LocalDateTime now);
+
 	protected abstract void handleFailure(Long scanId, LocalDateTime now, Exception e);
+
 	protected abstract void unlock(Long scanId, String lockOwner);
 }
