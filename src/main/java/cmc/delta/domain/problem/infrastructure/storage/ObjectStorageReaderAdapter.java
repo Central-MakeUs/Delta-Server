@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.infrastructure.storage;
 
-import cmc.delta.domain.problem.application.port.ObjectStorageReader;
+import cmc.delta.domain.problem.application.port.ocr.ObjectStorageReader;
 import cmc.delta.global.storage.ObjectStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

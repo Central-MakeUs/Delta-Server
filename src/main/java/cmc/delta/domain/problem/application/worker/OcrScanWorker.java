@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.worker;
 
-import cmc.delta.domain.problem.application.port.ObjectStorageReader;
-import cmc.delta.domain.problem.application.port.OcrClient;
-import cmc.delta.domain.problem.application.port.OcrResult;
+import cmc.delta.domain.problem.application.port.ocr.ObjectStorageReader;
+import cmc.delta.domain.problem.application.port.ocr.OcrClient;
+import cmc.delta.domain.problem.application.port.ocr.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractScanWorker;
 import cmc.delta.domain.problem.model.Asset;
 import cmc.delta.domain.problem.model.ProblemScan;

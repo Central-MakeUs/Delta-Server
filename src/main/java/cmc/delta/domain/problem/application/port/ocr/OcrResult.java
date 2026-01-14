@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.application.port;
+package cmc.delta.domain.problem.application.port.ocr;
 
 public record OcrResult(
 	String plainText,

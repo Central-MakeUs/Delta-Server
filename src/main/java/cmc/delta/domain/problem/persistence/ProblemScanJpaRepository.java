@@ -68,4 +68,33 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 			  and (s.nextRetryAt is null or s.nextRetryAt <= :now)
 		""")
 	long countOcrCandidates(@Param("now") LocalDateTime now);
+
+	@Query("""
+		select s.id
+		from ProblemScan s
+		where s.status = cmc.delta.domain.problem.model.enums.ScanStatus.OCR_DONE
+		  and s.lockedAt is null
+		  and (s.nextRetryAt is null or s.nextRetryAt <= :now)
+		order by s.createdAt asc, s.id asc
+		""")
+	Optional<Long> findNextAiCandidateId(@Param("now") LocalDateTime now);
+
+	/**
+	 * AI 후보만 락을 잡는다 (상태/재시도조건 포함).
+	 */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("""
+		update ProblemScan s
+		   set s.lockedAt = :now,
+		       s.lockOwner = :lockOwner
+		 where s.id = :scanId
+		   and s.status = cmc.delta.domain.problem.model.enums.ScanStatus.OCR_DONE
+		   and s.lockedAt is null
+		   and (s.nextRetryAt is null or s.nextRetryAt <= :now)
+		""")
+	int tryLockAiCandidate(
+		@Param("scanId") Long scanId,
+		@Param("lockOwner") String lockOwner,
+		@Param("now") LocalDateTime now
+	);
 }

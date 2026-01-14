@@ -31,6 +31,11 @@ mathpix:
   app-id: ${MATHPIX_APP_ID}
   app-key: ${MATHPIX_APP_KEY}
 
+gemini:
+  base-url: https://generativelanguage.googleapis.com
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.0-flash
+
 worker:
   ocr:
     fixed-delay-ms: 2000
