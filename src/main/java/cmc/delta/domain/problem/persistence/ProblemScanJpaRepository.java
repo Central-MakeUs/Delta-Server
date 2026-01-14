@@ -3,43 +3,69 @@ package cmc.delta.domain.problem.persistence;
 import cmc.delta.domain.problem.model.ProblemScan;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long> {
 
-	@Query(value = """
-		select id
-		from problem_scan
-		where status = 'UPLOADED'
-		  and locked_at is null
-		  and (next_retry_at is null or next_retry_at <= :now)
-		order by created_at asc
-		limit 1
-		""", nativeQuery = true)
+	@Query("""
+		select s.id
+		from ProblemScan s
+		where s.status = cmc.delta.domain.problem.model.enums.ScanStatus.UPLOADED
+		  and s.lockedAt is null
+		  and (s.nextRetryAt is null or s.nextRetryAt <= :now)
+		order by s.createdAt asc, s.id asc
+		""")
 	Optional<Long> findNextOcrCandidateId(@Param("now") LocalDateTime now);
 
-	@Modifying
-	@Query(value = """
-		update problem_scan
-		   set locked_at = :now,
-		       lock_owner = :owner
-		 where id = :id
-		   and status = 'UPLOADED'
-		   and locked_at is null
-		   and (next_retry_at is null or next_retry_at <= :now)
-		""", nativeQuery = true)
-	int tryLock(@Param("id") Long id, @Param("owner") String owner, @Param("now") LocalDateTime now);
+	/**
+	 * OCR 후보만 락을 잡는다 (상태/재시도조건 포함).
+	 */
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("""
+		update ProblemScan s
+		   set s.lockedAt = :now,
+		       s.lockOwner = :lockOwner
+		 where s.id = :scanId
+		   and s.status = cmc.delta.domain.problem.model.enums.ScanStatus.UPLOADED
+		   and s.lockedAt is null
+		   and (s.nextRetryAt is null or s.nextRetryAt <= :now)
+		""")
+	int tryLockOcrCandidate(
+		@Param("scanId") Long scanId,
+		@Param("lockOwner") String lockOwner,
+		@Param("now") LocalDateTime now
+	);
 
-	@Modifying
-	@Query(value = """
-		update problem_scan
-		   set locked_at = null,
-		       lock_owner = null
-		 where id = :id
-		   and lock_owner = :owner
-		""", nativeQuery = true)
-	int unlock(@Param("id") Long id, @Param("owner") String owner);
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query("""
+		update ProblemScan s
+		   set s.lockedAt = null,
+		       s.lockOwner = null
+		 where s.id = :scanId
+		   and s.lockOwner = :lockOwner
+		""")
+	int unlock(@Param("scanId") Long scanId, @Param("lockOwner") String lockOwner);
 
-	Optional<ProblemScan> findByIdAndUser_Id(Long id, Long userId);
+	@Query("""
+			select s
+			from ProblemScan s
+			join s.user u
+			where s.id = :scanId
+			  and u.id = :userId
+		""")
+	Optional<ProblemScan> findOwnedBy(@Param("scanId") Long scanId, @Param("userId") Long userId);
+
+	// ProblemScanJpaRepository
+
+	@Query("""
+			select count(s)
+			from ProblemScan s
+			where s.status = cmc.delta.domain.problem.model.enums.ScanStatus.UPLOADED
+			  and s.lockedAt is null
+			  and (s.nextRetryAt is null or s.nextRetryAt <= :now)
+		""")
+	long countOcrCandidates(@Param("now") LocalDateTime now);
 }

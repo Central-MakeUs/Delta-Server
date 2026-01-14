@@ -7,7 +7,7 @@ spring:
       ddl-auto: update
     defer-datasource-initialization: true
     open-in-view: true
-    show-sql: true
+    show-sql: false
     generate-ddl: true
 
   thymeleaf:
@@ -31,6 +31,13 @@ mathpix:
   app-id: ${MATHPIX_APP_ID}
   app-key: ${MATHPIX_APP_KEY}
 
+worker:
+  ocr:
+    fixed-delay-ms: 2000
 
-
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
+  level:
+    cmc.delta.domain.problem.application.worker.OcrWorkerScheduler: INFO
 

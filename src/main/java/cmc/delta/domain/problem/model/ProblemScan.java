@@ -150,20 +150,18 @@ public class ProblemScan extends BaseTimeEntity {
 		return s;
 	}
 
-	// 네 서비스에서 쓰던 네이밍 유지
 	public static ProblemScan createUploaded(User user) {
 		return uploaded(user);
 	}
 
-	public void markOcrSucceeded(String plainText, String rawJson, String latexStyled, LocalDateTime completedAt) {
+	/**
+	 * OCR 단계는 OCR 필드만 변경한다.
+	 */
+	public void markOcrSucceeded(String plainText, String rawJson, LocalDateTime completedAt) {
 		this.ocrPlainText = plainText;
 		this.ocrRawJson = rawJson;
 		this.ocrCompletedAt = completedAt;
 		this.status = ScanStatus.OCR_DONE;
-
-		if (latexStyled != null && !latexStyled.isBlank()) {
-			this.aiProblemLatex = latexStyled;
-		}
 
 		this.failReason = null;
 		this.nextRetryAt = null;

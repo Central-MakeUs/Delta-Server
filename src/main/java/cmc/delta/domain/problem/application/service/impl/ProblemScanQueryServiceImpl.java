@@ -25,7 +25,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 	@Transactional(readOnly = true)
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
-		ProblemScan scan = scanRepository.findByIdAndUser_Id(scanId, userId)
+		ProblemScan scan = scanRepository.findOwnedBy(scanId, userId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_SCAN_NOT_FOUND, "스캔을 찾을 수 없습니다."));
 
 		Asset original = assetRepository.findOriginalByScanId(scanId)
