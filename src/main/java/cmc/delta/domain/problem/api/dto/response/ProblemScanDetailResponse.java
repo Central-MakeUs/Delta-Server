@@ -14,6 +14,8 @@ public record ProblemScanDetailResponse(
 	String aiProblemLatex,
 	String aiSolutionLatex,
 
+	AiClassification ai,
+
 	LocalDateTime createdAt,
 	LocalDateTime ocrCompletedAt,
 	LocalDateTime aiCompletedAt,
@@ -25,5 +27,19 @@ public record ProblemScanDetailResponse(
 		String viewUrl,
 		Integer width,
 		Integer height
+	) {}
+
+	public record AiClassification(
+									String subjectId,
+									String subjectName,
+									String unitId,
+									String unitName,
+									String typeId,
+									String typeName,
+									Double confidence,
+									Boolean needsReview,
+									String unitCandidatesJson,
+									String typeCandidatesJson,
+									String aiDraftJson
 	) {}
 }

@@ -11,7 +11,6 @@ public interface ProblemScanDetailProjection {
 	Boolean getHasFigure();
 	RenderMode getRenderMode();
 
-	// ORIGINAL asset (없을 수도 있으니 nullable)
 	Long getAssetId();
 	String getStorageKey();
 	Integer getWidth();
@@ -20,6 +19,17 @@ public interface ProblemScanDetailProjection {
 	String getOcrPlainText();
 	String getAiProblemLatex();
 	String getAiSolutionLatex();
+
+	String getPredictedUnitId();
+	String getPredictedUnitName();
+	String getPredictedTypeId();
+	String getPredictedTypeName();
+	Double getConfidence();
+	Boolean getNeedsReview();
+
+	String getAiUnitCandidatesJson();
+	String getAiTypeCandidatesJson();
+	String getAiDraftJson();
 
 	LocalDateTime getCreatedAt();
 	LocalDateTime getOcrCompletedAt();

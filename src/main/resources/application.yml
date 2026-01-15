@@ -53,5 +53,5 @@ logging:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
   level:
     cmc.delta.domain.problem.application.worker.OcrWorkerScheduler: INFO
-#    cmc.delta.domain.problem.application.worker: INFO
+    cmc.delta.domain.problem.application.worker: INFO
 

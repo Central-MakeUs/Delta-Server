@@ -160,13 +160,19 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	private AiCurriculumPrompt buildPrompt(Long userId, String ocrText) {
 		List<AiCurriculumPrompt.Option> subjectOptions = unitRepository.findAllRootUnitsActive()
-			.stream().map(u -> new AiCurriculumPrompt.Option(String.valueOf(u.getId()), u.getName())).toList();
+			.stream()
+			.map(u -> new AiCurriculumPrompt.Option(u.getId(), u.getName()))
+			.toList();
 
-		List<AiCurriculumPrompt.Option> unitOptions = unitRepository.findAllByActiveTrueOrderBySortOrderAsc()
-			.stream().map(u -> new AiCurriculumPrompt.Option(String.valueOf(u.getId()), u.getName())).toList();
+		List<AiCurriculumPrompt.Option> unitOptions = unitRepository.findAllChildUnitsActive()
+			.stream()
+			.map(u -> new AiCurriculumPrompt.Option(u.getId(), u.getName()))
+			.toList();
 
 		List<AiCurriculumPrompt.Option> typeOptions = typeRepository.findAllActiveForUser(userId)
-			.stream().map(t -> new AiCurriculumPrompt.Option(String.valueOf(t.getId()), t.getName())).toList();
+			.stream()
+			.map(t -> new AiCurriculumPrompt.Option(t.getId(), t.getName()))
+			.toList();
 
 		return new AiCurriculumPrompt(ocrText, subjectOptions, unitOptions, typeOptions);
 	}

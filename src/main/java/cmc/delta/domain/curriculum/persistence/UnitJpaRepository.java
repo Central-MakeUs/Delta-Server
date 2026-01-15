@@ -9,11 +9,20 @@ public interface UnitJpaRepository extends JpaRepository<Unit, String> {
 	List<Unit> findAllByActiveTrueOrderBySortOrderAsc();
 
 	@Query("""
-        select u
-        from Unit u
-        where u.active = true
-          and u.parent is null
-        order by u.sortOrder asc
-        """)
+		select u
+		from Unit u
+		where u.active = true
+		  and u.parent is null
+		order by u.sortOrder asc
+		""")
 	List<Unit> findAllRootUnitsActive();
+
+	@Query("""
+		select u
+		from Unit u
+		where u.active = true
+		  and u.parent is not null
+		order by u.sortOrder asc
+		""")
+	List<Unit> findAllChildUnitsActive();
 }
