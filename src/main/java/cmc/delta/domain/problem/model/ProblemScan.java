@@ -143,7 +143,7 @@ public class ProblemScan extends BaseTimeEntity {
 	private static final int AI_MAX_ATTEMPTS = 3;
 	private static final long AI_BACKOFF_SECONDS = 60L;
 
-	// 429는 “실패”라기보다 “대기”라서 더 길게 허용
+	// 429는 실패라기보다 대기라서 더 길게 허용
 	private static final int AI_MAX_RATE_LIMIT_ATTEMPTS = 20;
 
 	public static ProblemScan uploaded(User user) {

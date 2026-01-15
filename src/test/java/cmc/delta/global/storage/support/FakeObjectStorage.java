@@ -15,6 +15,15 @@ public class FakeObjectStorage implements ObjectStorage {
 	}
 
 	@Override
+	public byte[] readBytes(String storageKey) {
+		byte[] bytes = store.get(storageKey);
+		if (bytes == null) {
+			throw new IllegalStateException("OBJECT_NOT_FOUND");
+		}
+		return bytes;
+	}
+
+	@Override
 	public String createPresignedGetUrl(String storageKey, Duration ttl) {
 		return "https://fake-s3.local/" + storageKey + "?ttl=" + ttl.toSeconds();
 	}
