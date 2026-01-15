@@ -120,9 +120,12 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 			scan.markOcrFailed(reason);
 
-			if (retryable) {
-				scan.scheduleNextRetryForOcr(LocalDateTime.now());
+			if (!retryable) {
+				scan.markFailed(reason);
+				return;
 			}
+
+			scan.scheduleNextRetryForOcr(LocalDateTime.now());
 		});
 	}
 
