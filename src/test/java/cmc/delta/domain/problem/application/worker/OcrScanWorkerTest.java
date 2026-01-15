@@ -5,10 +5,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.ocr.OcrResult;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.OcrWorkerDoubles;
-import cmc.delta.domain.problem.model.Asset;
-import cmc.delta.domain.problem.model.ProblemScan;
+import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.Clock;
 import java.time.LocalDateTime;

@@ -7,9 +7,9 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.problem.application.port.ai.AiCurriculumResult;
+import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.application.worker.support.AiWorkerDoubles;
-import cmc.delta.domain.problem.model.ProblemScan;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.Clock;
 import java.time.LocalDateTime;

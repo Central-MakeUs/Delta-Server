@@ -1,14 +1,14 @@
 package cmc.delta.domain.problem.application.worker;
 
-import cmc.delta.domain.problem.application.port.ocr.ObjectStorageReader;
-import cmc.delta.domain.problem.application.port.ocr.OcrClient;
-import cmc.delta.domain.problem.application.port.ocr.OcrResult;
+import cmc.delta.domain.problem.application.scan.port.out.storage.ObjectStorageReader;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
-import cmc.delta.domain.problem.application.worker.support.OcrWorkerProperties;
-import cmc.delta.domain.problem.model.Asset;
-import cmc.delta.domain.problem.model.ProblemScan;
-import cmc.delta.domain.problem.persistence.AssetJpaRepository;
-import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.application.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
+import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;

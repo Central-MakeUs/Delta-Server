@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.infrastructure.ai.gemini;
 
-import cmc.delta.domain.problem.application.port.ai.AiClient;
-import cmc.delta.domain.problem.application.port.ai.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.ai.AiCurriculumResult;
+import cmc.delta.domain.problem.application.scan.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;

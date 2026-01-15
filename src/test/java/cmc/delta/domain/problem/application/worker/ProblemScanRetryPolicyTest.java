@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.application.worker;
 import static cmc.delta.domain.problem.application.worker.support.ProblemScanFixtures.*;
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.problem.model.ProblemScan;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.DisplayName;

@@ -4,8 +4,9 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.curriculum.persistence.ProblemTypeJpaRepository;
 import cmc.delta.domain.curriculum.persistence.UnitJpaRepository;
-import cmc.delta.domain.problem.application.port.ai.AiClient;
-import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.application.scan.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.util.List;
 import org.springframework.transaction.support.TransactionTemplate;
 

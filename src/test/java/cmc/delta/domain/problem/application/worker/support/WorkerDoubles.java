@@ -2,11 +2,11 @@ package cmc.delta.domain.problem.application.worker.support;
 
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.ai.AiClient;
-import cmc.delta.domain.problem.application.port.ocr.ObjectStorageReader;
-import cmc.delta.domain.problem.application.port.ocr.OcrClient;
-import cmc.delta.domain.problem.persistence.AssetJpaRepository;
-import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.application.scan.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.scan.port.out.storage.ObjectStorageReader;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record WorkerDoubles(

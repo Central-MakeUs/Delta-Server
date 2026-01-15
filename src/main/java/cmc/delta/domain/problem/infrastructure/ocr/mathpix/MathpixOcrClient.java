@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.infrastructure.ocr.mathpix;
 
-import cmc.delta.domain.problem.application.port.ocr.OcrClient;
-import cmc.delta.domain.problem.application.port.ocr.OcrResult;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
