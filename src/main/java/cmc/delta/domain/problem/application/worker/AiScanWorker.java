@@ -172,13 +172,19 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private Unit findUnitOrNull(String id) {
-		Long unitId = parseLongOrNull(id);
+		String unitId = normalizeIdOrNull(id);
 		return unitId == null ? null : unitRepository.findById(unitId).orElse(null);
 	}
 
 	private ProblemType findTypeOrNull(String id) {
-		Long typeId = parseLongOrNull(id);
+		String typeId = normalizeIdOrNull(id);
 		return typeId == null ? null : typeRepository.findById(typeId).orElse(null);
+	}
+
+	private String normalizeIdOrNull(String id) {
+		if (id == null) return null;
+		String t = id.trim();
+		return t.isEmpty() ? null : t;
 	}
 
 	private Long parseLongOrNull(String s) {

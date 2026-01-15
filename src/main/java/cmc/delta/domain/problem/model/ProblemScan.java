@@ -137,6 +137,10 @@ public class ProblemScan extends BaseTimeEntity {
 	@Column(name = "lock_token", length = 40)
 	private String lockToken;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "predicted_subject_id")
+	private Unit predictedSubject;
+
 	private static final int OCR_MAX_ATTEMPTS = 3;
 	private static final long OCR_BACKOFF_SECONDS = 30L;
 
