@@ -44,7 +44,8 @@ class AiScanWorkerTest {
 			d.scanRepo(),
 			d.unitRepo(),
 			d.typeRepo(),
-			d.aiClient()
+			d.aiClient(),
+			d.props()
 		);
 
 		// buildPrompt에서 옵션 조회하므로 기본값(빈 리스트)로 고정

@@ -13,15 +13,20 @@ public record OcrWorkerDoubles(
 	AssetJpaRepository assetRepo,
 	ObjectStorageReader storageReader,
 	OcrClient ocrClient,
-	TransactionTemplate tx
+	TransactionTemplate tx,
+	OcrWorkerProperties props
 ) {
 	public static OcrWorkerDoubles create() {
+		TransactionTemplate tx = WorkerTestTx.immediateTx();
+		OcrWorkerProperties props = new OcrWorkerProperties(2000L, 10, 30L, 1, 1);
+
 		return new OcrWorkerDoubles(
 			mock(ProblemScanJpaRepository.class),
 			mock(AssetJpaRepository.class),
 			mock(ObjectStorageReader.class),
 			mock(OcrClient.class),
-			WorkerTestTx.immediateTx()
+			tx,
+			props
 		);
 	}
 }

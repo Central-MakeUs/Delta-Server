@@ -17,6 +17,8 @@ public abstract class AbstractClaimingScanWorker {
 	private final TransactionTemplate tx;
 	private final Executor executor;
 
+	private volatile long lastLockLeaseSeconds = 0L;
+
 	protected AbstractClaimingScanWorker(Clock clock, TransactionTemplate tx, Executor executor) {
 		this.clock = Objects.requireNonNull(clock);
 		this.tx = Objects.requireNonNull(tx);
@@ -27,7 +29,13 @@ public abstract class AbstractClaimingScanWorker {
 		return LocalDateTime.now(clock);
 	}
 
+	protected final long lockLeaseSeconds() {
+		return lastLockLeaseSeconds;
+	}
+
 	public final void runBatch(String lockOwner, int batchSize, long lockLeaseSeconds) {
+		this.lastLockLeaseSeconds = lockLeaseSeconds;
+
 		LocalDateTime batchNow = now();
 		LocalDateTime staleBefore = batchNow.minusSeconds(lockLeaseSeconds);
 		LocalDateTime lockedAt = batchNow;

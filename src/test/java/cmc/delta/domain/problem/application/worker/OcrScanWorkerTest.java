@@ -42,7 +42,8 @@ class OcrScanWorkerTest {
 			d.scanRepo(),
 			d.assetRepo(),
 			d.storageReader(),
-			d.ocrClient()
+			d.ocrClient(),
+			d.props()
 		);
 	}
 

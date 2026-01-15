@@ -14,15 +14,19 @@ public record AiWorkerDoubles(
 	UnitJpaRepository unitRepo,
 	ProblemTypeJpaRepository typeRepo,
 	AiClient aiClient,
-	TransactionTemplate tx
+	TransactionTemplate tx,
+	AiWorkerProperties props
 ) {
 	public static AiWorkerDoubles create() {
+		AiWorkerProperties props = new AiWorkerProperties(2000L, 10, 30L, 1, 1);
+
 		AiWorkerDoubles d = new AiWorkerDoubles(
 			mock(ProblemScanJpaRepository.class),
 			mock(UnitJpaRepository.class),
 			mock(ProblemTypeJpaRepository.class),
 			mock(AiClient.class),
-			WorkerTestTx.immediateTx()
+			WorkerTestTx.immediateTx(),
+			props
 		);
 
 		when(d.unitRepo().findAllRootUnitsActive()).thenReturn(List.of());

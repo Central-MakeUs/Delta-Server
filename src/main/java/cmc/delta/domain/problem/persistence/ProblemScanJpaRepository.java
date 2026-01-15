@@ -196,4 +196,37 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		@Param("scanId") Long scanId,
 		@Param("userId") Long userId
 	);
+
+	// ProblemScanJpaRepository
+
+	@Query(
+		value = """
+		select count(*)
+		  from problem_scan
+		 where status = 'UPLOADED'
+		   and (locked_at is null or locked_at <= :staleBefore)
+		   and (next_retry_at is null or next_retry_at <= :now)
+		""",
+		nativeQuery = true
+	)
+	long countOcrBacklog(
+		@Param("now") LocalDateTime now,
+		@Param("staleBefore") LocalDateTime staleBefore
+	);
+
+	@Query(
+		value = """
+		select count(*)
+		  from problem_scan
+		 where status = 'OCR_DONE'
+		   and (locked_at is null or locked_at <= :staleBefore)
+		   and (next_retry_at is null or next_retry_at <= :now)
+		""",
+		nativeQuery = true
+	)
+	long countAiBacklog(
+		@Param("now") LocalDateTime now,
+		@Param("staleBefore") LocalDateTime staleBefore
+	);
+
 }

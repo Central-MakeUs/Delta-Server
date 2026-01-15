@@ -36,21 +36,10 @@ gemini:
   api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash
 
-worker:
-  ocr:
-    fixed-delay-ms: 2000
-    batch-size: 10
-    lock-lease-seconds: 600
-    concurrency: 5
-  ai:
-    fixed-delay-ms: 2000
-    batch-size: 5
-    lock-lease-seconds: 600
-    concurrency: 3
 
 logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
-#  level:
-#    cmc.delta.domain.problem.application.worker: INFO
+  level:
+    cmc.delta.domain.problem.application.worker: INFO
 

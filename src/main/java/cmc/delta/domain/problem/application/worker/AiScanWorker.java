@@ -8,10 +8,13 @@ import cmc.delta.domain.problem.application.port.ai.AiClient;
 import cmc.delta.domain.problem.application.port.ai.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.ai.AiCurriculumResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
+import cmc.delta.domain.problem.application.worker.support.AiWorkerProperties;
+import cmc.delta.domain.problem.application.worker.support.OcrWorkerProperties;
 import cmc.delta.domain.problem.model.ProblemScan;
 import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -34,7 +37,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository typeRepository;
 	private final AiClient aiClient;
-	private final TransactionTemplate tx;
+	private final TransactionTemplate template;
+	private LocalDateTime lastBacklogLoggedAt;
+	private final AiWorkerProperties props;
 
 	public AiScanWorker(
 		Clock clock,
@@ -43,14 +48,16 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		ProblemScanJpaRepository scanRepository,
 		UnitJpaRepository unitRepository,
 		ProblemTypeJpaRepository typeRepository,
-		AiClient aiClient
+		AiClient aiClient,
+		AiWorkerProperties props
 	) {
 		super(clock, workerTxTemplate, aiExecutor);
-		this.tx = workerTxTemplate;
+		this.template = workerTxTemplate;
 		this.scanRepository = scanRepository;
 		this.unitRepository = unitRepository;
 		this.typeRepository = typeRepository;
 		this.aiClient = aiClient;
+		this.props = props;
 	}
 
 	@Override
@@ -66,6 +73,21 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	@Override
 	protected void onNoCandidate(LocalDateTime now) {
 		log.debug("AI 워커 tick - 처리 대상 없음");
+
+		if (!shouldLogBacklog(now)) return;
+
+		LocalDateTime staleBefore = now.minusSeconds(lockLeaseSeconds());
+		long backlog = scanRepository.countAiBacklog(now, staleBefore);
+
+		log.info("AI 워커 - 처리 대상 없음 (aiBacklog={})", backlog);
+		lastBacklogLoggedAt = now;
+	}
+
+	private boolean shouldLogBacklog(LocalDateTime now) {
+		if (lastBacklogLoggedAt == null) return true;
+
+		Duration interval = Duration.ofMinutes(props.backlogLogMinutes());
+		return !now.isBefore(lastBacklogLoggedAt.plus(interval));
 	}
 
 	@Override
@@ -198,7 +220,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		Unit predictedUnit, ProblemType predictedType, BigDecimal confidence, boolean needsReview,
 		String unitCandidatesJson, String typeCandidatesJson, String aiDraftJson
 	) {
-		tx.executeWithoutResult(status -> {
+		template.executeWithoutResult(status -> {
 			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
 
 			ProblemScan scan = loadScanOrThrow(scanId);
@@ -215,7 +237,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		Long scanId, String lockOwner, String lockToken,
 		String reason, boolean retryable, Long retryAfterSec
 	) {
-		tx.executeWithoutResult(status -> {
+		template.executeWithoutResult(status -> {
 			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
 
 			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
@@ -264,7 +286,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
+			template.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
 		} catch (Exception unlockEx) {
 			log.error("AI unlock 실패 scanId={}", scanId, unlockEx);
 		}

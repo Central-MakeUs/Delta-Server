@@ -7,5 +7,12 @@ public record OcrWorkerProperties(
 	long fixedDelayMs,
 	int batchSize,
 	long lockLeaseSeconds,
-	int concurrency
-) {}
+	int concurrency,
+	int backlogLogMinutes
+) {
+	public OcrWorkerProperties {
+		if (backlogLogMinutes <= 0) {
+			backlogLogMinutes = 5;
+		}
+	}
+}

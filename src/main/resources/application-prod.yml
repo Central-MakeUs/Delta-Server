@@ -38,3 +38,18 @@ oauth:
     redirect-uri: ${KAKAO_REDIRECT_URI}
     connect-timeout-ms: 2000
     read-timeout-ms: 4000
+
+
+worker:
+  ocr:
+    fixed-delay-ms: 2000
+    batch-size: 10
+    lock-lease-seconds: 600
+    concurrency: 5
+    backlog-log-minutes: 7
+  ai:
+    fixed-delay-ms: 2000
+    batch-size: 5
+    lock-lease-seconds: 600
+    concurrency: 3
+    backlog-log-minutes: 7

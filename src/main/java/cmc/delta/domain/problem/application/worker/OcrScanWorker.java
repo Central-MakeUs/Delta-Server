@@ -4,11 +4,13 @@ import cmc.delta.domain.problem.application.port.ocr.ObjectStorageReader;
 import cmc.delta.domain.problem.application.port.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.ocr.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
+import cmc.delta.domain.problem.application.worker.support.OcrWorkerProperties;
 import cmc.delta.domain.problem.model.Asset;
 import cmc.delta.domain.problem.model.ProblemScan;
 import cmc.delta.domain.problem.persistence.AssetJpaRepository;
 import cmc.delta.domain.problem.persistence.ProblemScanJpaRepository;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -27,7 +29,9 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private final AssetJpaRepository assetRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
-	private final TransactionTemplate tx;
+	private final TransactionTemplate template;
+	private LocalDateTime lastBacklogLoggedAt;
+	private final OcrWorkerProperties props;
 
 	public OcrScanWorker(
 		Clock clock,
@@ -36,14 +40,16 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		ProblemScanJpaRepository scanRepository,
 		AssetJpaRepository assetRepository,
 		ObjectStorageReader storageReader,
-		OcrClient ocrClient
+		OcrClient ocrClient,
+		OcrWorkerProperties props
 	) {
 		super(clock, workerTxTemplate, ocrExecutor);
-		this.tx = workerTxTemplate;
+		this.template = workerTxTemplate;
 		this.scanRepository = scanRepository;
 		this.assetRepository = assetRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
+		this.props = props;
 	}
 
 	@Override
@@ -59,6 +65,21 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	@Override
 	protected void onNoCandidate(LocalDateTime now) {
 		log.debug("OCR 워커 tick - 처리 대상 없음");
+
+		if (!shouldLogBacklog(now)) return;
+
+		LocalDateTime staleBefore = now.minusSeconds(lockLeaseSeconds());
+		long backlog = scanRepository.countOcrBacklog(now, staleBefore);
+
+		log.info("OCR 워커 - 처리 대상 없음 (ocrBacklog={})", backlog);
+		lastBacklogLoggedAt = now;
+	}
+
+	private boolean shouldLogBacklog(LocalDateTime now) {
+		if (lastBacklogLoggedAt == null) return true;
+
+		Duration interval = Duration.ofMinutes(props.backlogLogMinutes());
+		return !now.isBefore(lastBacklogLoggedAt.plus(interval));
 	}
 
 	@Override
@@ -106,7 +127,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void saveOcrSuccess(Long scanId, OcrResult result) {
-		tx.executeWithoutResult(status -> {
+		template.executeWithoutResult(status -> {
 			ProblemScan scan = scanRepository.findById(scanId)
 				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
 			scan.markOcrSucceeded(result.plainText(), result.rawJson(), LocalDateTime.now());
@@ -114,7 +135,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void saveOcrFailure(Long scanId, String reason, boolean retryable) {
-		tx.executeWithoutResult(status -> {
+		template.executeWithoutResult(status -> {
 			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
@@ -131,7 +152,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			tx.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
+			template.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
 
 		} catch (Exception unlockEx) {
 			log.error("OCR unlock 실패 scanId={}", scanId, unlockEx);
