@@ -57,8 +57,8 @@ public class GeminiAiClient implements AiClient {
 
 		body.put("generationConfig", Map.of(
 			"temperature", 0,
-			"response_mime_type", "application/json",
-			"response_schema", responseSchema()
+			"responseMimeType", "application/json",
+			"responseSchema", responseSchema()
 		));
 
 		return body;

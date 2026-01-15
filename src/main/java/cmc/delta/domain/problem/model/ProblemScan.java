@@ -137,12 +137,14 @@ public class ProblemScan extends BaseTimeEntity {
 	@Column(name = "lock_token", length = 40)
 	private String lockToken;
 
-	// retry policy (MVP)
 	private static final int OCR_MAX_ATTEMPTS = 3;
 	private static final long OCR_BACKOFF_SECONDS = 30L;
 
 	private static final int AI_MAX_ATTEMPTS = 3;
 	private static final long AI_BACKOFF_SECONDS = 60L;
+
+	// 429는 “실패”라기보다 “대기”라서 더 길게 허용
+	private static final int AI_MAX_RATE_LIMIT_ATTEMPTS = 20;
 
 	public static ProblemScan uploaded(User user) {
 		ProblemScan s = new ProblemScan();
@@ -169,8 +171,8 @@ public class ProblemScan extends BaseTimeEntity {
 		this.ocrCompletedAt = completedAt;
 		this.status = ScanStatus.OCR_DONE;
 
-		this.failReason = null;
-		this.nextRetryAt = null;
+		clearFailureAndRetry();
+		this.ocrAttemptCount = 0;
 	}
 
 	/**
@@ -198,13 +200,8 @@ public class ProblemScan extends BaseTimeEntity {
 		this.aiCompletedAt = completedAt;
 		this.status = ScanStatus.AI_DONE;
 
-		this.failReason = null;
-		this.nextRetryAt = null;
-	}
-
-	public void markFailed(String reason) {
-		this.failReason = reason;
-		this.status = ScanStatus.FAILED;
+		clearFailureAndRetry();
+		this.aiAttemptCount = 0;
 	}
 
 	public void markOcrFailed(String reason) {
@@ -212,38 +209,89 @@ public class ProblemScan extends BaseTimeEntity {
 		this.ocrAttemptCount += 1;
 	}
 
-	public void scheduleNextRetryForOcr(LocalDateTime now) {
-		if (this.ocrAttemptCount >= OCR_MAX_ATTEMPTS) {
-			this.status = ScanStatus.FAILED;
-			this.nextRetryAt = null;
-			return;
-		}
-
-		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount;
-		this.nextRetryAt = now.plusSeconds(delaySeconds);
-		this.status = ScanStatus.UPLOADED;
-	}
-
 	public void markAiFailed(String reason) {
 		this.failReason = reason;
 		this.aiAttemptCount += 1;
 	}
 
+	public void scheduleNextRetryForOcr(LocalDateTime now) {
+		if (this.ocrAttemptCount >= OCR_MAX_ATTEMPTS) {
+			failTerminal(this.failReason);
+			return;
+		}
+
+		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount;
+		scheduleRetry(now, delaySeconds, ScanStatus.UPLOADED);
+	}
+
 	public void scheduleNextRetryForAi(LocalDateTime now) {
 		if (this.aiAttemptCount >= AI_MAX_ATTEMPTS) {
-			this.status = ScanStatus.FAILED;
-			this.nextRetryAt = null;
+			failTerminal(this.failReason);
 			return;
 		}
 
 		long delaySeconds = AI_BACKOFF_SECONDS * this.aiAttemptCount;
-		this.nextRetryAt = now.plusSeconds(delaySeconds);
-		this.status = ScanStatus.OCR_DONE;
+		scheduleRetry(now, delaySeconds, ScanStatus.OCR_DONE);
 	}
 
 	@Deprecated
 	public void markAiDone(LocalDateTime completedAt) {
 		this.aiCompletedAt = completedAt;
 		this.status = ScanStatus.AI_DONE;
+	}
+
+	public void retryFailed(LocalDateTime now) {
+		this.failReason = null;
+		this.nextRetryAt = now;
+		this.lockedAt = null;
+		this.lockOwner = null;
+		this.lockToken = null;
+
+		boolean hasOcr = this.ocrPlainText != null && !this.ocrPlainText.isBlank();
+		if (hasOcr) {
+			this.aiAttemptCount = 0;
+			this.status = ScanStatus.OCR_DONE;
+			return;
+		}
+
+		this.ocrAttemptCount = 0;
+		this.status = ScanStatus.UPLOADED;
+	}
+
+	public void markAiRateLimited(String reason) {
+		this.failReason = reason;
+		this.aiAttemptCount += 1;
+	}
+
+	public void scheduleNextRetryForAi(LocalDateTime now, long delaySeconds) {
+		if (this.aiAttemptCount >= AI_MAX_RATE_LIMIT_ATTEMPTS) {
+			failTerminal(this.failReason);
+			return;
+		}
+		scheduleRetry(now, delaySeconds, ScanStatus.OCR_DONE);
+	}
+
+	public void scheduleNextRetryForOcr(LocalDateTime now, long delaySeconds) {
+		scheduleRetry(now, delaySeconds, ScanStatus.UPLOADED);
+	}
+
+	public void markFailed(String reason) {
+		failTerminal(reason);
+	}
+
+	private void clearFailureAndRetry() {
+		this.failReason = null;
+		this.nextRetryAt = null;
+	}
+
+	private void scheduleRetry(LocalDateTime now, long delaySeconds, ScanStatus nextStatus) {
+		this.nextRetryAt = now.plusSeconds(Math.max(0, delaySeconds));
+		this.status = nextStatus;
+	}
+
+	private void failTerminal(String reason) {
+		this.failReason = reason;
+		this.status = ScanStatus.FAILED;
+		this.nextRetryAt = null;
 	}
 }

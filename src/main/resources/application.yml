@@ -34,7 +34,7 @@ mathpix:
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
-  model: gemini-2.0-flash
+  model: gemini-2.5-flash
 
 worker:
   ocr:
@@ -53,4 +53,5 @@ logging:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
   level:
     cmc.delta.domain.problem.application.worker.OcrWorkerScheduler: INFO
+    cmc.delta.domain.problem.application.worker: INFO
 

@@ -26,6 +26,10 @@ import org.springframework.web.client.RestClientResponseException;
 @Component
 public class AiScanWorker extends AbstractClaimingScanWorker {
 
+	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;
+	private static final long MIN_RATE_LIMIT_DELAY_SECONDS = 60L;
+	private static final int OCR_TEXT_MAX_CHARS = 3000;
+
 	private final ProblemScanJpaRepository scanRepository;
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository typeRepository;
@@ -71,70 +75,67 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	@Override
 	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!isStillLockedByMe(scanId, lockOwner, lockToken)) {
-			return;
-		}
+		if (!isStillLockedByMe(scanId, lockOwner, lockToken)) return;
 
 		try {
-			ProblemScan scan = scanRepository.findById(scanId)
-				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+			ProblemScan scan = loadScanOrThrow(scanId);
 
-			String ocrText = scan.getOcrPlainText();
-			if (ocrText == null || ocrText.isBlank()) {
-				throw new IllegalStateException("OCR_TEXT_EMPTY");
-			}
+			String ocrText = normalizeOcrText(scan.getOcrPlainText());
+			if (ocrText.isBlank()) throw new IllegalStateException("OCR_TEXT_EMPTY");
 
-			Long userId = scan.getUser().getId();
+			Long userId = scan.getUser().getId(); // 프록시는 id 접근 가능(초기화 없이도 됨)
 
-			List<AiCurriculumPrompt.Option> subjectOptions = unitRepository.findAllRootUnitsActive()
-				.stream().map(u -> new AiCurriculumPrompt.Option(u.getId(), u.getName())).toList();
+			AiCurriculumPrompt prompt = buildPrompt(userId, ocrText);
+			AiCurriculumResult ai = aiClient.classifyCurriculum(prompt);
 
-			List<AiCurriculumPrompt.Option> unitOptions = unitRepository.findAllByActiveTrueOrderBySortOrderAsc()
-				.stream().map(u -> new AiCurriculumPrompt.Option(u.getId(), u.getName())).toList();
+			// 외부 호출 후 저장 직전에 lock 재확인(lease 만료/steal 방지)
+			if (!isStillLockedByMe(scanId, lockOwner, lockToken)) return;
 
-			List<AiCurriculumPrompt.Option> typeOptions = typeRepository.findAllActiveForUser(userId)
-				.stream().map(t -> new AiCurriculumPrompt.Option(t.getId(), t.getName())).toList();
-
-			AiCurriculumResult ai = aiClient.classifyCurriculum(
-				new AiCurriculumPrompt(ocrText, subjectOptions, unitOptions, typeOptions)
-			);
-
-			Unit predictedUnit = ai.predictedUnitId() == null ? null : unitRepository.findById(ai.predictedUnitId()).orElse(null);
-			ProblemType predictedType = ai.predictedTypeId() == null ? null : typeRepository.findById(ai.predictedTypeId()).orElse(null);
+			Unit predictedUnit = findUnitOrNull(ai.predictedUnitId());
+			ProblemType predictedType = findTypeOrNull(ai.predictedTypeId());
 
 			BigDecimal confidence = BigDecimal.valueOf(ai.confidence());
 			boolean needsReview = shouldNeedsReview(predictedUnit, predictedType, confidence);
 
 			saveAiSuccess(
-				scanId,
-				predictedUnit,
-				predictedType,
-				confidence,
-				needsReview,
-				ai.unitCandidatesJson(),
-				ai.typeCandidatesJson(),
-				ai.aiDraftJson()
+				scanId, lockOwner, lockToken,
+				predictedUnit, predictedType, confidence, needsReview,
+				ai.unitCandidatesJson(), ai.typeCandidatesJson(), ai.aiDraftJson()
 			);
 
-			log.info("AI 분류 완료 scanId={} 상태=AI_DONE 단원={} 유형={} 신뢰도={} 검토필요={}",
+			log.info("AI 분류 완료 scanId={} unitId={} typeId={} confidence={} needsReview={}",
 				scanId,
 				predictedUnit == null ? null : predictedUnit.getId(),
 				predictedType == null ? null : predictedType.getId(),
 				confidence,
 				needsReview
 			);
-		} catch (Exception e) {
-			String reason = classifyFailureReason(e);
-			boolean retryable = isRetryable(e);
-			saveAiFailure(scanId, reason, retryable);
 
-			if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() >= 400 && rre.getRawStatusCode() < 500) {
-				log.warn("AI 호출 4xx scanId={} reason={} status={}", scanId, reason, rre.getRawStatusCode());
-			} else {
-				log.error("AI 처리 실패 scanId={} reason={}", scanId, reason, e);
-			}
+		} catch (Exception e) {
+			handleFailure(scanId, lockOwner, lockToken, e);
 		} finally {
 			unlockBestEffort(scanId, lockOwner, lockToken);
+		}
+	}
+
+	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception e) {
+		String reason = classifyFailureReason(e);
+
+		// OCR_TEXT_EMPTY는 AI를 재시도해봐야 의미가 거의 없어서 즉시 터미널 처리 권장
+		if ("OCR_TEXT_EMPTY".equals(reason)) {
+			saveAiFailure(scanId, lockOwner, lockToken, reason, false, null);
+			log.warn("AI 처리 불가 scanId={} reason={}", scanId, reason);
+			return;
+		}
+
+		boolean retryable = isRetryable(e);
+		Long retryAfterSec = extractRetryAfterSecondsIf429(e);
+		saveAiFailure(scanId, lockOwner, lockToken, reason, retryable, retryAfterSec);
+
+		if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() >= 400 && rre.getRawStatusCode() < 500) {
+			log.warn("AI 호출 4xx scanId={} reason={} status={}", scanId, reason, rre.getRawStatusCode());
+		} else {
+			log.error("AI 처리 실패 scanId={} reason={}", scanId, reason, e);
 		}
 	}
 
@@ -143,44 +144,119 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		return exists != null;
 	}
 
+	private ProblemScan loadScanOrThrow(Long scanId) {
+		return scanRepository.findById(scanId)
+			.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+	}
+
+	private String normalizeOcrText(String ocrText) {
+		if (ocrText == null) return "";
+		String t = ocrText.replaceAll("\\s+", " ").trim();
+		if (t.length() > OCR_TEXT_MAX_CHARS) {
+			t = t.substring(0, OCR_TEXT_MAX_CHARS);
+		}
+		return t;
+	}
+
+	private AiCurriculumPrompt buildPrompt(Long userId, String ocrText) {
+		List<AiCurriculumPrompt.Option> subjectOptions = unitRepository.findAllRootUnitsActive()
+			.stream().map(u -> new AiCurriculumPrompt.Option(String.valueOf(u.getId()), u.getName())).toList();
+
+		List<AiCurriculumPrompt.Option> unitOptions = unitRepository.findAllByActiveTrueOrderBySortOrderAsc()
+			.stream().map(u -> new AiCurriculumPrompt.Option(String.valueOf(u.getId()), u.getName())).toList();
+
+		List<AiCurriculumPrompt.Option> typeOptions = typeRepository.findAllActiveForUser(userId)
+			.stream().map(t -> new AiCurriculumPrompt.Option(String.valueOf(t.getId()), t.getName())).toList();
+
+		return new AiCurriculumPrompt(ocrText, subjectOptions, unitOptions, typeOptions);
+	}
+
+	private Unit findUnitOrNull(String id) {
+		Long unitId = parseLongOrNull(id);
+		return unitId == null ? null : unitRepository.findById(unitId).orElse(null);
+	}
+
+	private ProblemType findTypeOrNull(String id) {
+		Long typeId = parseLongOrNull(id);
+		return typeId == null ? null : typeRepository.findById(typeId).orElse(null);
+	}
+
+	private Long parseLongOrNull(String s) {
+		if (s == null || s.isBlank()) return null;
+		try {
+			return Long.valueOf(s.trim());
+		} catch (NumberFormatException ignore) {
+			return null;
+		}
+	}
+
 	private void saveAiSuccess(
-		Long scanId,
-		Unit predictedUnit,
-		ProblemType predictedType,
-		BigDecimal confidence,
-		boolean needsReview,
-		String unitCandidatesJson,
-		String typeCandidatesJson,
-		String aiDraftJson
+		Long scanId, String lockOwner, String lockToken,
+		Unit predictedUnit, ProblemType predictedType, BigDecimal confidence, boolean needsReview,
+		String unitCandidatesJson, String typeCandidatesJson, String aiDraftJson
 	) {
 		tx.executeWithoutResult(status -> {
-			ProblemScan scan = scanRepository.findById(scanId)
-				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
+
+			ProblemScan scan = loadScanOrThrow(scanId);
 
 			scan.markAiSucceeded(
-				predictedUnit,
-				predictedType,
-				confidence,
-				needsReview,
-				unitCandidatesJson,
-				typeCandidatesJson,
-				aiDraftJson,
+				predictedUnit, predictedType, confidence, needsReview,
+				unitCandidatesJson, typeCandidatesJson, aiDraftJson,
 				LocalDateTime.now()
 			);
 		});
 	}
 
-	private void saveAiFailure(Long scanId, String reason, boolean retryable) {
+	private void saveAiFailure(
+		Long scanId, String lockOwner, String lockToken,
+		String reason, boolean retryable, Long retryAfterSec
+	) {
 		tx.executeWithoutResult(status -> {
+			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
+
 			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
-			scan.markAiFailed(reason);
-
-			if (retryable) {
-				scan.scheduleNextRetryForAi(LocalDateTime.now());
+			// non-retryable은 즉시 FAILED(무한 루프 방지)
+			if (!retryable) {
+				scan.markFailed(reason);
+				return;
 			}
+
+			// 429는 별도 backoff + rate-limit max attempts
+			if ("AI_RATE_LIMIT".equals(reason)) {
+				scan.markAiRateLimited(reason);
+
+				long delay = computeRateLimitDelaySeconds(retryAfterSec);
+				scan.scheduleNextRetryForAi(LocalDateTime.now(), delay);
+				return;
+			}
+
+			// 그 외 retryable은 기존 정책(3회 후 FAILED)
+			scan.markAiFailed(reason);
+			scan.scheduleNextRetryForAi(LocalDateTime.now());
 		});
+	}
+
+	private long computeRateLimitDelaySeconds(Long retryAfterSec) {
+		if (retryAfterSec == null || retryAfterSec <= 0) return DEFAULT_RATE_LIMIT_DELAY_SECONDS;
+		return Math.max(retryAfterSec, MIN_RATE_LIMIT_DELAY_SECONDS);
+	}
+
+	private Long extractRetryAfterSecondsIf429(Exception e) {
+		if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() == 429) {
+			var headers = rre.getResponseHeaders();
+			if (headers == null) return null;
+			String v = headers.getFirst("Retry-After");
+			if (v == null || v.isBlank()) return null;
+			try {
+				return Long.parseLong(v.trim());
+			} catch (NumberFormatException ignore) {
+				return null;
+			}
+		}
+		return null;
 	}
 
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
@@ -197,13 +273,24 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private boolean isRetryable(Exception e) {
+		if (e instanceof IllegalStateException ise) {
+			String msg = ise.getMessage();
+			// 이 둘은 재시도해도 의미 거의 없음
+			if ("OCR_TEXT_EMPTY".equals(msg)) return false;
+			if ("SCAN_NOT_FOUND".equals(msg)) return false;
+			return false;
+		}
+
 		if (e instanceof ResourceAccessException) return true;
+
 		if (e instanceof RestClientResponseException rre) {
 			int s = rre.getRawStatusCode();
 			if (s == 429) return true;
+			if (s == 408) return true;
 			if (s >= 500) return true;
 			return false;
 		}
+
 		return true;
 	}
 
