@@ -156,8 +156,6 @@ class OcrScanWorkerTest {
 		assertThat(scan.getNextRetryAt()).isNull();
 	}
 
-	// ---------------- helpers ----------------
-
 	private void run(Long scanId) {
 		sut.processOne(scanId, OWNER, TOKEN, LocalDateTime.now());
 	}

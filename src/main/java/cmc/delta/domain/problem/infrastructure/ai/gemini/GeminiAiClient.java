@@ -112,6 +112,10 @@ public class GeminiAiClient implements AiClient {
 		return (text == null || text.isBlank()) ? null : text;
 	}
 
+	/**
+	 * GEMINI AI용 프롬프트 생성
+	 * Todo: 나중에 분류
+	 */
 	private String buildPromptText(AiCurriculumPrompt prompt) throws Exception {
 		// 후보 목록은 id/name만 보내서 토큰 절약
 		String subjectsJson = objectMapper.writeValueAsString(prompt.subjects());

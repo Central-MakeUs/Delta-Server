@@ -193,15 +193,6 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		return t.isEmpty() ? null : t;
 	}
 
-	private Long parseLongOrNull(String s) {
-		if (s == null || s.isBlank()) return null;
-		try {
-			return Long.valueOf(s.trim());
-		} catch (NumberFormatException ignore) {
-			return null;
-		}
-	}
-
 	private void saveAiSuccess(
 		Long scanId, String lockOwner, String lockToken,
 		Unit predictedUnit, ProblemType predictedType, BigDecimal confidence, boolean needsReview,

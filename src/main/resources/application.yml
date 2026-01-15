@@ -51,6 +51,6 @@ worker:
 logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
-  level:
-    cmc.delta.domain.problem.application.worker: INFO
+#  level:
+#    cmc.delta.domain.problem.application.worker: INFO
 

@@ -79,17 +79,4 @@ public class Asset extends BaseCreatedEntity {
 			null
 		);
 	}
-
-	// 필요해지면 확장 (지금 당장 안 쓰면 안 만들어도 됨)
-	public static Asset createPreprocessed(ProblemScan scan, String storageKey, Integer width, Integer height) {
-		return new Asset(scan, AssetType.PREPROCESSED, DEFAULT_SLOT, storageKey, width, height, null);
-	}
-
-	public static Asset createDiagramCrop(ProblemScan scan, int slot, String storageKey, Integer width, Integer height) {
-		return new Asset(scan, AssetType.DIAGRAM_CROP, slot, storageKey, width, height, null);
-	}
-
-	public static Asset createFormulaCrop(ProblemScan scan, int slot, String storageKey, Integer width, Integer height) {
-		return new Asset(scan, AssetType.FORMULA_CROP, slot, storageKey, width, height, null);
-	}
 }
