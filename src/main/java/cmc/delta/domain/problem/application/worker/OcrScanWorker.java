@@ -139,14 +139,21 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private boolean isRetryable(Exception e) {
-		if (e instanceof ResourceAccessException) return true; // 네트워크
+		if (e instanceof IllegalStateException ise) {
+			String msg = ise.getMessage();
+			if ("ASSET_NOT_FOUND".equals(msg)) return false;
+			if ("SCAN_NOT_FOUND".equals(msg)) return false;
+			return false; // 내부 상태/데이터 이상은 재시도 X로 보수적으로
+		}
+
+		if (e instanceof ResourceAccessException) return true;
 		if (e instanceof RestClientResponseException rre) {
 			int s = rre.getRawStatusCode();
-			if (s == 429) return true;       // rate limit
-			if (s >= 500) return true;       // 서버 오류
-			return false;                    // 일반 4xx는 보통 재시도 가치 없음
+			if (s == 429) return true;
+			if (s >= 500) return true;
+			return false;
 		}
-		return true; // 기타는 일단 제한적으로 retry(최대시도는 schedule 쪽에서 제어)
+		return true;
 	}
 
 	private String classifyFailureReason(Exception e) {
