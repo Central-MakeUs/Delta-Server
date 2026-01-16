@@ -1,0 +1,23 @@
+package cmc.delta.domain.problem.application.worker.support.failure;
+
+public enum ScanFailReasonCode {
+	ASSET_NOT_FOUND,
+	SCAN_NOT_FOUND,
+	OCR_TEXT_EMPTY,
+
+	OCR_RATE_LIMIT,
+	OCR_CLIENT_4XX,
+	OCR_CLIENT_5XX,
+	OCR_CLIENT_ERROR,
+	OCR_NETWORK_ERROR,
+	OCR_FAILED,
+
+	AI_RATE_LIMIT,
+	AI_CLIENT_4XX,
+	AI_CLIENT_5XX,
+	AI_CLIENT_ERROR,
+	AI_NETWORK_ERROR,
+	AI_FAILED,
+
+	ILLEGAL_STATE
+}
