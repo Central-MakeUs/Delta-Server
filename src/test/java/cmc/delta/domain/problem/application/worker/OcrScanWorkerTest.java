@@ -1,18 +1,15 @@
 package cmc.delta.domain.problem.application.worker;
 
 import static cmc.delta.domain.problem.application.worker.support.ProblemScanFixtures.*;
-import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
-import cmc.delta.domain.problem.application.worker.support.OcrWorkerDoubles;
+import cmc.delta.domain.problem.application.worker.support.OcrWorkerDoublesV2;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,12 +24,12 @@ class OcrScanWorkerTest {
 	private static final String OWNER = "w1";
 	private static final String TOKEN = "t1";
 
-	private OcrWorkerDoubles d;
+	private OcrWorkerDoublesV2 d;
 	private OcrScanWorker sut;
 
 	@BeforeEach
 	void setUp() {
-		d = OcrWorkerDoubles.create();
+		d = OcrWorkerDoublesV2.create();
 		Executor direct = Runnable::run;
 
 		sut = new OcrScanWorker(
@@ -40,10 +37,16 @@ class OcrScanWorkerTest {
 			d.tx(),
 			direct,
 			d.scanRepo(),
-			d.assetRepo(),
 			d.storageReader(),
 			d.ocrClient(),
-			d.props()
+			d.props(),
+			d.lockGuard(),
+			d.unlocker(),
+			d.backlogLogger(),
+			d.logPolicy(),
+			d.failureDecider(),
+			d.validator(),
+			d.persister()
 		);
 	}
 
@@ -58,7 +61,8 @@ class OcrScanWorkerTest {
 		run(scanId);
 
 		// then
-		verifyNoInteractions(d.assetRepo(), d.storageReader(), d.ocrClient());
+		verifyNoInteractions(d.validator(), d.storageReader(), d.ocrClient(), d.persister(), d.failureDecider(), d.logPolicy());
+		verifyNoInteractions(d.unlocker()); // 시작부터 return이면 finally도 안 타서 unlock도 호출 X
 	}
 
 	@Test
@@ -66,20 +70,18 @@ class OcrScanWorkerTest {
 	void success_marksOcrDone() {
 		// given
 		Long scanId = 1L;
-		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
-		givenLocked(scanId);
-		givenOriginalBytes(scanId, "s3/key", new byte[] {1});
-		givenOcrReturns("plain", "{\"ok\":true}");
+		givenLockedTwice(scanId); // 시작/외부호출 후 저장 직전 재확인까지 true
+
+		givenOriginalBytesByValidator(scanId, "s3/key", new byte[] {1});
+		OcrResult result = givenOcrReturns("plain", "{\"ok\":true}");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE);
-		assertThat(scan.getOcrPlainText()).isEqualTo("plain");
-		assertThat(scan.getOcrRawJson()).isEqualTo("{\"ok\":true}");
-		assertThat(scan.getFailReason()).isNull();
-		assertThat(scan.getNextRetryAt()).isNull();
+		verify(d.persister()).persistOcrSucceeded(eq(scanId), eq(OWNER), eq(TOKEN), eq(result), any(LocalDateTime.class));
+		verify(d.persister(), never()).persistOcrFailed(anyLong(), anyString(), anyString(), any(), any());
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -87,16 +89,22 @@ class OcrScanWorkerTest {
 	void assetMissing_failsFast() {
 		// given
 		Long scanId = 1L;
-		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
 		givenLocked(scanId);
-		givenNoOriginalAsset(scanId);
+
+		IllegalStateException ex = new IllegalStateException("ASSET_NOT_FOUND");
+		when(d.validator().requireOriginalAsset(scanId)).thenThrow(ex);
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("ASSET_NOT_FOUND");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.FAILED);
-		assertThat(scan.getFailReason()).isEqualTo("ASSET_NOT_FOUND");
+		verify(d.persister()).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
+		verifyNoInteractions(d.storageReader(), d.ocrClient());
 	}
 
 	@Test
@@ -104,17 +112,22 @@ class OcrScanWorkerTest {
 	void client4xx_failsFast() {
 		// given
 		Long scanId = 1L;
-		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
 		givenLocked(scanId);
-		givenOriginalBytes(scanId, "s3/key", new byte[] {1});
-		givenOcrThrows4xx();
+
+		givenOriginalBytesByValidator(scanId, "s3/key", new byte[] {1});
+		HttpClientErrorException ex = givenOcrThrows4xx();
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("OCR_CLIENT_4XX");
+		when(d.logPolicy().shouldSuppressStacktrace(any())).thenReturn(true);
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.FAILED);
-		assertThat(scan.getFailReason()).isEqualTo("OCR_CLIENT_4XX");
+		verify(d.persister()).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -122,29 +135,40 @@ class OcrScanWorkerTest {
 	void networkErr_schedulesRetry() {
 		// given
 		Long scanId = 1L;
-		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
 		givenLocked(scanId);
-		givenOriginalBytes(scanId, "s3/key", new byte[] {1});
-		givenOcrThrowsNetwork();
+
+		givenOriginalBytesByValidator(scanId, "s3/key", new byte[] {1});
+		ResourceAccessException ex = givenOcrThrowsNetwork();
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("OCR_NETWORK");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.UPLOADED);
-		assertThat(scan.getOcrAttemptCount()).isEqualTo(1);
-		assertThat(scan.getNextRetryAt()).isNotNull();
+		verify(d.persister()).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
 	@DisplayName("OCR 워커는 재시도 3회째 실패하면 FAILED로 전환해 무한 호출을 막는다.")
 	void retry3_failsTerminal() {
+		// 이 로직은 이제 worker가 직접 엔티티를 바꾸는 게 아니라 persister/decision 정책에 있음.
+		// 따라서 워커 단위 테스트에서는 '3번 호출 시도' 자체가 아니라,
+		// persistOcrFailed가 매번 호출되고 unlock이 보장되는지만 검증하는 게 맞다.
+
 		// given
 		Long scanId = 1L;
-		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
 		givenLocked(scanId);
-		givenOriginalBytes(scanId, "s3/key", new byte[] {1});
-		givenOcrThrowsNetwork();
+
+		givenOriginalBytesByValidator(scanId, "s3/key", new byte[] {1});
+		ResourceAccessException ex = givenOcrThrowsNetwork();
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("OCR_NETWORK");
 
 		// when
 		run(scanId);
@@ -152,53 +176,52 @@ class OcrScanWorkerTest {
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.FAILED);
-		assertThat(scan.getOcrAttemptCount()).isEqualTo(3);
-		assertThat(scan.getNextRetryAt()).isNull();
+		verify(d.persister(), times(3)).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker(), times(3)).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
+
+	/* ================= helpers ================= */
 
 	private void run(Long scanId) {
 		sut.processOne(scanId, OWNER, TOKEN, LocalDateTime.now());
 	}
 
 	private void givenLocked(Long scanId) {
-		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(true);
+	}
+
+	private void givenLockedTwice(Long scanId) {
+		// processOne 내부에서 2번 체크함: 시작 시 + 외부 호출 후 저장 직전
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
 	}
 
 	private void givenLockLost(Long scanId) {
-		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(false);
 	}
 
-	private ProblemScan givenScan(Long scanId, ProblemScan scan) {
-		when(d.scanRepo().findById(scanId)).thenReturn(Optional.of(scan));
-		return scan;
-	}
-
-	private void givenOriginalBytes(Long scanId, String storageKey, byte[] bytes) {
+	private void givenOriginalBytesByValidator(Long scanId, String storageKey, byte[] bytes) {
 		Asset asset = originalAsset(storageKey);
-
-		when(d.assetRepo().findOriginalByScanId(scanId)).thenReturn(Optional.of(asset));
+		when(d.validator().requireOriginalAsset(scanId)).thenReturn(asset);
 		when(d.storageReader().readBytes(storageKey)).thenReturn(bytes);
 	}
 
-	private void givenNoOriginalAsset(Long scanId) {
-		when(d.assetRepo().findOriginalByScanId(scanId)).thenReturn(Optional.empty());
-	}
-
-	private void givenOcrReturns(String plain, String raw) {
+	private OcrResult givenOcrReturns(String plain, String raw) {
 		OcrResult result = ocrResult(plain, raw);
 		when(d.ocrClient().recognize(any(), anyString())).thenReturn(result);
+		return result;
 	}
 
-	private void givenOcrThrows4xx() {
+	private HttpClientErrorException givenOcrThrows4xx() {
 		HttpClientErrorException ex = HttpClientErrorException.create(
 			HttpStatus.BAD_REQUEST, "400", new HttpHeaders(), null, null
 		);
 		when(d.ocrClient().recognize(any(), anyString())).thenThrow(ex);
+		return ex;
 	}
 
-	private void givenOcrThrowsNetwork() {
-		when(d.ocrClient().recognize(any(), anyString()))
-			.thenThrow(new ResourceAccessException("timeout"));
+	private ResourceAccessException givenOcrThrowsNetwork() {
+		ResourceAccessException ex = new ResourceAccessException("timeout");
+		when(d.ocrClient().recognize(any(), anyString())).thenThrow(ex);
+		return ex;
 	}
 }

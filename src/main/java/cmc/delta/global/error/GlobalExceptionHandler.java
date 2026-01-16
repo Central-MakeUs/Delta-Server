@@ -34,9 +34,14 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<Object>> handleBusiness(
 		BusinessException ex, HttpServletRequest request) {
 		ErrorCode ec = ex.getErrorCode();
-		ApiResponse<Object> body = errorResponseFactory.create(ec, ex.getMessage(), ex.getData());
+		boolean hideDetail = shouldHideDetail(ec);
+		String clientMessage = hideDetail ? ec.defaultMessage() : ex.getMessage();
+		Object clientData = hideDetail ? null : ex.getData();
+
+		ApiResponse<Object> body = errorResponseFactory.create(ec, clientMessage, clientData);
 		return logAndRespond(ec, ex, request, body);
 	}
+
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse<Object>> handleValidation(
@@ -88,6 +93,10 @@ public class GlobalExceptionHandler {
 		ErrorCode ec = ErrorCode.INTERNAL_ERROR;
 		ApiResponse<Object> body = errorResponseFactory.defaultError(ec);
 		return logAndRespond(ec, ex, request, body);
+	}
+
+	private boolean shouldHideDetail(ErrorCode ec) {
+		return ec.status().is5xxServerError();
 	}
 
 	private ResponseEntity<ApiResponse<Object>> logAndRespond(

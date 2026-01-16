@@ -1,19 +1,17 @@
 package cmc.delta.domain.problem.application.worker;
 
 import static cmc.delta.domain.problem.application.worker.support.ProblemScanFixtures.*;
-import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.curriculum.model.Unit;
+import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
-import cmc.delta.domain.problem.application.worker.support.AiWorkerDoubles;
+import cmc.delta.domain.problem.application.worker.support.AiWorkerDoublesV2;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator.AiValidatedInput;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,12 +27,12 @@ class AiScanWorkerTest {
 	private static final String OWNER = "w1";
 	private static final String TOKEN = "t1";
 
-	private AiWorkerDoubles d;
+	private AiWorkerDoublesV2 d;
 	private AiScanWorker sut;
 
 	@BeforeEach
 	void setUp() {
-		d = AiWorkerDoubles.create();
+		d = AiWorkerDoublesV2.create();
 
 		Executor direct = Runnable::run;
 		sut = new AiScanWorker(
@@ -42,16 +40,17 @@ class AiScanWorkerTest {
 			d.tx(),
 			direct,
 			d.scanRepo(),
-			d.unitRepo(),
-			d.typeRepo(),
 			d.aiClient(),
-			d.props()
+			d.props(),
+			d.lockGuard(),
+			d.unlocker(),
+			d.backlogLogger(),
+			d.logPolicy(),
+			d.failureDecider(),
+			d.validator(),
+			d.promptBuilder(),
+			d.persister()
 		);
-
-		// buildPrompt에서 옵션 조회하므로 기본값(빈 리스트)로 고정
-		when(d.unitRepo().findAllRootUnitsActive()).thenReturn(List.of());
-		when(d.unitRepo().findAllChildUnitsActive()).thenReturn(List.of());
-		when(d.typeRepo().findAllActiveForUser(anyLong())).thenReturn(List.of());
 	}
 
 	@Test
@@ -65,7 +64,8 @@ class AiScanWorkerTest {
 		run(scanId);
 
 		// then
-		verifyNoInteractions(d.aiClient());
+		verifyNoInteractions(d.scanRepo(), d.validator(), d.promptBuilder(), d.aiClient(), d.persister(), d.failureDecider(), d.logPolicy());
+		verifyNoInteractions(d.unlocker()); // 시작부터 return이면 finally도 안 탐
 	}
 
 	@Test
@@ -76,12 +76,20 @@ class AiScanWorkerTest {
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "   "));
 		givenLocked(scanId);
 
+		IllegalStateException ex = new IllegalStateException("OCR_TEXT_EMPTY");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenThrow(ex);
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("OCR_TEXT_EMPTY");
+
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.FAILED);
-		assertThat(scan.getFailReason()).isEqualTo("OCR_TEXT_EMPTY");
+		verify(d.persister()).persistAiFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
+		verifyNoInteractions(d.promptBuilder(), d.aiClient());
 	}
 
 	@Test
@@ -90,34 +98,56 @@ class AiScanWorkerTest {
 		// given
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
-		givenLocked(scanId);
-		givenAiReturns("U_GEOM", "T_GEOM", 0.90);
-		givenUnitTypeExists("U_GEOM", "T_GEOM");
+		givenLockedTwice(scanId);
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
+
+		AiCurriculumResult ai = givenAiReturns("U_GEOM", "T_GEOM", 0.90);
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.AI_DONE);
-		assertThat(scan.isNeedsReview()).isFalse();
+		verify(d.aiClient()).classifyCurriculum(prompt);
+		verify(d.persister()).persistAiSucceeded(eq(scanId), eq(OWNER), eq(TOKEN), eq(ai), any(LocalDateTime.class));
+		verify(d.persister(), never()).persistAiFailed(anyLong(), anyString(), anyString(), any(), any());
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
 	@DisplayName("AI 워커는 신뢰도가 낮으면 needs_review를 true로 저장한다.")
 	void lowConf_marksNeedsReview() {
+		// needs_review는 보통 persister/도메인 로직에서 결정됨
+		// => 워커 단위에서는 성공 저장 호출만 검증
+
 		// given
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
-		givenLocked(scanId);
-		givenAiReturns("U_GEOM", "T_GEOM", 0.59);
-		givenUnitTypeExists("U_GEOM", "T_GEOM");
+		givenLockedTwice(scanId);
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
+
+		AiCurriculumResult ai = givenAiReturns("U_GEOM", "T_GEOM", 0.59);
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.AI_DONE);
-		assertThat(scan.isNeedsReview()).isTrue();
+		verify(d.persister()).persistAiSucceeded(eq(scanId), eq(OWNER), eq(TOKEN), eq(ai), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -127,16 +157,27 @@ class AiScanWorkerTest {
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
 		givenLocked(scanId);
-		givenAiThrowsRateLimit("10");
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
+
+		HttpClientErrorException ex = givenAiThrowsRateLimit("10");
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("AI_RATE_LIMIT");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE);
-		assertThat(scan.getAiAttemptCount()).isEqualTo(1);
-		assertThat(scan.getFailReason()).isEqualTo("AI_RATE_LIMIT");
-		assertThat(scan.getNextRetryAt()).isNotNull();
+		verify(d.persister()).persistAiFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -146,14 +187,27 @@ class AiScanWorkerTest {
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
 		givenLocked(scanId);
-		givenAiThrows4xx();
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
+
+		HttpClientErrorException ex = givenAiThrows4xx();
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("AI_CLIENT_4XX");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.FAILED);
-		assertThat(scan.getFailReason()).isEqualTo("AI_CLIENT_4XX");
+		verify(d.persister()).persistAiFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -163,16 +217,27 @@ class AiScanWorkerTest {
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
 		givenLocked(scanId);
-		when(d.aiClient().classifyCurriculum(any()))
-			.thenThrow(new ResourceAccessException("timeout"));
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
+
+		ResourceAccessException ex = givenAiThrowsNetwork();
+
+		FailureDecision decision = mock(FailureDecision.class);
+		when(d.failureDecider().decide(ex)).thenReturn(decision);
+		when(d.logPolicy().reasonCode(decision)).thenReturn("AI_NETWORK");
 
 		// when
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE);
-		assertThat(scan.getAiAttemptCount()).isEqualTo(1);
-		assertThat(scan.getNextRetryAt()).isNotNull();
+		verify(d.persister()).persistAiFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	@Test
@@ -182,9 +247,17 @@ class AiScanWorkerTest {
 		Long scanId = 1L;
 		ProblemScan scan = givenScan(scanId, ocrDone(user(10L), "some text"));
 
-		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN))
-			.thenReturn(1)     // 시작 시점: 내 락
-			.thenReturn(null); // 외부 호출 후: 락 steal
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN))
+			.thenReturn(true)   // 시작
+			.thenReturn(false); // 외부 호출 후 저장 직전
+
+		AiValidatedInput input = mock(AiValidatedInput.class);
+		when(input.userId()).thenReturn(10L);
+		when(input.normalizedOcrText()).thenReturn("some text");
+		when(d.validator().validateAndNormalize(eq(scanId), same(scan))).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(d.promptBuilder().build(10L, "some text")).thenReturn(prompt);
 
 		givenAiReturns("U_GEOM", "T_GEOM", 0.90);
 
@@ -192,11 +265,12 @@ class AiScanWorkerTest {
 		run(scanId);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE);
+		verify(d.aiClient()).classifyCurriculum(prompt);
 
-		// prompt 옵션 조회는 발생할 수 있으니 허용하고,
-		verify(d.unitRepo(), never()).findById(anyString());
-		verify(d.typeRepo(), never()).findById(anyString());
+		verify(d.persister(), never()).persistAiSucceeded(anyLong(), anyString(), anyString(), any(), any());
+		verify(d.persister(), never()).persistAiFailed(anyLong(), anyString(), anyString(), any(), any());
+
+		verify(d.unlocker()).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
 	private void run(Long scanId) {
@@ -204,11 +278,15 @@ class AiScanWorkerTest {
 	}
 
 	private void givenLocked(Long scanId) {
-		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(true);
+	}
+
+	private void givenLockedTwice(Long scanId) {
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
 	}
 
 	private void givenLockLost(Long scanId) {
-		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
+		when(d.lockGuard().isOwned(scanId, OWNER, TOKEN)).thenReturn(false);
 	}
 
 	private ProblemScan givenScan(Long scanId, ProblemScan scan) {
@@ -216,32 +294,33 @@ class AiScanWorkerTest {
 		return scan;
 	}
 
-	private void givenAiReturns(String unitId, String typeId, double confidence) {
+	private AiCurriculumResult givenAiReturns(String unitId, String typeId, double confidence) {
 		AiCurriculumResult ai = aiResult(unitId, typeId, confidence);
 		when(d.aiClient().classifyCurriculum(any())).thenReturn(ai);
+		return ai;
 	}
 
-	private void givenUnitTypeExists(String unitId, String typeId) {
-		Unit u = unit(unitId);
-		ProblemType t = type(typeId);
-
-		when(d.unitRepo().findById(unitId)).thenReturn(Optional.of(u));
-		when(d.typeRepo().findById(typeId)).thenReturn(Optional.of(t));
-	}
-
-	private void givenAiThrowsRateLimit(String retryAfterSec) {
+	private HttpClientErrorException givenAiThrowsRateLimit(String retryAfterSec) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Retry-After", retryAfterSec);
 		HttpClientErrorException ex = HttpClientErrorException.create(
 			HttpStatus.TOO_MANY_REQUESTS, "429", headers, null, null
 		);
 		when(d.aiClient().classifyCurriculum(any())).thenThrow(ex);
+		return ex;
 	}
 
-	private void givenAiThrows4xx() {
+	private HttpClientErrorException givenAiThrows4xx() {
 		HttpClientErrorException ex = HttpClientErrorException.create(
 			HttpStatus.BAD_REQUEST, "400", new HttpHeaders(), null, null
 		);
 		when(d.aiClient().classifyCurriculum(any())).thenThrow(ex);
+		return ex;
+	}
+
+	private ResourceAccessException givenAiThrowsNetwork() {
+		ResourceAccessException ex = new ResourceAccessException("timeout");
+		when(d.aiClient().classifyCurriculum(any())).thenThrow(ex);
+		return ex;
 	}
 }

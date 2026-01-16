@@ -14,7 +14,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * QueryDSL로 변경 예정
+ * 나중에 상황을 보고 레포지토리를 쪼개거나,
+ * DSL 사용 예정
  */
 public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long> {
 
@@ -197,8 +198,6 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		@Param("userId") Long userId
 	);
 
-	// ProblemScanJpaRepository
-
 	@Query(
 		value = """
 		select count(*)
@@ -229,4 +228,18 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		@Param("staleBefore") LocalDateTime staleBefore
 	);
 
+	@Query(
+		value = """
+	select count(*)
+	  from problem_scan
+	 where status = 'FAILED'
+	   and updated_at >= :from
+	""",
+		nativeQuery = true
+	)
+	long countFailedSince(@Param("from") LocalDateTime from);
+
+	long countByOcrCompletedAtGreaterThanEqual(LocalDateTime from);
+
+	long countByAiCompletedAtGreaterThanEqual(LocalDateTime from);
 }
