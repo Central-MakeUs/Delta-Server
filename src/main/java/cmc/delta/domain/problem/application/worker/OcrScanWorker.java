@@ -8,13 +8,14 @@ import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanW
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
 import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
+import cmc.delta.domain.problem.application.worker.support.lock.ScanUnlocker;
+import cmc.delta.domain.problem.application.worker.support.logging.BacklogLogger;
+import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
 import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -22,59 +23,64 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Component
 public class OcrScanWorker extends AbstractClaimingScanWorker {
 
+	private static final String WORKER_KEY = "worker:ocr:backlog";
 	private static final String OCR_FILENAME_PREFIX = "scan-";
 	private static final String OCR_FILENAME_SUFFIX = ".jpg";
 
 	private final ProblemScanJpaRepository problemScanRepository;
-	private final AssetJpaRepository assetRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
 	private final OcrWorkerProperties properties;
 
-	private LocalDateTime lastBacklogLoggedAt;
-
 	private final ScanLockGuard lockGuard;
+	private final ScanUnlocker unlocker;
+	private final BacklogLogger backlogLogger;
+	private final WorkerLogPolicy logPolicy;
+
 	private final OcrFailureDecider failureDecider;
-	private final OcrScanPersister ocrScanPersister;
-	private final OcrScanValidator ocrScanValidator;
+	private final OcrScanValidator validator;
+	private final OcrScanPersister persister;
 
 	public OcrScanWorker(
 		Clock clock,
-		org.springframework.transaction.support.TransactionTemplate workerTxTemplate,
+		TransactionTemplate workerTxTemplate,
 		@Qualifier("ocrExecutor") Executor ocrExecutor,
 		ProblemScanJpaRepository problemScanRepository,
-		AssetJpaRepository assetRepository,
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
-		OcrWorkerProperties properties
+		OcrWorkerProperties properties,
+		ScanLockGuard lockGuard,
+		ScanUnlocker unlocker,
+		BacklogLogger backlogLogger,
+		WorkerLogPolicy logPolicy,
+		OcrFailureDecider failureDecider,
+		OcrScanValidator validator,
+		OcrScanPersister persister
 	) {
 		super(clock, workerTxTemplate, ocrExecutor);
 		this.problemScanRepository = problemScanRepository;
-		this.assetRepository = assetRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
 		this.properties = properties;
 
-		this.lockGuard = new ScanLockGuard(problemScanRepository);
-		this.failureDecider = new OcrFailureDecider();
-		this.ocrScanPersister = new OcrScanPersister(workerTxTemplate, problemScanRepository);
-		this.ocrScanValidator = new OcrScanValidator(assetRepository);
+		this.lockGuard = lockGuard;
+		this.unlocker = unlocker;
+		this.backlogLogger = backlogLogger;
+		this.logPolicy = logPolicy;
+
+		this.failureDecider = failureDecider;
+		this.validator = validator;
+		this.persister = persister;
 	}
 
 	@Override
-	protected int claim(
-		LocalDateTime now,
-		LocalDateTime staleBefore,
-		String lockOwner,
-		String lockToken,
-		LocalDateTime lockedAt,
-		int limit
-	) {
+	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
 		return problemScanRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
@@ -87,20 +93,14 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	protected void onNoCandidate(LocalDateTime now) {
 		log.debug("OCR 워커 tick - 처리 대상 없음");
 
-		if (!shouldLogBacklog(now)) return;
-
 		LocalDateTime staleBefore = now.minusSeconds(lockLeaseSeconds());
-		long backlog = problemScanRepository.countOcrBacklog(now, staleBefore);
-
-		log.info("OCR 워커 - 처리 대상 없음 (ocrBacklog={})", backlog);
-		lastBacklogLoggedAt = now;
-	}
-
-	private boolean shouldLogBacklog(LocalDateTime now) {
-		if (lastBacklogLoggedAt == null) return true;
-
-		Duration interval = Duration.ofMinutes(properties.backlogLogMinutes());
-		return !now.isBefore(lastBacklogLoggedAt.plus(interval));
+		backlogLogger.logIfDue(
+			WORKER_KEY,
+			now,
+			properties.backlogLogMinutes(),
+			() -> problemScanRepository.countOcrBacklog(now, staleBefore),
+			(backlog) -> log.info("OCR 워커 - 처리 대상 없음 (ocrBacklog={})", backlog)
+		);
 	}
 
 	@Override
@@ -110,64 +110,40 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 	@Override
 	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
-			return;
-		}
+		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 		try {
-			Asset originalAsset = ocrScanValidator.requireOriginalAsset(scanId);
+			Asset originalAsset = validator.requireOriginalAsset(scanId);
 
 			byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
 			String filename = OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
 
 			OcrResult ocrResult = ocrClient.recognize(originalBytes, filename);
 
-			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
-				return;
-			}
+			// 외부 호출 후 저장 직전 락 재확인
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
-			LocalDateTime completedAt = LocalDateTime.now();
-			ocrScanPersister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, completedAt);
-
+			persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, LocalDateTime.now());
 			log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
 
 		} catch (Exception exception) {
 			FailureDecision decision = failureDecider.decide(exception);
-
-			LocalDateTime now = LocalDateTime.now();
-			ocrScanPersister.persistOcrFailed(scanId, lockOwner, lockToken, decision, now);
+			persister.persistOcrFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
 
 			if (exception instanceof RestClientResponseException restClientResponseException
-				&& restClientResponseException.getRawStatusCode() >= 400
-				&& restClientResponseException.getRawStatusCode() < 500
-			) {
+				&& logPolicy.shouldSuppressStacktrace(restClientResponseException)) {
 				log.warn("OCR 호출 4xx scanId={} reason={} status={}",
-					scanId,
-					decision.reasonCode().code(),
-					restClientResponseException.getRawStatusCode()
+					scanId, logPolicy.reasonCode(decision), restClientResponseException.getRawStatusCode()
 				);
 			} else {
-				log.error("OCR 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().code(), exception);
+				log.error("OCR 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
 			}
 		} finally {
-			unlockBestEffort(scanId, lockOwner, lockToken);
+			try {
+				unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
+			} catch (Exception unlockException) {
+				log.error("OCR unlock 실패 scanId={}", scanId, unlockException);
+			}
 		}
-	}
-
-	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
-		try {
-			org.springframework.transaction.support.TransactionTemplate txTemplate = getWorkerTransactionTemplate();
-			txTemplate.executeWithoutResult(status ->
-				problemScanRepository.unlock(scanId, lockOwner, lockToken)
-			);
-		} catch (Exception unlockException) {
-			log.error("OCR unlock 실패 scanId={}", scanId, unlockException);
-		}
-	}
-
-	private org.springframework.transaction.support.TransactionTemplate getWorkerTransactionTemplate() {
-		// AbstractClaimingScanWorker에서 txTemplate을 노출하지 않는다면,
-		// 기존처럼 workerTxTemplate을 필드로 유지하고 여기서 사용해도 된다.
-		throw new UnsupportedOperationException("workerTxTemplate을 필드로 보관해서 사용하세요.");
 	}
 }

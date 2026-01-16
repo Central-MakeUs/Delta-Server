@@ -11,12 +11,11 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@Component
 public class AiScanPersister {
-
-	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;
-	private static final long MIN_RATE_LIMIT_DELAY_SECONDS = 60L;
 
 	private static final BigDecimal NEEDS_REVIEW_CONFIDENCE_THRESHOLD = BigDecimal.valueOf(0.60);
 
@@ -47,8 +46,8 @@ public class AiScanPersister {
 		workerTransactionTemplate.executeWithoutResult(status -> {
 			if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
 
-			ProblemScan scan = problemScanRepository.findById(scanId)
-				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
+			if (scan == null) return;
 
 			Unit predictedUnit = findUnitOrNull(aiResult.predictedUnitId());
 			ProblemType predictedType = findProblemTypeOrNull(aiResult.predictedTypeId());
@@ -94,6 +93,7 @@ public class AiScanPersister {
 
 				Long delaySeconds = decision.retryAfterSeconds();
 				long delay = delaySeconds == null ? 180L : delaySeconds.longValue();
+
 				scan.scheduleNextRetryForAi(now, delay);
 				return;
 			}
@@ -102,8 +102,6 @@ public class AiScanPersister {
 			scan.scheduleNextRetryForAi(now);
 		});
 	}
-
-
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
 		Integer exists = problemScanRepository.existsLockedBy(scanId, lockOwner, lockToken);
@@ -131,12 +129,5 @@ public class AiScanPersister {
 	private boolean shouldNeedsReview(Unit predictedUnit, ProblemType predictedType, BigDecimal confidence) {
 		if (predictedUnit == null || predictedType == null) return true;
 		return confidence.compareTo(NEEDS_REVIEW_CONFIDENCE_THRESHOLD) < 0;
-	}
-
-	private long computeRateLimitDelaySeconds(Long retryAfterSeconds) {
-		if (retryAfterSeconds == null || retryAfterSeconds <= 0) {
-			return DEFAULT_RATE_LIMIT_DELAY_SECONDS;
-		}
-		return Math.max(retryAfterSeconds, MIN_RATE_LIMIT_DELAY_SECONDS);
 	}
 }

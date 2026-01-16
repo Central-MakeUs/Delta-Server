@@ -1,0 +1,29 @@
+package cmc.delta.domain.problem.application.worker.support.lock;
+
+import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
+
+@Component
+public class ScanUnlocker {
+
+	private final TransactionTemplate workerTransactionTemplate;
+	private final ProblemScanJpaRepository problemScanRepository;
+
+	public ScanUnlocker(
+		TransactionTemplate workerTransactionTemplate,
+		ProblemScanJpaRepository problemScanRepository
+	) {
+		this.workerTransactionTemplate = workerTransactionTemplate;
+		this.problemScanRepository = problemScanRepository;
+	}
+
+	public void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
+		try {
+			workerTransactionTemplate.executeWithoutResult(status ->
+				problemScanRepository.unlock(scanId, lockOwner, lockToken)
+			);
+		} catch (Exception unlockException) {
+		}
+	}
+}

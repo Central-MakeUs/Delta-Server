@@ -3,9 +3,11 @@ package cmc.delta.domain.problem.application.worker.support.failure;
 import cmc.delta.domain.problem.application.worker.exception.ProblemScanWorkerException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
+@Component
 public class AiFailureDecider {
 
 	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;

@@ -4,7 +4,9 @@ import cmc.delta.domain.problem.application.worker.exception.OriginalAssetNotFou
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
 import java.util.Optional;
+import org.springframework.stereotype.Component;
 
+@Component
 public class OcrScanValidator {
 
 	private final AssetJpaRepository assetRepository;

@@ -2,7 +2,9 @@ package cmc.delta.domain.problem.application.worker.support.validation;
 
 import cmc.delta.domain.problem.application.worker.exception.OcrTextEmptyException;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AiScanValidator {
 
 	private static final int OCR_TEXT_MAX_CHARS = 3000;
@@ -14,7 +16,6 @@ public class AiScanValidator {
 		if (normalizedOcrText.isBlank()) {
 			throw new OcrTextEmptyException(scanId);
 		}
-
 		return new AiValidatedInput(userId, normalizedOcrText);
 	}
 

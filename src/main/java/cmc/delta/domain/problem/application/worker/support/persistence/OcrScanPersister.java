@@ -5,8 +5,10 @@ import cmc.delta.domain.problem.application.worker.support.failure.FailureDecisi
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.LocalDateTime;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+@Component
 public class OcrScanPersister {
 
 	private final TransactionTemplate workerTransactionTemplate;
@@ -30,8 +32,8 @@ public class OcrScanPersister {
 		workerTransactionTemplate.executeWithoutResult(status -> {
 			if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
 
-			ProblemScan scan = problemScanRepository.findById(scanId)
-				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
+			if (scan == null) return;
 
 			scan.markOcrSucceeded(ocrResult.plainText(), ocrResult.rawJson(), completedAt);
 		});
@@ -61,7 +63,6 @@ public class OcrScanPersister {
 			scan.scheduleNextRetryForOcr(now);
 		});
 	}
-
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
 		Integer exists = problemScanRepository.existsLockedBy(scanId, lockOwner, lockToken);
