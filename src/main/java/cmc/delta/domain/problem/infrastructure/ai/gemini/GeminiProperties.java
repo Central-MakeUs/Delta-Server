@@ -10,6 +10,6 @@ record GeminiProperties(
 ) {
 	public GeminiProperties {
 		if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://generativelanguage.googleapis.com";
-		if (model == null || model.isBlank()) model = "gemini-2.0-flash";
+		if (model == null || model.isBlank()) model = "gemini-2.5-flash";
 	}
 }
