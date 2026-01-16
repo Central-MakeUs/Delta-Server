@@ -30,8 +30,14 @@ public enum ErrorCode {
 
 	// USER
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.", LogLevel.WARN),
-	USER_WITHDRAWN(HttpStatus.FORBIDDEN, "USER_002", "탈퇴한 사용자입니다.", LogLevel.WARN);
+	USER_WITHDRAWN(HttpStatus.FORBIDDEN, "USER_002", "탈퇴한 사용자입니다.", LogLevel.WARN),
 
+	// PROBLEM
+	PROBLEM_SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_001", "스캔을 찾을 수 없습니다.", LogLevel.WARN),
+	PROBLEM_ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_002", "원본 이미지를 찾을 수 없습니다.", LogLevel.WARN),
+	PROBLEM_SCAN_FORBIDDEN(HttpStatus.FORBIDDEN, "PROB_003", "해당 스캔에 접근할 수 없습니다.", LogLevel.WARN),
+	OCR_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_010", "OCR 처리에 실패했습니다.", LogLevel.ERROR),
+	AI_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_020", "AI 처리에 실패했습니다.", LogLevel.ERROR);
 
 	private final HttpStatus status;
 	private final String code;

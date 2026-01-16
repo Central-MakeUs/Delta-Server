@@ -38,3 +38,20 @@ oauth:
     redirect-uri: ${KAKAO_REDIRECT_URI}
     connect-timeout-ms: 2000
     read-timeout-ms: 4000
+
+
+worker:
+  ocr:
+    fixed-delay-ms: ${WORKER_OCR_FIXED_DELAY_MS:2000}
+    batch-size: ${WORKER_OCR_BATCH_SIZE:10}
+    lock-lease-seconds: ${WORKER_OCR_LOCK_LEASE_SECONDS:600}
+    concurrency: ${WORKER_OCR_CONCURRENCY:5}
+    backlog-log-minutes: ${WORKER_OCR_BACKLOG_LOG_MINUTES:7}
+
+  ai:
+    fixed-delay-ms: ${WORKER_AI_FIXED_DELAY_MS:2000}
+    batch-size: ${WORKER_AI_BATCH_SIZE:5}
+    lock-lease-seconds: ${WORKER_AI_LOCK_LEASE_SECONDS:600}
+    concurrency: ${WORKER_AI_CONCURRENCY:3}
+    backlog-log-minutes: ${WORKER_AI_BACKLOG_LOG_MINUTES:7}
+
