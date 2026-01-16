@@ -9,6 +9,10 @@ import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumPro
 import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
 import cmc.delta.domain.problem.application.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.application.worker.support.failure.AiFailureDecider;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.worker.support.failure.ScanFailReasonCode;
+import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.math.BigDecimal;
@@ -21,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
@@ -40,6 +43,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private LocalDateTime lastBacklogLoggedAt;
 	private final AiWorkerProperties props;
 
+	private final ScanLockGuard lockGuard;
+	private final AiFailureDecider failureDecider;
+
 	public AiScanWorker(
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
@@ -57,6 +63,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		this.typeRepository = typeRepository;
 		this.aiClient = aiClient;
 		this.props = props;
+
+		this.lockGuard = new ScanLockGuard(scanRepository);
+		this.failureDecider = new AiFailureDecider();
 	}
 
 	@Override
@@ -96,7 +105,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	@Override
 	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!isStillLockedByMe(scanId, lockOwner, lockToken)) return;
+		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 		try {
 			ProblemScan scan = loadScanOrThrow(scanId);
@@ -104,13 +113,13 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 			String ocrText = normalizeOcrText(scan.getOcrPlainText());
 			if (ocrText.isBlank()) throw new IllegalStateException("OCR_TEXT_EMPTY");
 
-			Long userId = scan.getUser().getId(); // 프록시는 id 접근 가능(초기화 없이도 됨)
+			Long userId = scan.getUser().getId();
 
 			AiCurriculumPrompt prompt = buildPrompt(userId, ocrText);
 			AiCurriculumResult ai = aiClient.classifyCurriculum(prompt);
 
-			// 외부 호출 후 저장 직전에 lock 재확인(lease 만료/steal 방지)
-			if (!isStillLockedByMe(scanId, lockOwner, lockToken)) return;
+			// 외부 호출 후 저장 직전 락 재확인
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 			Unit predictedUnit = findUnitOrNull(ai.predictedUnitId());
 			ProblemType predictedType = findTypeOrNull(ai.predictedTypeId());
@@ -140,31 +149,21 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception e) {
-		String reason = classifyFailureReason(e);
+		FailureDecision decision = failureDecider.decide(e);
 
-		// OCR_TEXT_EMPTY는 AI를 재시도해봐야 의미가 거의 없어서 즉시 터미널 처리 권장
-		if ("OCR_TEXT_EMPTY".equals(reason)) {
-			saveAiFailure(scanId, lockOwner, lockToken, reason, false, null);
-			log.warn("AI 처리 불가 scanId={} reason={}", scanId, reason);
+		if (decision.reasonCode() == ScanFailReasonCode.OCR_TEXT_EMPTY) {
+			saveAiFailure(scanId, lockOwner, lockToken, decision);
+			log.warn("AI 처리 불가 scanId={} reason={}", scanId, decision.reasonCode().name());
 			return;
 		}
 
-		boolean retryable = isRetryable(e);
-		Long retryAfterSec = extractRetryAfterSecondsIf429(e);
-		saveAiFailure(scanId, lockOwner, lockToken, reason, retryable, retryAfterSec);
+		saveAiFailure(scanId, lockOwner, lockToken, decision);
 
 		if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() >= 400 && rre.getRawStatusCode() < 500) {
-			log.warn("AI 호출 4xx scanId={} reason={} status={}", scanId, reason, rre.getRawStatusCode());
+			log.warn("AI 호출 4xx scanId={} reason={} status={}", scanId, decision.reasonCode().name(), rre.getRawStatusCode());
 		} else {
-			log.error("AI 처리 실패 scanId={} reason={}", scanId, reason, e);
+			log.error("AI 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().name(), e);
 		}
-	}
-
-	// 락 소유권(best-effort) 확인: lease 만료/steal 시 외부 호출 비용을 줄이기 위한 가드.
-	// 외부 API 호출은 DB 트랜잭션으로 감싸지 않으며, 정합성은 저장 직전 existsLockedBy 재확인으로 보장한다.
-	private boolean isStillLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		Integer exists = scanRepository.existsLockedBy(scanId, lockOwner, lockToken);
-		return exists != null;
 	}
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
@@ -222,7 +221,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		String unitCandidatesJson, String typeCandidatesJson, String aiDraftJson
 	) {
 		template.executeWithoutResult(status -> {
-			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 			ProblemScan scan = loadScanOrThrow(scanId);
 
@@ -234,32 +233,28 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		});
 	}
 
-	private void saveAiFailure(
-		Long scanId, String lockOwner, String lockToken,
-		String reason, boolean retryable, Long retryAfterSec
-	) {
+	private void saveAiFailure(Long scanId, String lockOwner, String lockToken, FailureDecision decision) {
 		template.executeWithoutResult(status -> {
-			if (scanRepository.existsLockedBy(scanId, lockOwner, lockToken) == null) return;
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
-			// non-retryable은 즉시 FAILED(무한 루프 방지)
-			if (!retryable) {
+			String reason = decision.reasonCode().name();
+
+			if (!decision.retryable()) {
 				scan.markFailed(reason);
 				return;
 			}
 
-			// 429는 별도 backoff + rate-limit max attempts
-			if ("AI_RATE_LIMIT".equals(reason)) {
+			if (decision.reasonCode() == ScanFailReasonCode.AI_RATE_LIMIT) {
 				scan.markAiRateLimited(reason);
 
-				long delay = computeRateLimitDelaySeconds(retryAfterSec);
+				long delay = computeRateLimitDelaySeconds(decision.retryAfterSeconds());
 				scan.scheduleNextRetryForAi(LocalDateTime.now(), delay);
 				return;
 			}
 
-			// 그 외 retryable은 기존 정책(3회 후 FAILED)
 			scan.markAiFailed(reason);
 			scan.scheduleNextRetryForAi(LocalDateTime.now());
 		});
@@ -268,21 +263,6 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private long computeRateLimitDelaySeconds(Long retryAfterSec) {
 		if (retryAfterSec == null || retryAfterSec <= 0) return DEFAULT_RATE_LIMIT_DELAY_SECONDS;
 		return Math.max(retryAfterSec, MIN_RATE_LIMIT_DELAY_SECONDS);
-	}
-
-	private Long extractRetryAfterSecondsIf429(Exception e) {
-		if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() == 429) {
-			var headers = rre.getResponseHeaders();
-			if (headers == null) return null;
-			String v = headers.getFirst("Retry-After");
-			if (v == null || v.isBlank()) return null;
-			try {
-				return Long.parseLong(v.trim());
-			} catch (NumberFormatException ignore) {
-				return null;
-			}
-		}
-		return null;
 	}
 
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
@@ -296,45 +276,5 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private boolean shouldNeedsReview(Unit unit, ProblemType type, BigDecimal confidence) {
 		if (unit == null || type == null) return true;
 		return confidence.compareTo(BigDecimal.valueOf(0.60)) < 0;
-	}
-
-	private boolean isRetryable(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			// 이 둘은 재시도해도 의미 거의 없음
-			if ("OCR_TEXT_EMPTY".equals(msg)) return false;
-			if ("SCAN_NOT_FOUND".equals(msg)) return false;
-			return false;
-		}
-
-		if (e instanceof ResourceAccessException) return true;
-
-		if (e instanceof RestClientResponseException rre) {
-			int s = rre.getRawStatusCode();
-			if (s == 429) return true;
-			if (s == 408) return true;
-			if (s >= 500) return true;
-			return false;
-		}
-
-		return true;
-	}
-
-	private String classifyFailureReason(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("OCR_TEXT_EMPTY".equals(msg)) return "OCR_TEXT_EMPTY";
-			if ("SCAN_NOT_FOUND".equals(msg)) return "SCAN_NOT_FOUND";
-			return "ILLEGAL_STATE";
-		}
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return "AI_RATE_LIMIT";
-			if (status >= 400 && status < 500) return "AI_CLIENT_4XX";
-			if (status >= 500) return "AI_CLIENT_5XX";
-			return "AI_CLIENT_ERROR";
-		}
-		if (e instanceof ResourceAccessException) return "AI_NETWORK_ERROR";
-		return "AI_FAILED";
 	}
 }

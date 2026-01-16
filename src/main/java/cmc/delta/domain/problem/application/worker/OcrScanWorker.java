@@ -5,6 +5,9 @@ import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
 import cmc.delta.domain.problem.application.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
+import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
@@ -18,12 +21,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
 @Component
 public class OcrScanWorker extends AbstractClaimingScanWorker {
+
+	private static final String OCR_FILENAME_PREFIX = "scan-";
+	private static final String OCR_FILENAME_SUFFIX = ".jpg";
 
 	private final ProblemScanJpaRepository scanRepository;
 	private final AssetJpaRepository assetRepository;
@@ -32,6 +37,9 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private final TransactionTemplate template;
 	private LocalDateTime lastBacklogLoggedAt;
 	private final OcrWorkerProperties props;
+
+	private final ScanLockGuard lockGuard;
+	private final OcrFailureDecider failureDecider;
 
 	public OcrScanWorker(
 		Clock clock,
@@ -50,6 +58,9 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
 		this.props = props;
+
+		this.lockGuard = new ScanLockGuard(scanRepository);
+		this.failureDecider = new OcrFailureDecider();
 	}
 
 	@Override
@@ -89,8 +100,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 	@Override
 	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		// 락을 잃었으면(lease 만료 후 다른 워커가 가져감) 외부호출(비용)부터 막기
-		if (!isStillLockedByMe(scanId, lockOwner, lockToken)) {
+		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
 			return;
 		}
 
@@ -99,51 +109,49 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 				.orElseThrow(() -> new IllegalStateException("ASSET_NOT_FOUND"));
 
 			byte[] bytes = storageReader.readBytes(original.getStorageKey());
-			OcrResult result = ocrClient.recognize(bytes, "scan-" + scanId + ".jpg");
+			String filename = OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
 
-			saveOcrSuccess(scanId, result);
+			OcrResult result = ocrClient.recognize(bytes, filename);
+
+			saveOcrSuccess(scanId, lockOwner, lockToken, result);
 
 			log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
 		} catch (Exception e) {
-			String reason = classifyFailureReason(e);
+			FailureDecision decision = failureDecider.decide(e);
+			saveOcrFailure(scanId, lockOwner, lockToken, decision);
 
-			boolean retryable = isRetryable(e);
-			saveOcrFailure(scanId, reason, retryable);
-
-			// 4xx는 스택 찍지 말고(노이즈/민감정보 위험), 5xx/네트워크만 스택 포함
 			if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() >= 400 && rre.getRawStatusCode() < 500) {
-				log.warn("OCR 호출 4xx scanId={} reason={} status={}", scanId, reason, rre.getRawStatusCode());
+				log.warn("OCR 호출 4xx scanId={} reason={} status={}", scanId, decision.reasonCode().name(), rre.getRawStatusCode());
 			} else {
-				log.error("OCR 처리 실패 scanId={} reason={}", scanId, reason, e);
+				log.error("OCR 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().name(), e);
 			}
 		} finally {
 			unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 
-	// 락 소유권(best-effort) 확인: lease 만료/steal 시 외부 호출 비용을 줄이기 위한 가드.
-	// 외부 API 호출은 DB 트랜잭션으로 감싸지 않으며, 정합성은 저장 직전 existsLockedBy 재확인으로 보장한다.
-	private boolean isStillLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		Integer exists = scanRepository.existsLockedBy(scanId, lockOwner, lockToken);
-		return exists != null;
-	}
-
-	private void saveOcrSuccess(Long scanId, OcrResult result) {
+	private void saveOcrSuccess(Long scanId, String lockOwner, String lockToken, OcrResult result) {
 		template.executeWithoutResult(status -> {
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
+
 			ProblemScan scan = scanRepository.findById(scanId)
 				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
+
 			scan.markOcrSucceeded(result.plainText(), result.rawJson(), LocalDateTime.now());
 		});
 	}
 
-	private void saveOcrFailure(Long scanId, String reason, boolean retryable) {
+	private void saveOcrFailure(Long scanId, String lockOwner, String lockToken, FailureDecision decision) {
 		template.executeWithoutResult(status -> {
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
+
 			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
+			String reason = decision.reasonCode().name();
 			scan.markOcrFailed(reason);
 
-			if (!retryable) {
+			if (!decision.retryable()) {
 				scan.markFailed(reason);
 				return;
 			}
@@ -155,45 +163,8 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
 			template.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
-
 		} catch (Exception unlockEx) {
 			log.error("OCR unlock 실패 scanId={}", scanId, unlockEx);
 		}
-	}
-
-	private boolean isRetryable(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("ASSET_NOT_FOUND".equals(msg)) return false;
-			if ("SCAN_NOT_FOUND".equals(msg)) return false;
-			return false; // 내부 상태/데이터 이상은 재시도 X로 보수적으로
-		}
-
-		if (e instanceof ResourceAccessException) return true;
-		if (e instanceof RestClientResponseException rre) {
-			int s = rre.getRawStatusCode();
-			if (s == 429) return true;
-			if (s >= 500) return true;
-			return false;
-		}
-		return true;
-	}
-
-	private String classifyFailureReason(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("ASSET_NOT_FOUND".equals(msg)) return "ASSET_NOT_FOUND";
-			if ("SCAN_NOT_FOUND".equals(msg)) return "SCAN_NOT_FOUND";
-			return "ILLEGAL_STATE";
-		}
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return "OCR_RATE_LIMIT";
-			if (status >= 400 && status < 500) return "OCR_CLIENT_4XX";
-			if (status >= 500) return "OCR_CLIENT_5XX";
-			return "OCR_CLIENT_ERROR";
-		}
-		if (e instanceof ResourceAccessException) return "OCR_NETWORK_ERROR";
-		return "OCR_FAILED";
 	}
 }
