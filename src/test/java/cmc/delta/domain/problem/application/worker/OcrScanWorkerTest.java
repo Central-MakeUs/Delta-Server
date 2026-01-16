@@ -157,6 +157,29 @@ class OcrScanWorkerTest {
 		assertThat(scan.getNextRetryAt()).isNull();
 	}
 
+	@Test
+	@DisplayName("OCR 워커는 외부 호출 후 락을 잃으면 결과 저장을 수행하지 않는다.")
+	void lostLock_beforeSave_skipsSave() {
+		// given
+		Long scanId = 1L;
+		ProblemScan scan = givenScan(scanId, uploaded(user(10L)));
+
+		when(d.scanRepo().existsLockedBy(scanId, OWNER, TOKEN))
+			.thenReturn(1)     // 시작 시점: 내 락
+			.thenReturn(null); // 저장 직전: 락 steal
+
+		givenOriginalBytes(scanId, "s3/key", new byte[] {1});
+		givenOcrReturns("plain", "{\"ok\":true}");
+
+		// when
+		run(scanId);
+
+		// then: 저장이 스킵되므로 UPLOADED 유지
+		assertThat(scan.getStatus()).isEqualTo(ScanStatus.UPLOADED);
+		assertThat(scan.getOcrPlainText()).isNull();
+		assertThat(scan.getOcrRawJson()).isNull();
+	}
+
 	private void run(Long scanId) {
 		sut.processOne(scanId, OWNER, TOKEN, LocalDateTime.now());
 	}
