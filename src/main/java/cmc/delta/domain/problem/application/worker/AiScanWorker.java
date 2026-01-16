@@ -65,7 +65,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		AiCurriculumPromptBuilder promptBuilder,
 		AiScanPersister persister
 	) {
-		super(clock, workerTxTemplate, aiExecutor);
+		super(clock, workerTxTemplate, aiExecutor,"ai");
 		this.problemScanRepository = problemScanRepository;
 		this.aiClient = aiClient;
 		this.properties = properties;

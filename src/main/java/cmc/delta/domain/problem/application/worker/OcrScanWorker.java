@@ -63,7 +63,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		OcrScanValidator validator,
 		OcrScanPersister persister
 	) {
-		super(clock, workerTxTemplate, ocrExecutor);
+		super(clock, workerTxTemplate, ocrExecutor,"ocr");
 		this.problemScanRepository = problemScanRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
