@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.api.scan;
 
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanCreateResponse;
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.query.ProblemScanQueryService;
 import cmc.delta.domain.problem.application.command.ProblemScanService;
 import cmc.delta.global.api.response.ApiResponse;
@@ -61,6 +62,25 @@ public class ProblemScanController {
 		@PathVariable Long scanId
 	) {
 		ProblemScanDetailResponse data = problemScanQueryService.getDetail(principal.userId(), scanId);
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "문제 스캔 요약 조회 (앱용: 이미지 + 과목/단원/유형)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_SCAN_NOT_FOUND,
+		ErrorCode.PROBLEM_ASSET_NOT_FOUND,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/{scanId}/summary")
+	public ApiResponse<ProblemScanSummaryResponse> getScanSummary(
+		@CurrentUser UserPrincipal principal,
+		@PathVariable Long scanId
+	) {
+		ProblemScanSummaryResponse data = problemScanQueryService.getSummary(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }
