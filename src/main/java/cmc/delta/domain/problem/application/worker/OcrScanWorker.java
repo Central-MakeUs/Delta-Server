@@ -121,6 +121,8 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		}
 	}
 
+	// 락 소유권(best-effort) 확인: lease 만료/steal 시 외부 호출 비용을 줄이기 위한 가드.
+	// 외부 API 호출은 DB 트랜잭션으로 감싸지 않으며, 정합성은 저장 직전 existsLockedBy 재확인으로 보장한다.
 	private boolean isStillLockedByMe(Long scanId, String lockOwner, String lockToken) {
 		Integer exists = scanRepository.existsLockedBy(scanId, lockOwner, lockToken);
 		return exists != null;
