@@ -216,12 +216,15 @@ public class ProblemScan extends BaseTimeEntity {
 	}
 
 	public void scheduleNextRetryForOcr(LocalDateTime now) {
+		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount;
+		scheduleNextRetryForOcr(now, delaySeconds);
+	}
+
+	public void scheduleNextRetryForOcr(LocalDateTime now, long delaySeconds) {
 		if (this.ocrAttemptCount >= OCR_MAX_ATTEMPTS) {
 			failTerminal(this.failReason);
 			return;
 		}
-
-		long delaySeconds = OCR_BACKOFF_SECONDS * this.ocrAttemptCount;
 		scheduleRetry(now, delaySeconds, ScanStatus.UPLOADED);
 	}
 
@@ -235,11 +238,6 @@ public class ProblemScan extends BaseTimeEntity {
 		scheduleRetry(now, delaySeconds, ScanStatus.OCR_DONE);
 	}
 
-	@Deprecated
-	public void markAiDone(LocalDateTime completedAt) {
-		this.aiCompletedAt = completedAt;
-		this.status = ScanStatus.AI_DONE;
-	}
 
 	public void retryFailed(LocalDateTime now) {
 		this.failReason = null;
@@ -270,10 +268,6 @@ public class ProblemScan extends BaseTimeEntity {
 			return;
 		}
 		scheduleRetry(now, delaySeconds, ScanStatus.OCR_DONE);
-	}
-
-	public void scheduleNextRetryForOcr(LocalDateTime now, long delaySeconds) {
-		scheduleRetry(now, delaySeconds, ScanStatus.UPLOADED);
 	}
 
 	public void markFailed(String reason) {
