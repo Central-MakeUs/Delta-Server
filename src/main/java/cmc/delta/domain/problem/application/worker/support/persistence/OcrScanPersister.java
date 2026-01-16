@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.application.worker.support.persistence;
 
 import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.LocalDateTime;
@@ -57,6 +58,13 @@ public class OcrScanPersister {
 
 			if (!decision.retryable()) {
 				scan.markFailed(reason);
+				return;
+			}
+
+			if (decision.reasonCode() == FailureReason.OCR_RATE_LIMIT) {
+				Long delaySeconds = decision.retryAfterSeconds();
+				long delay = (delaySeconds == null) ? 180L : delaySeconds.longValue();
+				scan.scheduleNextRetryForOcr(now, delay);
 				return;
 			}
 
