@@ -65,7 +65,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		AiCurriculumPromptBuilder promptBuilder,
 		AiScanPersister persister
 	) {
-		super(clock, workerTxTemplate, aiExecutor,"ai");
+		super(clock, workerTxTemplate, aiExecutor, "ai");
 		this.problemScanRepository = problemScanRepository;
 		this.aiClient = aiClient;
 		this.properties = properties;
@@ -140,11 +140,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 				log.error("AI 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
 			}
 		} finally {
-			try {
-				unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
-			} catch (Exception unlockException) {
-				log.error("AI unlock 실패 scanId={}", scanId, unlockException);
-			}
+			unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 

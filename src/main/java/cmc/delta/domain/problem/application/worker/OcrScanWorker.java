@@ -63,7 +63,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		OcrScanValidator validator,
 		OcrScanPersister persister
 	) {
-		super(clock, workerTxTemplate, ocrExecutor,"ocr");
+		super(clock, workerTxTemplate, ocrExecutor, "ocr");
 		this.problemScanRepository = problemScanRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
@@ -139,11 +139,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 				log.error("OCR 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
 			}
 		} finally {
-			try {
-				unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
-			} catch (Exception unlockException) {
-				log.error("OCR unlock 실패 scanId={}", scanId, unlockException);
-			}
+			unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 }
