@@ -1,15 +1,15 @@
 package cmc.delta.domain.problem.application.worker;
 
-import cmc.delta.domain.problem.application.scan.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
-import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
+import cmc.delta.domain.problem.application.scan.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.application.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.application.worker.support.AbstractClaimingScanWorker;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
 import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
+import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.Clock;
@@ -30,47 +30,57 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private static final String OCR_FILENAME_PREFIX = "scan-";
 	private static final String OCR_FILENAME_SUFFIX = ".jpg";
 
-	private final ProblemScanJpaRepository scanRepository;
+	private final ProblemScanJpaRepository problemScanRepository;
 	private final AssetJpaRepository assetRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
-	private final TransactionTemplate template;
+	private final TransactionTemplate workerTransactionTemplate;
+	private final OcrWorkerProperties properties;
+
 	private LocalDateTime lastBacklogLoggedAt;
-	private final OcrWorkerProperties props;
 
 	private final ScanLockGuard lockGuard;
 	private final OcrFailureDecider failureDecider;
+	private final OcrScanPersister ocrScanPersister;
 
 	public OcrScanWorker(
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
 		@Qualifier("ocrExecutor") Executor ocrExecutor,
-		ProblemScanJpaRepository scanRepository,
+		ProblemScanJpaRepository problemScanRepository,
 		AssetJpaRepository assetRepository,
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
-		OcrWorkerProperties props
+		OcrWorkerProperties properties
 	) {
 		super(clock, workerTxTemplate, ocrExecutor);
-		this.template = workerTxTemplate;
-		this.scanRepository = scanRepository;
+		this.workerTransactionTemplate = workerTxTemplate;
+		this.problemScanRepository = problemScanRepository;
 		this.assetRepository = assetRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
-		this.props = props;
+		this.properties = properties;
 
-		this.lockGuard = new ScanLockGuard(scanRepository);
+		this.lockGuard = new ScanLockGuard(problemScanRepository);
 		this.failureDecider = new OcrFailureDecider();
+		this.ocrScanPersister = new OcrScanPersister(workerTxTemplate, problemScanRepository);
 	}
 
 	@Override
-	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
-		return scanRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
+	protected int claim(
+		LocalDateTime now,
+		LocalDateTime staleBefore,
+		String lockOwner,
+		String lockToken,
+		LocalDateTime lockedAt,
+		int limit
+	) {
+		return problemScanRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return scanRepository.findClaimedOcrIds(lockOwner, lockToken, limit);
+		return problemScanRepository.findClaimedOcrIds(lockOwner, lockToken, limit);
 	}
 
 	@Override
@@ -80,7 +90,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		if (!shouldLogBacklog(now)) return;
 
 		LocalDateTime staleBefore = now.minusSeconds(lockLeaseSeconds());
-		long backlog = scanRepository.countOcrBacklog(now, staleBefore);
+		long backlog = problemScanRepository.countOcrBacklog(now, staleBefore);
 
 		log.info("OCR 워커 - 처리 대상 없음 (ocrBacklog={})", backlog);
 		lastBacklogLoggedAt = now;
@@ -89,7 +99,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private boolean shouldLogBacklog(LocalDateTime now) {
 		if (lastBacklogLoggedAt == null) return true;
 
-		Duration interval = Duration.ofMinutes(props.backlogLogMinutes());
+		Duration interval = Duration.ofMinutes(properties.backlogLogMinutes());
 		return !now.isBefore(lastBacklogLoggedAt.plus(interval));
 	}
 
@@ -105,66 +115,57 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		}
 
 		try {
-			Asset original = assetRepository.findOriginalByScanId(scanId)
+			Asset originalAsset = assetRepository.findOriginalByScanId(scanId)
 				.orElseThrow(() -> new IllegalStateException("ASSET_NOT_FOUND"));
 
-			byte[] bytes = storageReader.readBytes(original.getStorageKey());
+			byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
 			String filename = OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
 
-			OcrResult result = ocrClient.recognize(bytes, filename);
+			OcrResult ocrResult = ocrClient.recognize(originalBytes, filename);
 
-			saveOcrSuccess(scanId, lockOwner, lockToken, result);
+			// 외부 호출 후 저장 직전 락 재확인 (트랜잭션 열기 전에 비용 방지)
+			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
+				return;
+			}
+
+			LocalDateTime completedAt = LocalDateTime.now();
+			ocrScanPersister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, completedAt);
 
 			log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
-		} catch (Exception e) {
-			FailureDecision decision = failureDecider.decide(e);
-			saveOcrFailure(scanId, lockOwner, lockToken, decision);
 
-			if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() >= 400 && rre.getRawStatusCode() < 500) {
-				log.warn("OCR 호출 4xx scanId={} reason={} status={}", scanId, decision.reasonCode().name(), rre.getRawStatusCode());
+		} catch (Exception exception) {
+			FailureDecision decision = failureDecider.decide(exception);
+
+			String failureReason = decision.reasonCode().name();
+			boolean retryable = decision.retryable();
+
+			LocalDateTime now = LocalDateTime.now();
+			ocrScanPersister.persistOcrFailed(scanId, lockOwner, lockToken, failureReason, retryable, now);
+
+			if (exception instanceof RestClientResponseException restClientResponseException
+				&& restClientResponseException.getRawStatusCode() >= 400
+				&& restClientResponseException.getRawStatusCode() < 500
+			) {
+				log.warn("OCR 호출 4xx scanId={} reason={} status={}",
+					scanId,
+					failureReason,
+					restClientResponseException.getRawStatusCode()
+				);
 			} else {
-				log.error("OCR 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().name(), e);
+				log.error("OCR 처리 실패 scanId={} reason={}", scanId, failureReason, exception);
 			}
 		} finally {
 			unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 
-	private void saveOcrSuccess(Long scanId, String lockOwner, String lockToken, OcrResult result) {
-		template.executeWithoutResult(status -> {
-			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
-
-			ProblemScan scan = scanRepository.findById(scanId)
-				.orElseThrow(() -> new IllegalStateException("SCAN_NOT_FOUND"));
-
-			scan.markOcrSucceeded(result.plainText(), result.rawJson(), LocalDateTime.now());
-		});
-	}
-
-	private void saveOcrFailure(Long scanId, String lockOwner, String lockToken, FailureDecision decision) {
-		template.executeWithoutResult(status -> {
-			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
-
-			ProblemScan scan = scanRepository.findById(scanId).orElse(null);
-			if (scan == null) return;
-
-			String reason = decision.reasonCode().name();
-			scan.markOcrFailed(reason);
-
-			if (!decision.retryable()) {
-				scan.markFailed(reason);
-				return;
-			}
-
-			scan.scheduleNextRetryForOcr(LocalDateTime.now());
-		});
-	}
-
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			template.executeWithoutResult(status -> scanRepository.unlock(scanId, lockOwner, lockToken));
-		} catch (Exception unlockEx) {
-			log.error("OCR unlock 실패 scanId={}", scanId, unlockEx);
+			workerTransactionTemplate.executeWithoutResult(status ->
+				problemScanRepository.unlock(scanId, lockOwner, lockToken)
+			);
+		} catch (Exception unlockException) {
+			log.error("OCR unlock 실패 scanId={}", scanId, unlockException);
 		}
 	}
 }
