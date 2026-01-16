@@ -20,7 +20,6 @@ public class CandidateJsonParser {
 		try {
 			return objectMapper.readValue(json, new TypeReference<List<CandidateIdScore>>() {});
 		} catch (Exception e) {
-			// 후보 JSON이 깨져도 summary가 죽지 않게(운영 안정성)
 			return Collections.emptyList();
 		}
 	}

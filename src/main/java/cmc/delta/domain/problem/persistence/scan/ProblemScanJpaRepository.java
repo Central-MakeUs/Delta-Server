@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 나중에 상황을 보고 레포지토리를 쪼개거나,
  * DSL 사용 예정
  */
-public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long> {
+public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long>,ProblemScanSummaryRepository {
 
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
