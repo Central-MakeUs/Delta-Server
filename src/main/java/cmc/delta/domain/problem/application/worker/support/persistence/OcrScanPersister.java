@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.application.worker.support.persistence;
 
 import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.LocalDateTime;
@@ -40,8 +41,7 @@ public class OcrScanPersister {
 		Long scanId,
 		String lockOwner,
 		String lockToken,
-		String failureReason,
-		boolean retryable,
+		FailureDecision decision,
 		LocalDateTime now
 	) {
 		workerTransactionTemplate.executeWithoutResult(status -> {
@@ -50,16 +50,18 @@ public class OcrScanPersister {
 			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
-			scan.markOcrFailed(failureReason);
+			String reason = decision.reasonCode().code();
+			scan.markOcrFailed(reason);
 
-			if (!retryable) {
-				scan.markFailed(failureReason);
+			if (!decision.retryable()) {
+				scan.markFailed(reason);
 				return;
 			}
 
 			scan.scheduleNextRetryForOcr(now);
 		});
 	}
+
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
 		Integer exists = problemScanRepository.existsLockedBy(scanId, lockOwner, lockToken);

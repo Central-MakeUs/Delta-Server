@@ -11,6 +11,8 @@ import cmc.delta.domain.problem.application.worker.support.failure.AiFailureDeci
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.application.worker.support.persistence.AiScanPersister;
+import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator;
+import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator.AiValidatedInput;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.time.Clock;
@@ -21,24 +23,17 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
 @Component
 public class AiScanWorker extends AbstractClaimingScanWorker {
 
-	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;
-	private static final long MIN_RATE_LIMIT_DELAY_SECONDS = 60L;
-	private static final int OCR_TEXT_MAX_CHARS = 3000;
-
 	private final ProblemScanJpaRepository problemScanRepository;
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository problemTypeRepository;
 	private final AiClient aiClient;
-	private final TransactionTemplate workerTransactionTemplate;
 	private final AiWorkerProperties properties;
 
 	private LocalDateTime lastBacklogLoggedAt;
@@ -46,10 +41,13 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private final ScanLockGuard lockGuard;
 	private final AiFailureDecider failureDecider;
 	private final AiScanPersister aiScanPersister;
+	private final AiScanValidator aiScanValidator;
+
+	private final org.springframework.transaction.support.TransactionTemplate workerTransactionTemplate;
 
 	public AiScanWorker(
 		Clock clock,
-		TransactionTemplate workerTxTemplate,
+		org.springframework.transaction.support.TransactionTemplate workerTxTemplate,
 		@Qualifier("aiExecutor") Executor aiExecutor,
 		ProblemScanJpaRepository problemScanRepository,
 		UnitJpaRepository unitRepository,
@@ -73,6 +71,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 			unitRepository,
 			problemTypeRepository
 		);
+		this.aiScanValidator = new AiScanValidator();
 	}
 
 	@Override
@@ -125,18 +124,11 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 		try {
 			ProblemScan scan = loadScanOrThrow(scanId);
+			AiValidatedInput validatedInput = aiScanValidator.validateAndNormalize(scanId, scan);
 
-			String normalizedOcrText = normalizeOcrText(scan.getOcrPlainText());
-			if (normalizedOcrText.isBlank()) {
-				throw new IllegalStateException("OCR_TEXT_EMPTY");
-			}
-
-			Long userId = scan.getUser().getId();
-
-			AiCurriculumPrompt prompt = buildPrompt(userId, normalizedOcrText);
+			AiCurriculumPrompt prompt = buildPrompt(validatedInput.userId(), validatedInput.normalizedOcrText());
 			AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
 
-			// 외부 호출 후 저장 직전 락 재확인
 			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
 				return;
 			}
@@ -147,42 +139,25 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 			log.info("AI 분류 완료 scanId={}", scanId);
 
 		} catch (Exception exception) {
-			handleFailure(scanId, lockOwner, lockToken, exception);
+			FailureDecision decision = failureDecider.decide(exception);
+
+			LocalDateTime now = LocalDateTime.now();
+			aiScanPersister.persistAiFailed(scanId, lockOwner, lockToken, decision, now);
+
+			if (exception instanceof RestClientResponseException restClientResponseException
+				&& restClientResponseException.getRawStatusCode() >= 400
+				&& restClientResponseException.getRawStatusCode() < 500
+			) {
+				log.warn("AI 호출 4xx scanId={} reason={} status={}",
+					scanId,
+					decision.reasonCode().code(),
+					restClientResponseException.getRawStatusCode()
+				);
+			} else {
+				log.error("AI 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().code(), exception);
+			}
 		} finally {
 			unlockBestEffort(scanId, lockOwner, lockToken);
-		}
-	}
-
-	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception exception) {
-		FailureDecision decision = failureDecider.decide(exception);
-
-		String failureReason = decision.reasonCode().name();
-		boolean retryable = decision.retryable();
-
-		Long retryAfterSeconds = extractRetryAfterSecondsIf429(exception);
-
-		LocalDateTime now = LocalDateTime.now();
-		aiScanPersister.persistAiFailed(
-			scanId,
-			lockOwner,
-			lockToken,
-			failureReason,
-			retryable,
-			retryAfterSeconds,
-			now
-		);
-
-		if (exception instanceof RestClientResponseException restClientResponseException
-			&& restClientResponseException.getRawStatusCode() >= 400
-			&& restClientResponseException.getRawStatusCode() < 500
-		) {
-			log.warn("AI 호출 4xx scanId={} reason={} status={}",
-				scanId,
-				failureReason,
-				restClientResponseException.getRawStatusCode()
-			);
-		} else {
-			log.error("AI 처리 실패 scanId={} reason={}", scanId, failureReason, exception);
 		}
 	}
 
@@ -199,18 +174,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	private ProblemScan loadScanOrThrow(Long scanId) {
 		Optional<ProblemScan> optionalScan = problemScanRepository.findById(scanId);
 		if (optionalScan.isEmpty()) {
-			throw new IllegalStateException("SCAN_NOT_FOUND");
+			throw new cmc.delta.domain.problem.application.worker.exception.ProblemScanNotFoundException(scanId);
 		}
 		return optionalScan.get();
-	}
-
-	private String normalizeOcrText(String ocrText) {
-		if (ocrText == null) return "";
-		String normalized = ocrText.replaceAll("\\s+", " ").trim();
-		if (normalized.length() > OCR_TEXT_MAX_CHARS) {
-			normalized = normalized.substring(0, OCR_TEXT_MAX_CHARS);
-		}
-		return normalized;
 	}
 
 	private AiCurriculumPrompt buildPrompt(Long userId, String normalizedOcrText) {
@@ -230,24 +196,5 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 			.toList();
 
 		return new AiCurriculumPrompt(normalizedOcrText, subjectOptions, unitOptions, typeOptions);
-	}
-
-	private Long extractRetryAfterSecondsIf429(Exception exception) {
-		if (exception instanceof RestClientResponseException restClientResponseException
-			&& restClientResponseException.getRawStatusCode() == 429
-		) {
-			HttpHeaders headers = restClientResponseException.getResponseHeaders();
-			if (headers == null) return null;
-
-			String retryAfterValue = headers.getFirst("Retry-After");
-			if (retryAfterValue == null || retryAfterValue.isBlank()) return null;
-
-			try {
-				return Long.parseLong(retryAfterValue.trim());
-			} catch (NumberFormatException ignore) {
-				return null;
-			}
-		}
-		return null;
 	}
 }

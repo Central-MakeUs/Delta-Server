@@ -9,6 +9,7 @@ import cmc.delta.domain.problem.application.worker.support.failure.FailureDecisi
 import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
 import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
+import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
@@ -20,7 +21,6 @@ import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
@@ -34,7 +34,6 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private final AssetJpaRepository assetRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
-	private final TransactionTemplate workerTransactionTemplate;
 	private final OcrWorkerProperties properties;
 
 	private LocalDateTime lastBacklogLoggedAt;
@@ -42,10 +41,11 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private final ScanLockGuard lockGuard;
 	private final OcrFailureDecider failureDecider;
 	private final OcrScanPersister ocrScanPersister;
+	private final OcrScanValidator ocrScanValidator;
 
 	public OcrScanWorker(
 		Clock clock,
-		TransactionTemplate workerTxTemplate,
+		org.springframework.transaction.support.TransactionTemplate workerTxTemplate,
 		@Qualifier("ocrExecutor") Executor ocrExecutor,
 		ProblemScanJpaRepository problemScanRepository,
 		AssetJpaRepository assetRepository,
@@ -54,7 +54,6 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		OcrWorkerProperties properties
 	) {
 		super(clock, workerTxTemplate, ocrExecutor);
-		this.workerTransactionTemplate = workerTxTemplate;
 		this.problemScanRepository = problemScanRepository;
 		this.assetRepository = assetRepository;
 		this.storageReader = storageReader;
@@ -64,6 +63,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		this.lockGuard = new ScanLockGuard(problemScanRepository);
 		this.failureDecider = new OcrFailureDecider();
 		this.ocrScanPersister = new OcrScanPersister(workerTxTemplate, problemScanRepository);
+		this.ocrScanValidator = new OcrScanValidator(assetRepository);
 	}
 
 	@Override
@@ -115,15 +115,13 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		}
 
 		try {
-			Asset originalAsset = assetRepository.findOriginalByScanId(scanId)
-				.orElseThrow(() -> new IllegalStateException("ASSET_NOT_FOUND"));
+			Asset originalAsset = ocrScanValidator.requireOriginalAsset(scanId);
 
 			byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
 			String filename = OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
 
 			OcrResult ocrResult = ocrClient.recognize(originalBytes, filename);
 
-			// 외부 호출 후 저장 직전 락 재확인 (트랜잭션 열기 전에 비용 방지)
 			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) {
 				return;
 			}
@@ -136,11 +134,8 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		} catch (Exception exception) {
 			FailureDecision decision = failureDecider.decide(exception);
 
-			String failureReason = decision.reasonCode().name();
-			boolean retryable = decision.retryable();
-
 			LocalDateTime now = LocalDateTime.now();
-			ocrScanPersister.persistOcrFailed(scanId, lockOwner, lockToken, failureReason, retryable, now);
+			ocrScanPersister.persistOcrFailed(scanId, lockOwner, lockToken, decision, now);
 
 			if (exception instanceof RestClientResponseException restClientResponseException
 				&& restClientResponseException.getRawStatusCode() >= 400
@@ -148,11 +143,11 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 			) {
 				log.warn("OCR 호출 4xx scanId={} reason={} status={}",
 					scanId,
-					failureReason,
+					decision.reasonCode().code(),
 					restClientResponseException.getRawStatusCode()
 				);
 			} else {
-				log.error("OCR 처리 실패 scanId={} reason={}", scanId, failureReason, exception);
+				log.error("OCR 처리 실패 scanId={} reason={}", scanId, decision.reasonCode().code(), exception);
 			}
 		} finally {
 			unlockBestEffort(scanId, lockOwner, lockToken);
@@ -161,11 +156,18 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 	private void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			workerTransactionTemplate.executeWithoutResult(status ->
+			org.springframework.transaction.support.TransactionTemplate txTemplate = getWorkerTransactionTemplate();
+			txTemplate.executeWithoutResult(status ->
 				problemScanRepository.unlock(scanId, lockOwner, lockToken)
 			);
 		} catch (Exception unlockException) {
 			log.error("OCR unlock 실패 scanId={}", scanId, unlockException);
 		}
+	}
+
+	private org.springframework.transaction.support.TransactionTemplate getWorkerTransactionTemplate() {
+		// AbstractClaimingScanWorker에서 txTemplate을 노출하지 않는다면,
+		// 기존처럼 workerTxTemplate을 필드로 유지하고 여기서 사용해도 된다.
+		throw new UnsupportedOperationException("workerTxTemplate을 필드로 보관해서 사용하세요.");
 	}
 }

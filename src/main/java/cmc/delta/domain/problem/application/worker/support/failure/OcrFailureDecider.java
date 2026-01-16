@@ -1,50 +1,35 @@
 package cmc.delta.domain.problem.application.worker.support.failure;
 
+import cmc.delta.domain.problem.application.worker.exception.ProblemScanWorkerException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
 public class OcrFailureDecider {
 
-	public FailureDecision decide(Exception e) {
-		ScanFailReasonCode reasonCode = classify(e);
-		boolean retryable = isRetryable(e);
-		return FailureDecision.of(reasonCode, retryable);
-	}
-
-	private boolean isRetryable(Exception e) {
-		if (e instanceof IllegalStateException) {
-			return false;
-		}
-		if (e instanceof ResourceAccessException) return true;
-
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return true;
-			if (status >= 500) return true;
-			return false;
+	public FailureDecision decide(Exception exception) {
+		if (exception instanceof ProblemScanWorkerException workerException) {
+			return FailureDecision.nonRetryable(workerException.failureReason());
 		}
 
-		return true;
-	}
-
-	private ScanFailReasonCode classify(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("ASSET_NOT_FOUND".equals(msg)) return ScanFailReasonCode.ASSET_NOT_FOUND;
-			if ("SCAN_NOT_FOUND".equals(msg)) return ScanFailReasonCode.SCAN_NOT_FOUND;
-			return ScanFailReasonCode.ILLEGAL_STATE;
+		if (exception instanceof ResourceAccessException) {
+			return FailureDecision.retryable(FailureReason.OCR_NETWORK_ERROR);
 		}
 
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return ScanFailReasonCode.OCR_RATE_LIMIT;
-			if (status >= 400 && status < 500) return ScanFailReasonCode.OCR_CLIENT_4XX;
-			if (status >= 500) return ScanFailReasonCode.OCR_CLIENT_5XX;
-			return ScanFailReasonCode.OCR_CLIENT_ERROR;
+		if (exception instanceof RestClientResponseException restClientResponseException) {
+			int statusCode = restClientResponseException.getRawStatusCode();
+
+			if (statusCode == HttpStatus.TOO_MANY_REQUESTS.value()) {
+				return FailureDecision.retryable(FailureReason.OCR_RATE_LIMIT);
+			}
+			if (statusCode >= 500) {
+				return FailureDecision.retryable(FailureReason.OCR_CLIENT_5XX);
+			}
+			if (statusCode >= 400) {
+				return FailureDecision.nonRetryable(FailureReason.OCR_CLIENT_4XX);
+			}
 		}
 
-		if (e instanceof ResourceAccessException) return ScanFailReasonCode.OCR_NETWORK_ERROR;
-
-		return ScanFailReasonCode.OCR_FAILED;
+		return FailureDecision.retryable(FailureReason.OCR_FAILED);
 	}
 }

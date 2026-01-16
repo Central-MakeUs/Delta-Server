@@ -5,6 +5,8 @@ import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.curriculum.persistence.ProblemTypeJpaRepository;
 import cmc.delta.domain.curriculum.persistence.UnitJpaRepository;
 import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.math.BigDecimal;
@@ -71,9 +73,7 @@ public class AiScanPersister {
 		Long scanId,
 		String lockOwner,
 		String lockToken,
-		String failureReason,
-		boolean retryable,
-		Long retryAfterSecondsIfRateLimited,
+		FailureDecision decision,
 		LocalDateTime now
 	) {
 		workerTransactionTemplate.executeWithoutResult(status -> {
@@ -82,25 +82,28 @@ public class AiScanPersister {
 			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
 			if (scan == null) return;
 
-			// OCR_TEXT_EMPTY는 워커에서 즉시 터미널 권장인데,
-			// 여기서는 호출자가 넘겨준 retryable=false를 믿고 처리한다.
-			if (!retryable) {
-				scan.markFailed(failureReason);
+			String reason = decision.reasonCode().code();
+
+			if (!decision.retryable()) {
+				scan.markFailed(reason);
 				return;
 			}
 
-			if ("AI_RATE_LIMIT".equals(failureReason)) {
-				scan.markAiRateLimited(failureReason);
+			if (decision.reasonCode() == FailureReason.AI_RATE_LIMIT) {
+				scan.markAiRateLimited(reason);
 
-				long delaySeconds = computeRateLimitDelaySeconds(retryAfterSecondsIfRateLimited);
-				scan.scheduleNextRetryForAi(now, delaySeconds);
+				Long delaySeconds = decision.retryAfterSeconds();
+				long delay = delaySeconds == null ? 180L : delaySeconds.longValue();
+				scan.scheduleNextRetryForAi(now, delay);
 				return;
 			}
 
-			scan.markAiFailed(failureReason);
+			scan.markAiFailed(reason);
 			scan.scheduleNextRetryForAi(now);
 		});
 	}
+
+
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
 		Integer exists = problemScanRepository.existsLockedBy(scanId, lockOwner, lockToken);

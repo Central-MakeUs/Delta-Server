@@ -1,61 +1,62 @@
 package cmc.delta.domain.problem.application.worker.support.failure;
 
+import cmc.delta.domain.problem.application.worker.exception.ProblemScanWorkerException;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
 
 public class AiFailureDecider {
 
-	public FailureDecision decide(Exception e) {
-		ScanFailReasonCode reasonCode = classify(e);
-		boolean retryable = isRetryable(e);
+	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;
+	private static final long MIN_RATE_LIMIT_DELAY_SECONDS = 60L;
 
-		Long retryAfterSeconds = null;
-		if (e instanceof RestClientResponseException rre && rre.getRawStatusCode() == 429) {
-			retryAfterSeconds = RetryAfterParser.parseSecondsIf429(rre);
+	public FailureDecision decide(Exception exception) {
+		if (exception instanceof ProblemScanWorkerException workerException) {
+			return FailureDecision.nonRetryable(workerException.failureReason());
 		}
 
-		return FailureDecision.of(reasonCode, retryable, retryAfterSeconds);
+		if (exception instanceof ResourceAccessException) {
+			return FailureDecision.retryable(FailureReason.AI_NETWORK_ERROR);
+		}
+
+		if (exception instanceof RestClientResponseException restClientResponseException) {
+			int statusCode = restClientResponseException.getRawStatusCode();
+
+			if (statusCode == HttpStatus.TOO_MANY_REQUESTS.value()) {
+				Long retryAfterSeconds = extractRetryAfterSeconds(restClientResponseException);
+				Long delaySeconds = computeRateLimitDelaySeconds(retryAfterSeconds);
+				return new FailureDecision(FailureReason.AI_RATE_LIMIT, true, delaySeconds);
+			}
+			if (statusCode >= 500) {
+				return FailureDecision.retryable(FailureReason.AI_CLIENT_5XX);
+			}
+			if (statusCode >= 400) {
+				return FailureDecision.nonRetryable(FailureReason.AI_CLIENT_4XX);
+			}
+		}
+
+		return FailureDecision.retryable(FailureReason.AI_FAILED);
 	}
 
-	private boolean isRetryable(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("OCR_TEXT_EMPTY".equals(msg)) return false;
-			if ("SCAN_NOT_FOUND".equals(msg)) return false;
-			return false;
+	private Long extractRetryAfterSeconds(RestClientResponseException restClientResponseException) {
+		HttpHeaders headers = restClientResponseException.getResponseHeaders();
+		if (headers == null) return null;
+
+		String retryAfterValue = headers.getFirst("Retry-After");
+		if (retryAfterValue == null || retryAfterValue.isBlank()) return null;
+
+		try {
+			return Long.parseLong(retryAfterValue.trim());
+		} catch (NumberFormatException ignore) {
+			return null;
 		}
-
-		if (e instanceof ResourceAccessException) return true;
-
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return true;
-			if (status == 408) return true;
-			if (status >= 500) return true;
-			return false;
-		}
-
-		return true;
 	}
 
-	private ScanFailReasonCode classify(Exception e) {
-		if (e instanceof IllegalStateException ise) {
-			String msg = ise.getMessage();
-			if ("OCR_TEXT_EMPTY".equals(msg)) return ScanFailReasonCode.OCR_TEXT_EMPTY;
-			if ("SCAN_NOT_FOUND".equals(msg)) return ScanFailReasonCode.SCAN_NOT_FOUND;
-			return ScanFailReasonCode.ILLEGAL_STATE;
+	private Long computeRateLimitDelaySeconds(Long retryAfterSeconds) {
+		if (retryAfterSeconds == null || retryAfterSeconds <= 0) {
+			return DEFAULT_RATE_LIMIT_DELAY_SECONDS;
 		}
-
-		if (e instanceof RestClientResponseException rre) {
-			int status = rre.getRawStatusCode();
-			if (status == 429) return ScanFailReasonCode.AI_RATE_LIMIT;
-			if (status >= 400 && status < 500) return ScanFailReasonCode.AI_CLIENT_4XX;
-			if (status >= 500) return ScanFailReasonCode.AI_CLIENT_5XX;
-			return ScanFailReasonCode.AI_CLIENT_ERROR;
-		}
-
-		if (e instanceof ResourceAccessException) return ScanFailReasonCode.AI_NETWORK_ERROR;
-
-		return ScanFailReasonCode.AI_FAILED;
+		return Math.max(retryAfterSeconds, MIN_RATE_LIMIT_DELAY_SECONDS);
 	}
 }
