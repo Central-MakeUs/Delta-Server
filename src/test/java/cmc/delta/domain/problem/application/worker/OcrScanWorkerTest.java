@@ -180,8 +180,6 @@ class OcrScanWorkerTest {
 		verify(d.unlocker(), times(3)).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
-	/* ================= helpers ================= */
-
 	private void run(Long scanId) {
 		sut.processOne(scanId, OWNER, TOKEN, LocalDateTime.now());
 	}
