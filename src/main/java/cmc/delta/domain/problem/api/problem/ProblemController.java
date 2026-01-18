@@ -65,7 +65,7 @@ public class ProblemController {
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "20") int size
 	) {
-		PagedResponse<ProblemListItemResponse> data = problemQueryService.getMyProblemList(
+		PagedResponse<ProblemListItemResponse> data = problemQueryService.getMyProblemCardList(
 			principal.userId(),
 			subjectId,
 			unitId,

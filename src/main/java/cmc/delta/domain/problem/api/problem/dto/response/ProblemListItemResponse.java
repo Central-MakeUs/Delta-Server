@@ -7,6 +7,11 @@ public record ProblemListItemResponse(
 	CurriculumItemResponse subject,
 	CurriculumItemResponse unit,
 	CurriculumItemResponse type,
-	String previewText,
+	PreviewImageResponse previewImage,
 	LocalDateTime createdAt
-) { }
+) {
+	public record PreviewImageResponse(
+		Long assetId,
+		String viewUrl
+	) { }
+}

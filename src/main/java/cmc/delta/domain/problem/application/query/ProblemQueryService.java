@@ -5,7 +5,8 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse
 import cmc.delta.global.api.response.PagedResponse;
 
 public interface ProblemQueryService {
-	PagedResponse<ProblemListItemResponse> getMyProblemList(
+
+	PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,
 		String subjectId,
 		String unitId,

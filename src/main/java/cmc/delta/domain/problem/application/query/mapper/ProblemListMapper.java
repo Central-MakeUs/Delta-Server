@@ -9,13 +9,14 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ProblemListMapper {
 
-	@Mapping(target = "problemId", source = "problemId")
-	@Mapping(target = "previewText", source = "previewText")
-	@Mapping(target = "createdAt", source = "createdAt")
+	@Mapping(target = "problemId", source = "row.problemId")
+	@Mapping(target = "createdAt", source = "row.createdAt")
 	@Mapping(target = "subject", expression = "java(toItem(row.getSubjectId(), row.getSubjectName()))")
 	@Mapping(target = "unit", expression = "java(toItem(row.getUnitId(), row.getUnitName()))")
 	@Mapping(target = "type", expression = "java(toItem(row.getTypeId(), row.getTypeName()))")
-	ProblemListItemResponse toResponse(ProblemListRow row);
+	@Mapping(target = "previewImage",
+		expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.getAssetId(), viewUrl))")
+	ProblemListItemResponse toResponse(ProblemListRow row, String viewUrl);
 
 	default CurriculumItemResponse toItem(String id, String name) {
 		if (id == null) {

@@ -12,7 +12,10 @@ public class ProblemListRequestValidator {
 		if (page < 0) {
 			throw new InvalidProblemListPaginationException();
 		}
-		if (size < 1 || size > MAX_SIZE) {
+		if (size < 1) {
+			throw new InvalidProblemListPaginationException();
+		}
+		if (size > MAX_SIZE) {
 			throw new InvalidProblemListPaginationException();
 		}
 	}

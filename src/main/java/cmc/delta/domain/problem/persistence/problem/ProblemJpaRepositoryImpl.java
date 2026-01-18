@@ -4,13 +4,12 @@ import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
-import cmc.delta.domain.problem.api.problem.dto.request.ProblemListSort;
+import cmc.delta.domain.problem.model.asset.QAsset;
+import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
 import cmc.delta.domain.problem.persistence.problem.dto.ProblemListRow;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -20,9 +19,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
-
-	private static final int PREVIEW_LENGTH = 80;
+public class ProblemJpaRepositoryImpl implements ProblemQueryRepository {
 
 	private final JPAQueryFactory queryFactory;
 
@@ -32,6 +29,7 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 		QUnit unit = QUnit.unit;
 		QUnit subject = new QUnit("subject");
 		QProblemType type = QProblemType.problemType;
+		QAsset asset = QAsset.asset;
 
 		BooleanBuilder where = new BooleanBuilder();
 		where.and(problem.user.id.eq(userId));
@@ -46,12 +44,6 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 			where.and(subject.id.eq(condition.subjectId()));
 		}
 
-		StringExpression markdownAsString =
-			Expressions.stringTemplate("cast({0} as string)", problem.problemMarkdown);
-
-		StringExpression previewExpr =
-			Expressions.stringTemplate("substring({0}, {1}, {2})", markdownAsString, 1, PREVIEW_LENGTH);
-
 		JPAQuery<ProblemListRow> contentQuery = queryFactory
 			.select(constructor(
 				ProblemListRow.class,
@@ -62,16 +54,21 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 				unit.name,
 				type.id,
 				type.name,
-				previewExpr,
+				asset.id,
+				asset.storageKey,
 				problem.createdAt
 			))
 			.from(problem)
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
 			.join(problem.finalType, type)
+			.join(asset).on(
+				asset.scan.id.eq(problem.scan.id)
+					.and(asset.assetType.eq(AssetType.ORIGINAL))
+			)
 			.where(where);
 
-		applySort(contentQuery, condition.sort(), problem);
+		applySort(contentQuery, condition);
 
 		List<ProblemListRow> content = contentQuery
 			.offset(pageable.getOffset())
@@ -95,8 +92,10 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 		return new PageImpl<ProblemListRow>(content, pageable, totalElements);
 	}
 
-	private void applySort(JPAQuery<ProblemListRow> query, ProblemListSort sort, QProblem problem) {
-		if (sort == ProblemListSort.OLDEST) {
+	private void applySort(JPAQuery<ProblemListRow> query, ProblemListCondition condition) {
+		QProblem problem = QProblem.problem;
+
+		if (condition.sort() != null && condition.sort().name().equals("OLDEST")) {
 			query.orderBy(problem.createdAt.asc());
 			return;
 		}

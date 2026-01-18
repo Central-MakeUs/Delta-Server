@@ -5,13 +5,19 @@ import java.time.LocalDateTime;
 public class ProblemListRow {
 
 	private final Long problemId;
+
 	private final String subjectId;
 	private final String subjectName;
+
 	private final String unitId;
 	private final String unitName;
+
 	private final String typeId;
 	private final String typeName;
-	private final String previewText;
+
+	private final Long assetId;
+	private final String storageKey;
+
 	private final LocalDateTime createdAt;
 
 	public ProblemListRow(
@@ -22,7 +28,8 @@ public class ProblemListRow {
 		String unitName,
 		String typeId,
 		String typeName,
-		String previewText,
+		Long assetId,
+		String storageKey,
 		LocalDateTime createdAt
 	) {
 		this.problemId = problemId;
@@ -32,7 +39,8 @@ public class ProblemListRow {
 		this.unitName = unitName;
 		this.typeId = typeId;
 		this.typeName = typeName;
-		this.previewText = previewText;
+		this.assetId = assetId;
+		this.storageKey = storageKey;
 		this.createdAt = createdAt;
 	}
 
@@ -43,6 +51,7 @@ public class ProblemListRow {
 	public String getUnitName() { return unitName; }
 	public String getTypeId() { return typeId; }
 	public String getTypeName() { return typeName; }
-	public String getPreviewText() { return previewText; }
+	public Long getAssetId() { return assetId; }
+	public String getStorageKey() { return storageKey; }
 	public LocalDateTime getCreatedAt() { return createdAt; }
 }
