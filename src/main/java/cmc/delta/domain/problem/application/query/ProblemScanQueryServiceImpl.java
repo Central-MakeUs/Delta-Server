@@ -11,9 +11,9 @@ import cmc.delta.domain.problem.application.query.support.ProblemScanDetailMappe
 import cmc.delta.domain.problem.application.query.support.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.query.support.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.query.validation.ProblemScanQueryValidator;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanDetailProjection;
+import cmc.delta.domain.problem.persistence.scan.query.projection.ProblemScanDetailProjection;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
-import cmc.delta.domain.problem.persistence.scan.dto.ProblemScanSummaryRow;
+import cmc.delta.domain.problem.persistence.scan.query.dto.ProblemScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.storage.StorageService;
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 	@Override
 	@Transactional(readOnly = true)
 	public ProblemScanSummaryResponse getSummary(Long userId, Long scanId) {
-		ProblemScanSummaryRow row = scanRepository.findSummaryRow(userId, scanId).orElse(null);
+		ProblemScanListRow row = scanRepository.findSummaryRow(userId, scanId).orElse(null);
 		if (row == null) {
 			throw new ProblemScanNotFoundException();
 		}

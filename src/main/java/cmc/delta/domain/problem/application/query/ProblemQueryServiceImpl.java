@@ -4,8 +4,8 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse
 import cmc.delta.domain.problem.application.query.mapper.ProblemListMapper;
 import cmc.delta.domain.problem.application.query.validation.ProblemListRequestValidator;
 import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListRow;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.storage.StorageService;

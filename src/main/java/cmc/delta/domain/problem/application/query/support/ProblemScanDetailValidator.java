@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.query.support;
 
-import cmc.delta.domain.problem.persistence.scan.ProblemScanDetailProjection;
+import cmc.delta.domain.problem.persistence.scan.query.projection.ProblemScanDetailProjection;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;

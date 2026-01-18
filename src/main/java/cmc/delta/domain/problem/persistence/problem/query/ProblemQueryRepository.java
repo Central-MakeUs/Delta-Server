@@ -1,7 +1,7 @@
-package cmc.delta.domain.problem.persistence.problem;
+package cmc.delta.domain.problem.persistence.problem.query;
 
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListRow;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

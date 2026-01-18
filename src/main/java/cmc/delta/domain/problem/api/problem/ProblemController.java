@@ -6,7 +6,7 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.PagedResponse;

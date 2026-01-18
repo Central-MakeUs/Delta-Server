@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.persistence.scan;
+package cmc.delta.domain.problem.persistence.scan.query.projection;
 
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.enums.ScanStatus;

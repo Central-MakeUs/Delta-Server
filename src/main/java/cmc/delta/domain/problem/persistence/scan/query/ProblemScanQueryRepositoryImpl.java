@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.persistence.scan;
+package cmc.delta.domain.problem.persistence.scan.query;
 
 import static com.querydsl.core.types.Projections.constructor;
 
@@ -7,7 +7,7 @@ import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.scan.QProblemScan;
-import cmc.delta.domain.problem.persistence.scan.dto.ProblemScanSummaryRow;
+import cmc.delta.domain.problem.persistence.scan.query.dto.ProblemScanListRow;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -15,21 +15,21 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ProblemScanSummaryRepositoryImpl implements ProblemScanSummaryRepository {
+public class ProblemScanQueryRepositoryImpl implements ProblemScanQueryRepository {
 
 	private final JPAQueryFactory queryFactory;
 
 	@Override
-	public Optional<ProblemScanSummaryRow> findSummaryRow(Long userId, Long scanId) {
+	public Optional<ProblemScanListRow> findSummaryRow(Long userId, Long scanId) {
 		QProblemScan scan = QProblemScan.problemScan;
 		QAsset asset = QAsset.asset;
 
 		QUnit unit = new QUnit("unit");
 		QProblemType type = new QProblemType("type");
 
-		ProblemScanSummaryRow row = queryFactory
+		ProblemScanListRow row = queryFactory
 			.select(constructor(
-				ProblemScanSummaryRow.class,
+				ProblemScanListRow.class,
 				scan.id,
 				scan.user.id,
 				scan.status,

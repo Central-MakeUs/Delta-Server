@@ -1,6 +1,8 @@
 package cmc.delta.domain.problem.persistence.scan;
 
 import cmc.delta.domain.problem.model.scan.ProblemScan;
+import cmc.delta.domain.problem.persistence.scan.query.ProblemScanQueryRepository;
+import cmc.delta.domain.problem.persistence.scan.query.projection.ProblemScanDetailProjection;
 import jakarta.persistence.LockModeType;
 
 import java.time.LocalDateTime;
@@ -17,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 나중에 상황을 보고 레포지토리를 쪼개거나,
  * DSL 사용 예정
  */
-public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long>,ProblemScanSummaryRepository {
+public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long>, ProblemScanQueryRepository {
 
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)

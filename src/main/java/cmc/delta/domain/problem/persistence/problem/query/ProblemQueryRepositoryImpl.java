@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.persistence.problem;
+package cmc.delta.domain.problem.persistence.problem.query;
 
 import static com.querydsl.core.types.Projections.constructor;
 
@@ -7,8 +7,8 @@ import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.problem.QProblem;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
-import cmc.delta.domain.problem.persistence.problem.dto.ProblemListRow;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ProblemJpaRepositoryImpl implements ProblemQueryRepository {
+public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 
 	private final JPAQueryFactory queryFactory;
 

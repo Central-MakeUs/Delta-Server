@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.persistence.problem.dto;
+package cmc.delta.domain.problem.persistence.problem.query.dto;
 
 import java.time.LocalDateTime;
 

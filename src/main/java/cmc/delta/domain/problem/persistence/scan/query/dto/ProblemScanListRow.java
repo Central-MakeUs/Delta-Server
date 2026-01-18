@@ -1,8 +1,8 @@
-package cmc.delta.domain.problem.persistence.scan.dto;
+package cmc.delta.domain.problem.persistence.scan.query.dto;
 
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 
-public class ProblemScanSummaryRow {
+public class ProblemScanListRow {
 
 	private final Long scanId;
 	private final Long userId;
@@ -19,7 +19,7 @@ public class ProblemScanSummaryRow {
 
 	private final Boolean needsReview;
 
-	public ProblemScanSummaryRow(
+	public ProblemScanListRow(
 		Long scanId,
 		Long userId,
 		ScanStatus status,

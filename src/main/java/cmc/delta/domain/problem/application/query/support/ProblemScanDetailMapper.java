@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.query.support;
 
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanDetailProjection;
+import cmc.delta.domain.problem.persistence.scan.query.projection.ProblemScanDetailProjection;
 import org.springframework.stereotype.Component;
 
 @Component
