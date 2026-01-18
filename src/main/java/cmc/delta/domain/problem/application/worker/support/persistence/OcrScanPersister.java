@@ -4,7 +4,8 @@ import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -13,11 +14,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class OcrScanPersister {
 
 	private final TransactionTemplate workerTransactionTemplate;
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 
 	public OcrScanPersister(
 		TransactionTemplate workerTransactionTemplate,
-		ProblemScanJpaRepository problemScanRepository
+		ScanRepository problemScanRepository
 	) {
 		this.workerTransactionTemplate = workerTransactionTemplate;
 		this.problemScanRepository = problemScanRepository;

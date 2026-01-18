@@ -11,7 +11,7 @@ import cmc.delta.domain.problem.application.worker.support.failure.FailureReason
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,13 +24,13 @@ class OcrScanPersisterTest {
 	private static final String OWNER = "w1";
 	private static final String TOKEN = "t1";
 
-	private ProblemScanJpaRepository scanRepo;
+	private ScanRepository scanRepo;
 	private TransactionTemplate tx;
 	private OcrScanPersister sut;
 
 	@BeforeEach
 	void setUp() {
-		scanRepo = mock(ProblemScanJpaRepository.class);
+		scanRepo = mock(ScanRepository.class);
 		tx = WorkerTestTx.immediateTx();
 
 		sut = new OcrScanPersister(tx, scanRepo);

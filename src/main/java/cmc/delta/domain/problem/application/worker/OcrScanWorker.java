@@ -14,11 +14,12 @@ import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPoli
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
 import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -33,7 +34,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private static final String OCR_FILENAME_PREFIX = "scan-";
 	private static final String OCR_FILENAME_SUFFIX = ".jpg";
 
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
 	private final OcrWorkerProperties properties;
@@ -51,7 +52,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
 		@Qualifier("ocrExecutor") Executor ocrExecutor,
-		ProblemScanJpaRepository problemScanRepository,
+		ScanRepository problemScanRepository,
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
 		OcrWorkerProperties properties,

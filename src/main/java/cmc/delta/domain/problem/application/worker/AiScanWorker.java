@@ -17,12 +17,13 @@ import cmc.delta.domain.problem.application.worker.support.prompt.AiCurriculumPr
 import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator.AiValidatedInput;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -35,7 +36,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	private static final String WORKER_KEY = "worker:ai:backlog";
 
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 	private final AiClient aiClient;
 	private final AiWorkerProperties properties;
 
@@ -53,7 +54,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
 		@Qualifier("aiExecutor") Executor aiExecutor,
-		ProblemScanJpaRepository problemScanRepository,
+		ScanRepository problemScanRepository,
 		AiClient aiClient,
 		AiWorkerProperties properties,
 		ScanLockGuard lockGuard,

@@ -4,7 +4,7 @@ import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.LocalDateTime;
 
-public interface ProblemScanDetailProjection {
+public interface ScanDetailProjection {
 
 	Long getScanId();
 	ScanStatus getStatus();

@@ -1,9 +1,10 @@
 package cmc.delta.domain.problem.application.monitor;
 
 import cmc.delta.domain.problem.application.monitor.dto.WorkerMetricsSnapshot;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProblemScanMetricsService {
 
 	private final Clock clock;
-	private final ProblemScanJpaRepository scanRepository;
+	private final ScanRepository scanRepository;
 
 	@Transactional(readOnly = true)
 	public WorkerMetricsSnapshot lastMinutes(

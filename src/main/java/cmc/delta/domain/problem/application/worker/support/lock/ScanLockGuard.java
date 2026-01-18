@@ -1,14 +1,15 @@
 package cmc.delta.domain.problem.application.worker.support.lock;
 
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class ScanLockGuard {
 
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 
-	public ScanLockGuard(ProblemScanJpaRepository problemScanRepository) {
+	public ScanLockGuard(ScanRepository problemScanRepository) {
 		this.problemScanRepository = problemScanRepository;
 	}
 

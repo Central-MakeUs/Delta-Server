@@ -12,11 +12,12 @@ import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPoli
 import cmc.delta.domain.problem.application.worker.support.persistence.AiScanPersister;
 import cmc.delta.domain.problem.application.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record AiWorkerDoublesV2(
-	ProblemScanJpaRepository scanRepo,
+	ScanRepository scanRepo,
 	AiClient aiClient,
 	TransactionTemplate tx,
 	AiWorkerProperties props,
@@ -34,7 +35,7 @@ public record AiWorkerDoublesV2(
 		AiWorkerProperties props = new AiWorkerProperties(2000L, 10, 30L, 1, 1);
 
 		return new AiWorkerDoublesV2(
-			mock(ProblemScanJpaRepository.class),
+			mock(ScanRepository.class),
 			mock(AiClient.class),
 			tx,
 			props,

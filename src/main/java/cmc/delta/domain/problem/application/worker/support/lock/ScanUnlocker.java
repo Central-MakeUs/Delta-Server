@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.worker.support.lock;
 
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
@@ -11,11 +11,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ScanUnlocker {
 
 	private final TransactionTemplate workerTransactionTemplate;
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 
 	public ScanUnlocker(
 		TransactionTemplate workerTransactionTemplate,
-		ProblemScanJpaRepository problemScanRepository
+		ScanRepository problemScanRepository
 	) {
 		this.workerTransactionTemplate = workerTransactionTemplate;
 		this.problemScanRepository = problemScanRepository;

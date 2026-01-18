@@ -8,7 +8,8 @@ import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumRes
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;
@@ -20,13 +21,13 @@ public class AiScanPersister {
 	private static final BigDecimal NEEDS_REVIEW_CONFIDENCE_THRESHOLD = BigDecimal.valueOf(0.60);
 
 	private final TransactionTemplate workerTransactionTemplate;
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanRepository problemScanRepository;
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository problemTypeRepository;
 
 	public AiScanPersister(
 		TransactionTemplate workerTransactionTemplate,
-		ProblemScanJpaRepository problemScanRepository,
+		ScanRepository problemScanRepository,
 		UnitJpaRepository unitRepository,
 		ProblemTypeJpaRepository problemTypeRepository
 	) {

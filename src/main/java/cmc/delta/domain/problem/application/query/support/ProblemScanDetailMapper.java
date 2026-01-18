@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.query.support;
 
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.persistence.scan.query.projection.ProblemScanDetailProjection;
+import cmc.delta.domain.problem.persistence.scan.query.projection.ScanDetailProjection;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +12,7 @@ public class ProblemScanDetailMapper {
 	}
 
 	public ProblemScanDetailResponse toDetailResponse(
-		ProblemScanDetailProjection p,
+		ScanDetailProjection p,
 		String viewUrl,
 		ProblemScanDetailResponse.AiClassification ai
 	) {
@@ -39,7 +39,7 @@ public class ProblemScanDetailMapper {
 	}
 
 	public ProblemScanDetailResponse.AiClassification toAiClassification(
-		ProblemScanDetailProjection p,
+		ScanDetailProjection p,
 		SubjectInfo subject
 	) {
 		return new ProblemScanDetailResponse.AiClassification(

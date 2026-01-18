@@ -4,14 +4,14 @@ import cmc.delta.domain.problem.api.scan.dto.response.CurriculumItemResponse;
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanSummaryClassificationResponse;
 import cmc.delta.domain.problem.api.scan.dto.response.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.query.support.ProblemScanDetailMapper;
-import cmc.delta.domain.problem.persistence.scan.query.dto.ProblemScanListRow;
+import cmc.delta.domain.problem.persistence.scan.query.dto.ScanListRow;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProblemScanSummaryMapper {
 
 	public ProblemScanSummaryResponse toSummaryResponse(
-		ProblemScanListRow row,
+		ScanListRow row,
 		String viewUrl,
 		ProblemScanDetailMapper.SubjectInfo subject
 	) {

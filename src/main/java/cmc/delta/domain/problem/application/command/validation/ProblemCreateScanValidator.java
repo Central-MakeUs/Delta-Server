@@ -6,7 +6,7 @@ import cmc.delta.domain.problem.application.common.exception.ProblemScanNotReady
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProblemCreateScanValidator {
 
-	private final ProblemScanJpaRepository scanRepository;
+	private final ScanRepository scanRepository;
 	private final ProblemJpaRepository problemRepository;
 
 	public ProblemScan getOwnedScan(Long userId, Long scanId) {
