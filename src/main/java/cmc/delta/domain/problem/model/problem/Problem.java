@@ -71,10 +71,6 @@ public class Problem extends BaseTimeEntity {
 	@Column(name = "solution_text", columnDefinition = "MEDIUMTEXT")
 	private String solutionText;
 
-	@Lob
-	@Column(columnDefinition = "MEDIUMTEXT")
-	private String memo;
-
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemChoice> choices = new ArrayList<>();
 
@@ -91,8 +87,7 @@ public class Problem extends BaseTimeEntity {
 		AnswerFormat answerFormat,
 		String answerValue,
 		Integer answerChoiceNo,
-		String solutionText,
-		String memo
+		String solutionText
 	) {
 		Problem p = new Problem();
 		p.user = user;
@@ -105,7 +100,6 @@ public class Problem extends BaseTimeEntity {
 		p.answerValue = answerValue;
 		p.answerChoiceNo = answerChoiceNo;
 		p.solutionText = solutionText;
-		p.memo = memo;
 		return p;
 	}
 

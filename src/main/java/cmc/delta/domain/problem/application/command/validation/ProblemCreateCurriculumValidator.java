@@ -7,12 +7,17 @@ import cmc.delta.domain.curriculum.persistence.UnitJpaRepository;
 import cmc.delta.domain.problem.application.common.exception.FinalUnitMustBeChildUnitException;
 import cmc.delta.domain.problem.application.common.exception.ProblemFinalTypeNotFoundException;
 import cmc.delta.domain.problem.application.common.exception.ProblemFinalUnitNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ProblemCreateCurriculumValidator {
 
-	public Unit getFinalUnit(UnitJpaRepository unitRepository, String finalUnitId) {
+	private final UnitJpaRepository unitRepository;
+	private final ProblemTypeJpaRepository typeRepository;
+
+	public Unit getFinalUnit(String finalUnitId) {
 		Unit unit = unitRepository.findById(finalUnitId)
 			.orElseThrow(ProblemFinalUnitNotFoundException::new);
 
@@ -23,7 +28,7 @@ public class ProblemCreateCurriculumValidator {
 		return unit;
 	}
 
-	public ProblemType getFinalType(ProblemTypeJpaRepository typeRepository, String finalTypeId) {
+	public ProblemType getFinalType(String finalTypeId) {
 		return typeRepository.findById(finalTypeId)
 			.orElseThrow(ProblemFinalTypeNotFoundException::new);
 	}

@@ -11,6 +11,5 @@ public record ProblemCreateRequest(
 	Integer answerChoiceNo,
 	String answerValue,
 
-	String solutionText,
-	String memo
+	String solutionText
 ) { }
