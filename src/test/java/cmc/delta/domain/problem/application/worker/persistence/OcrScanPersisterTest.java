@@ -11,7 +11,8 @@ import cmc.delta.domain.problem.application.worker.support.failure.FailureReason
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,16 +25,19 @@ class OcrScanPersisterTest {
 	private static final String OWNER = "w1";
 	private static final String TOKEN = "t1";
 
-	private ProblemScanJpaRepository scanRepo;
+	private ScanWorkRepository scanWorkRepo;
+	private ScanRepository scanRepo;
 	private TransactionTemplate tx;
+
 	private OcrScanPersister sut;
 
 	@BeforeEach
 	void setUp() {
-		scanRepo = mock(ProblemScanJpaRepository.class);
+		scanWorkRepo = mock(ScanWorkRepository.class);
+		scanRepo = mock(ScanRepository.class);
 		tx = WorkerTestTx.immediateTx();
 
-		sut = new OcrScanPersister(tx, scanRepo);
+		sut = new OcrScanPersister(tx, scanWorkRepo, scanRepo);
 	}
 
 	@Test
@@ -41,7 +45,7 @@ class OcrScanPersisterTest {
 	void succeed_lockLost_noop() {
 		// given
 		Long scanId = 1L;
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
 
 		// when
 		sut.persistOcrSucceeded(scanId, OWNER, TOKEN, mock(OcrResult.class), LocalDateTime.now());
@@ -55,14 +59,13 @@ class OcrScanPersisterTest {
 	void succeed_scanMissing_noop() {
 		// given
 		Long scanId = 1L;
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.empty());
 
 		// when
 		sut.persistOcrSucceeded(scanId, OWNER, TOKEN, mock(OcrResult.class), LocalDateTime.now());
 
 		// then
-		// 예외 없이 종료되는지만 보면 됨 (상태변경 대상이 없음)
 		verify(scanRepo).findById(scanId);
 	}
 
@@ -73,7 +76,7 @@ class OcrScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = uploaded(user(10L));
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		OcrResult r = ocrResult("plain", "{\"ok\":true}");
@@ -97,7 +100,7 @@ class OcrScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = uploaded(user(10L));
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
@@ -123,7 +126,7 @@ class OcrScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = uploaded(user(10L));
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
@@ -139,7 +142,7 @@ class OcrScanPersisterTest {
 		sut.persistOcrFailed(scanId, OWNER, TOKEN, decision, now);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.UPLOADED); // scheduleNextRetryForOcr가 UPLOADED로 되돌리는 구조 기준
+		assertThat(scan.getStatus()).isEqualTo(ScanStatus.UPLOADED); // scheduleNextRetryForOcr 기준
 		assertThat(scan.getOcrAttemptCount()).isEqualTo(1);
 		assertThat(scan.getFailReason()).isEqualTo("OCR_NETWORK");
 		assertThat(scan.getNextRetryAt()).isNotNull();

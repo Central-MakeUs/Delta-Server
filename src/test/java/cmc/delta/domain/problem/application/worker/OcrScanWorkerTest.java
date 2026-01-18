@@ -36,7 +36,7 @@ class OcrScanWorkerTest {
 			Clock.systemDefaultZone(),
 			d.tx(),
 			direct,
-			d.scanRepo(),
+			d.scanWorkRepo(),
 			d.storageReader(),
 			d.ocrClient(),
 			d.props(),
@@ -179,8 +179,6 @@ class OcrScanWorkerTest {
 		verify(d.persister(), times(3)).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), eq(decision), any(LocalDateTime.class));
 		verify(d.unlocker(), times(3)).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
-
-	/* ================= helpers ================= */
 
 	private void run(Long scanId) {
 		sut.processOne(scanId, OWNER, TOKEN, LocalDateTime.now());

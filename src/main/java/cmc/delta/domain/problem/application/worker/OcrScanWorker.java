@@ -14,7 +14,7 @@ import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPoli
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
 import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,8 +22,8 @@ import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
 @Component
@@ -33,7 +33,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	private static final String OCR_FILENAME_PREFIX = "scan-";
 	private static final String OCR_FILENAME_SUFFIX = ".jpg";
 
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanWorkRepository scanWorkRepository;
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
 	private final OcrWorkerProperties properties;
@@ -51,7 +51,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
 		@Qualifier("ocrExecutor") Executor ocrExecutor,
-		ProblemScanJpaRepository problemScanRepository,
+		ScanWorkRepository scanWorkRepository,
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
 		OcrWorkerProperties properties,
@@ -64,7 +64,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 		OcrScanPersister persister
 	) {
 		super(clock, workerTxTemplate, ocrExecutor, "ocr");
-		this.problemScanRepository = problemScanRepository;
+		this.scanWorkRepository = scanWorkRepository;
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
 		this.properties = properties;
@@ -80,13 +80,20 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	@Override
-	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
-		return problemScanRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
+	protected int claim(
+		LocalDateTime now,
+		LocalDateTime staleBefore,
+		String lockOwner,
+		String lockToken,
+		LocalDateTime lockedAt,
+		int limit
+	) {
+		return scanWorkRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return problemScanRepository.findClaimedOcrIds(lockOwner, lockToken, limit);
+		return scanWorkRepository.findClaimedOcrIds(lockOwner, lockToken, limit);
 	}
 
 	@Override
@@ -98,7 +105,7 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 			WORKER_KEY,
 			now,
 			properties.backlogLogMinutes(),
-			() -> problemScanRepository.countOcrBacklog(now, staleBefore),
+			() -> scanWorkRepository.countOcrBacklog(now, staleBefore),
 			(backlog) -> log.info("OCR 워커 - 처리 대상 없음 (ocrBacklog={})", backlog)
 		);
 	}
@@ -110,36 +117,60 @@ public class OcrScanWorker extends AbstractClaimingScanWorker {
 
 	@Override
 	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
+		if (!isOwned(scanId, lockOwner, lockToken)) return;
 
 		try {
-			Asset originalAsset = validator.requireOriginalAsset(scanId);
-
-			byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
-			String filename = OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
-
-			OcrResult ocrResult = ocrClient.recognize(originalBytes, filename);
-
-			// 외부 호출 후 저장 직전 락 재확인
-			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
-
-			persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, LocalDateTime.now());
-			log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
-
+			handleSuccess(scanId, lockOwner, lockToken);
 		} catch (Exception exception) {
-			FailureDecision decision = failureDecider.decide(exception);
-			persister.persistOcrFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
-
-			if (exception instanceof RestClientResponseException restClientResponseException
-				&& logPolicy.shouldSuppressStacktrace(restClientResponseException)) {
-				log.warn("OCR 호출 4xx scanId={} reason={} status={}",
-					scanId, logPolicy.reasonCode(decision), restClientResponseException.getRawStatusCode()
-				);
-			} else {
-				log.error("OCR 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
-			}
+			handleFailure(scanId, lockOwner, lockToken, exception);
 		} finally {
 			unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
 		}
+	}
+
+	private void handleSuccess(Long scanId, String lockOwner, String lockToken) {
+		Asset originalAsset = validator.requireOriginalAsset(scanId);
+
+		String storageKey = originalAsset.getStorageKey();
+		byte[] originalBytes = storageReader.readBytes(storageKey);
+
+		String filename = buildFilename(scanId);
+		OcrResult ocrResult = ocrClient.recognize(originalBytes, filename);
+
+		if (!isOwned(scanId, lockOwner, lockToken)) return;
+
+		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, LocalDateTime.now());
+		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
+	}
+
+	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception exception) {
+		FailureDecision decision = failureDecider.decide(exception);
+		persister.persistOcrFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
+
+		if (shouldSuppressStacktrace(exception)) {
+			RestClientResponseException rest = (RestClientResponseException) exception;
+			log.warn(
+				"OCR 호출 4xx scanId={} reason={} status={}",
+				scanId,
+				logPolicy.reasonCode(decision),
+				rest.getRawStatusCode()
+			);
+			return;
+		}
+
+		log.error("OCR 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
+	}
+
+	private boolean shouldSuppressStacktrace(Exception exception) {
+		if (!(exception instanceof RestClientResponseException rest)) return false;
+		return logPolicy.shouldSuppressStacktrace(rest);
+	}
+
+	private boolean isOwned(Long scanId, String lockOwner, String lockToken) {
+		return lockGuard.isOwned(scanId, lockOwner, lockToken);
+	}
+
+	private String buildFilename(Long scanId) {
+		return OCR_FILENAME_PREFIX + scanId + OCR_FILENAME_SUFFIX;
 	}
 }

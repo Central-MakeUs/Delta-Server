@@ -15,6 +15,7 @@ import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,10 +24,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
+	private static final String INTERNAL_ERROR_JSON =
+		"{\"status\":500,\"code\":\"INTERNAL_ERROR\",\"data\":null,\"message\":\"internal error\"}";
+
 	private final BearerTokenResolver tokenResolver;
 	private final JwtTokenProvider tokenProvider;
 	private final AccessBlacklistStore blacklistStore;
 	private final JwtProperties jwtProperties;
+	private final AuthenticationEntryPoint authenticationEntryPoint;
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -39,75 +44,121 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		BearerTokenResolver tokenResolver,
 		JwtTokenProvider tokenProvider,
 		AccessBlacklistStore blacklistStore,
-		JwtProperties jwtProperties) {
+		JwtProperties jwtProperties,
+		AuthenticationEntryPoint authenticationEntryPoint
+	) {
 		this.tokenResolver = tokenResolver;
 		this.tokenProvider = tokenProvider;
 		this.blacklistStore = blacklistStore;
 		this.jwtProperties = jwtProperties;
+		this.authenticationEntryPoint = authenticationEntryPoint;
 	}
 
 	@Override
 	protected void doFilterInternal(
-		HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-		throws ServletException, IOException {
+		HttpServletRequest request,
+		HttpServletResponse response,
+		FilterChain filterChain
+	) throws ServletException, IOException {
 
 		String token = tokenResolver.resolveBearerToken(request);
 
 		if (token == null) {
-			// 토큰이 없으면 Security가 permitAll/entrypoint로 처리한다.
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		try {
-			JwtTokenProvider.ParsedAccessToken parsed = tokenProvider.parseAccessTokenOrThrow(token);
-
-			if (isBlacklistEnabled() && blacklistStore.isBlacklisted(parsed.jti())) {
-				throw new JwtAuthenticationException(ErrorCode.BLACKLISTED_TOKEN);
-			}
-
-			setAuthentication(parsed.principal());
-
+			authenticateByToken(token);
 			filterChain.doFilter(request, response);
-
 		} catch (JwtAuthenticationException ex) {
-			// 4xx는 WARN스택 남김, entrypoint로 위임.
-			clearAuthentication();
-			logWarnAuthFail(request, ex);
-			throw ex;
+			handleJwtAuthFailure(request, response, ex);
 		} catch (Exception ex) {
-			clearAuthentication();
-			log.error(
-				"event=auth_error traceId={} path={} message={}",
-				MDC.get("traceId"),
-				request.getRequestURI(),
-				ex.getMessage(),
-				ex);
-			throw ex;
+			handleUnexpectedFailure(request, response, ex);
 		}
+	}
+
+	/**
+	 * 토큰을 검증하고 SecurityContext에 Authentication을 세팅한다.
+	 * 실패 시 JwtAuthenticationException 또는 RuntimeException 발생.
+	 */
+	private void authenticateByToken(String token) {
+		JwtTokenProvider.ParsedAccessToken parsed = tokenProvider.parseAccessTokenOrThrow(token);
+
+		if (isBlacklistEnabled() && blacklistStore.isBlacklisted(parsed.jti())) {
+			throw new JwtAuthenticationException(ErrorCode.BLACKLISTED_TOKEN);
+		}
+
+		setAuthentication(parsed.principal());
+	}
+
+	private void handleJwtAuthFailure(
+		HttpServletRequest request,
+		HttpServletResponse response,
+		JwtAuthenticationException ex
+	) throws IOException, ServletException {
+
+		clearAuthentication();
+		logWarnAuthFail(request, ex);
+
+		authenticationEntryPoint.commence(request, response, ex);
+	}
+
+	private void handleUnexpectedFailure(
+		HttpServletRequest request,
+		HttpServletResponse response,
+		Exception ex
+	) throws IOException {
+
+		clearAuthentication();
+		logUnexpectedError(request, ex);
+
+		writeInternalError(response);
+	}
+
+	private void logUnexpectedError(HttpServletRequest request, Exception ex) {
+		log.error(
+			"event=auth_error traceId={} path={} message={}",
+			MDC.get("traceId"),
+			request.getRequestURI(),
+			ex.getMessage(),
+			ex
+		);
+	}
+
+	private void writeInternalError(HttpServletResponse response) throws IOException {
+		if (response.isCommitted()) {
+			return;
+		}
+		response.setStatus(500);
+		response.setContentType("application/json;charset=UTF-8");
+		response.getWriter().write(INTERNAL_ERROR_JSON);
 	}
 
 	private boolean isBlacklistEnabled() {
 		return jwtProperties.blacklist() != null && jwtProperties.blacklist().enabled();
 	}
 
-	// principal/authority로 Authentication을 구성해 SecurityContext에 넣는다.
 	private void setAuthentication(UserPrincipal principal) {
-		var authorities = List.of(new SimpleGrantedAuthority("ROLE_" + principal.role()));
-		var auth = new UsernamePasswordAuthenticationToken(principal, null, authorities);
-		SecurityContextHolder.getContext().setAuthentication(auth);
+		List<SimpleGrantedAuthority> authorities =
+			List.of(new SimpleGrantedAuthority("ROLE_" + principal.role()));
+
+		UsernamePasswordAuthenticationToken authentication =
+			new UsernamePasswordAuthenticationToken(principal, null, authorities);
+
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 	}
 
 	private void clearAuthentication() {
 		SecurityContextHolder.clearContext();
 	}
 
-	// 토큰 값은 절대 로깅하지 않고 원인 코드만 남긴다.
 	private void logWarnAuthFail(HttpServletRequest request, JwtAuthenticationException ex) {
 		log.warn(
 			"event=auth_fail traceId={} path={} reasonCode={}",
 			MDC.get("traceId"),
 			request.getRequestURI(),
-			ex.getErrorCode().code());
+			ex.getErrorCode().code()
+		);
 	}
 }

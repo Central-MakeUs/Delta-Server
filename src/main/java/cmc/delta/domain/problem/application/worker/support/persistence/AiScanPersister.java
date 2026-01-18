@@ -8,9 +8,11 @@ import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumRes
 import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -18,20 +20,24 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class AiScanPersister {
 
 	private static final BigDecimal NEEDS_REVIEW_CONFIDENCE_THRESHOLD = BigDecimal.valueOf(0.60);
+	private static final long DEFAULT_RETRY_AFTER_SECONDS = 180L;
 
-	private final TransactionTemplate workerTransactionTemplate;
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final TransactionTemplate workerTx;
+	private final ScanWorkRepository scanWorkRepository;
+	private final ScanRepository scanRepository;
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository problemTypeRepository;
 
 	public AiScanPersister(
-		TransactionTemplate workerTransactionTemplate,
-		ProblemScanJpaRepository problemScanRepository,
+		TransactionTemplate workerTx,
+		ScanWorkRepository scanWorkRepository,
+		ScanRepository scanRepository,
 		UnitJpaRepository unitRepository,
 		ProblemTypeJpaRepository problemTypeRepository
 	) {
-		this.workerTransactionTemplate = workerTransactionTemplate;
-		this.problemScanRepository = problemScanRepository;
+		this.workerTx = workerTx;
+		this.scanWorkRepository = scanWorkRepository;
+		this.scanRepository = scanRepository;
 		this.unitRepository = unitRepository;
 		this.problemTypeRepository = problemTypeRepository;
 	}
@@ -43,29 +49,26 @@ public class AiScanPersister {
 		AiCurriculumResult aiResult,
 		LocalDateTime completedAt
 	) {
-		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
+		workerTx.executeWithoutResult(tx ->
+			inLockedTx(scanId, lockOwner, lockToken, scan -> {
+				Unit predictedUnit = findUnitOrNull(aiResult.predictedUnitId());
+				ProblemType predictedType = findProblemTypeOrNull(aiResult.predictedTypeId());
 
-			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
-			if (scan == null) return;
+				BigDecimal confidence = BigDecimal.valueOf(aiResult.confidence());
+				boolean needsReview = shouldNeedsReview(predictedUnit, predictedType, confidence);
 
-			Unit predictedUnit = findUnitOrNull(aiResult.predictedUnitId());
-			ProblemType predictedType = findProblemTypeOrNull(aiResult.predictedTypeId());
-
-			BigDecimal confidence = BigDecimal.valueOf(aiResult.confidence());
-			boolean needsReview = shouldNeedsReview(predictedUnit, predictedType, confidence);
-
-			scan.markAiSucceeded(
-				predictedUnit,
-				predictedType,
-				confidence,
-				needsReview,
-				aiResult.unitCandidatesJson(),
-				aiResult.typeCandidatesJson(),
-				aiResult.aiDraftJson(),
-				completedAt
-			);
-		});
+				scan.markAiSucceeded(
+					predictedUnit,
+					predictedType,
+					confidence,
+					needsReview,
+					aiResult.unitCandidatesJson(),
+					aiResult.typeCandidatesJson(),
+					aiResult.aiDraftJson(),
+					completedAt
+				);
+			})
+		);
 	}
 
 	public void persistAiFailed(
@@ -75,49 +78,61 @@ public class AiScanPersister {
 		FailureDecision decision,
 		LocalDateTime now
 	) {
-		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
+		workerTx.executeWithoutResult(tx ->
+			inLockedTx(scanId, lockOwner, lockToken, scan -> {
+				String reason = decision.reasonCode().code();
 
-			ProblemScan scan = problemScanRepository.findById(scanId).orElse(null);
-			if (scan == null) return;
+				if (!decision.retryable()) {
+					scan.markFailed(reason);
+					return;
+				}
 
-			String reason = decision.reasonCode().code();
+				if (decision.reasonCode() == FailureReason.AI_RATE_LIMIT) {
+					scan.markAiRateLimited(reason);
+					scan.scheduleNextRetryForAi(now, resolveRetryAfterSeconds(decision));
+					return;
+				}
 
-			if (!decision.retryable()) {
-				scan.markFailed(reason);
-				return;
-			}
+				scan.markAiFailed(reason);
+				scan.scheduleNextRetryForAi(now);
+			})
+		);
+	}
 
-			if (decision.reasonCode() == FailureReason.AI_RATE_LIMIT) {
-				scan.markAiRateLimited(reason);
+	private void inLockedTx(
+		Long scanId,
+		String lockOwner,
+		String lockToken,
+		Consumer<ProblemScan> action
+	) {
+		if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
 
-				Long delaySeconds = decision.retryAfterSeconds();
-				long delay = delaySeconds == null ? 180L : delaySeconds.longValue();
+		ProblemScan scan = scanRepository.findById(scanId).orElse(null);
+		if (scan == null) return;
 
-				scan.scheduleNextRetryForAi(now, delay);
-				return;
-			}
-
-			scan.markAiFailed(reason);
-			scan.scheduleNextRetryForAi(now);
-		});
+		action.accept(scan);
 	}
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		Integer exists = problemScanRepository.existsLockedBy(scanId, lockOwner, lockToken);
+		Integer exists = scanWorkRepository.existsLockedBy(scanId, lockOwner, lockToken);
 		return exists != null;
 	}
 
+	private long resolveRetryAfterSeconds(FailureDecision decision) {
+		Long retryAfter = decision.retryAfterSeconds();
+		return retryAfter == null ? DEFAULT_RETRY_AFTER_SECONDS : retryAfter.longValue();
+	}
+
 	private Unit findUnitOrNull(String unitId) {
-		String normalizedUnitId = normalizeIdOrNull(unitId);
-		if (normalizedUnitId == null) return null;
-		return unitRepository.findById(normalizedUnitId).orElse(null);
+		String normalized = normalizeIdOrNull(unitId);
+		if (normalized == null) return null;
+		return unitRepository.findById(normalized).orElse(null);
 	}
 
 	private ProblemType findProblemTypeOrNull(String problemTypeId) {
-		String normalizedProblemTypeId = normalizeIdOrNull(problemTypeId);
-		if (normalizedProblemTypeId == null) return null;
-		return problemTypeRepository.findById(normalizedProblemTypeId).orElse(null);
+		String normalized = normalizeIdOrNull(problemTypeId);
+		if (normalized == null) return null;
+		return problemTypeRepository.findById(normalized).orElse(null);
 	}
 
 	private String normalizeIdOrNull(String id) {

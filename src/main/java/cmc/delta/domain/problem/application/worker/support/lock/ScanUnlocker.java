@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.application.worker.support.lock;
 
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
@@ -11,20 +12,20 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ScanUnlocker {
 
 	private final TransactionTemplate workerTransactionTemplate;
-	private final ProblemScanJpaRepository problemScanRepository;
+	private final ScanWorkRepository scanWorkRepository;
 
 	public ScanUnlocker(
 		TransactionTemplate workerTransactionTemplate,
-		ProblemScanJpaRepository problemScanRepository
+		ScanWorkRepository scanWorkRepository
 	) {
 		this.workerTransactionTemplate = workerTransactionTemplate;
-		this.problemScanRepository = problemScanRepository;
+		this.scanWorkRepository = scanWorkRepository;
 	}
 
 	public void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
 			workerTransactionTemplate.executeWithoutResult(status ->
-				problemScanRepository.unlock(scanId, lockOwner, lockToken)
+				scanWorkRepository.unlock(scanId, lockOwner, lockToken)
 			);
 		} catch (Exception unlockException) {
 			log.debug("best-effort unlock failed scanId={} lockOwner={}", scanId, lockOwner, unlockException);

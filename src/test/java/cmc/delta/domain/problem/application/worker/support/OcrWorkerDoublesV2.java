@@ -12,11 +12,14 @@ import cmc.delta.domain.problem.application.worker.support.logging.BacklogLogger
 import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record OcrWorkerDoublesV2(
-	ProblemScanJpaRepository scanRepo,
+	ScanRepository scanRepo,
+	ScanWorkRepository scanWorkRepo,
 	ObjectStorageReader storageReader,
 	OcrClient ocrClient,
 	OcrWorkerProperties props,
@@ -34,7 +37,8 @@ public record OcrWorkerDoublesV2(
 		OcrWorkerProperties props = new OcrWorkerProperties(2000L, 10, 30L, 1, 1);
 
 		return new OcrWorkerDoublesV2(
-			mock(ProblemScanJpaRepository.class),
+			mock(ScanRepository.class),
+			mock(ScanWorkRepository.class),
 			mock(ObjectStorageReader.class),
 			mock(OcrClient.class),
 			props,

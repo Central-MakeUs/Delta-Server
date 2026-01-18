@@ -6,7 +6,7 @@ import cmc.delta.domain.problem.application.command.support.ProblemScanStoragePa
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.asset.AssetJpaRepository;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.persistence.UserJpaRepository;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
@@ -26,7 +26,7 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 
 	private final StorageService storageService;
 	private final UserJpaRepository userRepository;
-	private final ProblemScanJpaRepository scanRepository;
+	private final ScanRepository scanRepository;
 	private final AssetJpaRepository assetRepository;
 
 	private final ProblemScanStatusValidator statusValidator;

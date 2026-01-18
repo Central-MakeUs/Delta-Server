@@ -34,7 +34,7 @@ mathpix:
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
-  model: gemini-2.5-flash
+  model: gemini-2.5-flash-lite
 
 
 logging:

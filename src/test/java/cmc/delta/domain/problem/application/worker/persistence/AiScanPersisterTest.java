@@ -15,7 +15,8 @@ import cmc.delta.domain.problem.application.worker.support.failure.FailureReason
 import cmc.delta.domain.problem.application.worker.support.persistence.AiScanPersister;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
+import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,9 @@ class AiScanPersisterTest {
 	private static final String OWNER = "w1";
 	private static final String TOKEN = "t1";
 
-	private ProblemScanJpaRepository scanRepo;
+	private ScanRepository scanRepo;
+	private ScanWorkRepository scanWorkRepo;
+
 	private UnitJpaRepository unitRepo;
 	private ProblemTypeJpaRepository typeRepo;
 	private TransactionTemplate tx;
@@ -37,12 +40,15 @@ class AiScanPersisterTest {
 
 	@BeforeEach
 	void setUp() {
-		scanRepo = mock(ProblemScanJpaRepository.class);
+		scanRepo = mock(ScanRepository.class);
+		scanWorkRepo = mock(ScanWorkRepository.class);
+
 		unitRepo = mock(UnitJpaRepository.class);
 		typeRepo = mock(ProblemTypeJpaRepository.class);
+
 		tx = WorkerTestTx.immediateTx();
 
-		sut = new AiScanPersister(tx, scanRepo, unitRepo, typeRepo);
+		sut = new AiScanPersister(tx, scanWorkRepo, scanRepo, unitRepo, typeRepo);
 	}
 
 	@Test
@@ -50,13 +56,14 @@ class AiScanPersisterTest {
 	void succeed_lockLost_noop() {
 		// given
 		Long scanId = 1L;
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(null);
 
 		// when
 		sut.persistAiSucceeded(scanId, OWNER, TOKEN, mock(AiCurriculumResult.class), LocalDateTime.now());
 
 		// then
 		verify(scanRepo, never()).findById(anyLong());
+		verifyNoInteractions(unitRepo, typeRepo);
 	}
 
 	@Test
@@ -66,7 +73,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		AiCurriculumResult ai = aiResult("U1", "T1", 0.90);
@@ -93,7 +100,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		AiCurriculumResult ai = aiResult("U1", "T1", 0.59);
@@ -116,7 +123,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		AiCurriculumResult ai = aiResult("U_UNKNOWN", "T_UNKNOWN", 0.90);
@@ -139,7 +146,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
@@ -165,7 +172,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
@@ -179,7 +186,7 @@ class AiScanPersisterTest {
 		sut.persistAiFailed(scanId, OWNER, TOKEN, decision, now);
 
 		// then
-		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE); // AI 재시도는 OCR_DONE 유지 구조
+		assertThat(scan.getStatus()).isEqualTo(ScanStatus.OCR_DONE);
 		assertThat(scan.getAiAttemptCount()).isEqualTo(1);
 		assertThat(scan.getFailReason()).isEqualTo(FailureReason.AI_RATE_LIMIT.code());
 		assertThat(scan.getNextRetryAt()).isNotNull();
@@ -192,7 +199,7 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
@@ -217,13 +224,13 @@ class AiScanPersisterTest {
 		Long scanId = 1L;
 		ProblemScan scan = ocrDone(user(10L), "some text");
 
-		when(scanRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
+		when(scanWorkRepo.existsLockedBy(scanId, OWNER, TOKEN)).thenReturn(1);
 		when(scanRepo.findById(scanId)).thenReturn(Optional.of(scan));
 
 		FailureDecision decision = mock(FailureDecision.class);
 		when(decision.retryable()).thenReturn(true);
 
-		FailureReason reason = mock(FailureReason.class); // AI_RATE_LIMIT이 아니면 이 분기로 들어감
+		FailureReason reason = mock(FailureReason.class);
 		when(reason.code()).thenReturn("AI_NETWORK");
 		when(decision.reasonCode()).thenReturn(reason);
 

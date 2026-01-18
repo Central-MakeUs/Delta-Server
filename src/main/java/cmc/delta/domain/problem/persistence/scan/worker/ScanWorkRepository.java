@@ -1,23 +1,15 @@
-package cmc.delta.domain.problem.persistence.scan;
+package cmc.delta.domain.problem.persistence.scan.worker;
 
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import jakarta.persistence.LockModeType;
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 나중에 상황을 보고 레포지토리를 쪼개거나,
- * DSL 사용 예정
- */
-public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Long> {
+public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -138,64 +130,6 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 		@Param("scanId") Long scanId,
 		@Param("lockOwner") String lockOwner,
 		@Param("lockToken") String lockToken
-	);
-
-	@Override
-	Optional<ProblemScan> findById(Long scanId);
-
-	@Query("""
-	select
-	  s.id as scanId,
-	  s.status as status,
-	  s.hasFigure as hasFigure,
-	  s.renderMode as renderMode,
-
-	  a.id as assetId,
-	  a.storageKey as storageKey,
-	  a.width as width,
-	  a.height as height,
-
-	  s.ocrPlainText as ocrPlainText,
-	  s.aiProblemLatex as aiProblemLatex,
-	  s.aiSolutionLatex as aiSolutionLatex,
-
-	  u.id as predictedUnitId,
-	  u.name as predictedUnitName,
-	  t.id as predictedTypeId,
-	  t.name as predictedTypeName,
-	  s.confidence as confidence,
-	  s.needsReview as needsReview,
-	  s.aiUnitCandidatesJson as aiUnitCandidatesJson,
-	  s.aiTypeCandidatesJson as aiTypeCandidatesJson,
-	  s.aiDraftJson as aiDraftJson,
-
-	  s.createdAt as createdAt,
-	  s.ocrCompletedAt as ocrCompletedAt,
-	  s.aiCompletedAt as aiCompletedAt,
-	  s.failReason as failReason
-
-	from ProblemScan s
-	left join Asset a
-	  on a.scan = s
-	 and a.assetType = cmc.delta.domain.problem.model.enums.AssetType.ORIGINAL
-	left join s.predictedUnit u
-	left join s.predictedType t
-	where s.id = :scanId
-	  and s.user.id = :userId
-""")
-	Optional<ProblemScanDetailProjection> findOwnedDetail(Long scanId, Long userId);
-
-
-	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	@Query("""
-		select s
-		  from ProblemScan s
-		 where s.id = :scanId
-		   and s.user.id = :userId
-	""")
-	Optional<ProblemScan> findOwnedByForUpdate(
-		@Param("scanId") Long scanId,
-		@Param("userId") Long userId
 	);
 
 	@Query(
