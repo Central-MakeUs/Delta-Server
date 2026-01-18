@@ -6,6 +6,7 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
+import cmc.delta.domain.problem.persistence.problem.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.PagedResponse;
@@ -17,6 +18,9 @@ import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "오답카드")
@@ -65,15 +69,12 @@ public class ProblemController {
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "20") int size
 	) {
-		PagedResponse<ProblemListItemResponse> data = problemQueryService.getMyProblemCardList(
-			principal.userId(),
-			subjectId,
-			unitId,
-			typeId,
-			sort,
-			page,
-			size
-		);
+		Pageable pageable = PageRequest.of(page, size);
+		ProblemListCondition condition = new ProblemListCondition(subjectId, unitId, typeId, sort);
+
+		PagedResponse<ProblemListItemResponse> data =
+			problemQueryService.getMyProblemCardList(principal.userId(), condition, pageable);
+
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }
