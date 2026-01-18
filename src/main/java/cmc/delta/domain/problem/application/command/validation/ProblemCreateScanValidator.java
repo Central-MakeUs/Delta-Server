@@ -6,7 +6,7 @@ import cmc.delta.domain.problem.application.common.exception.ProblemScanNotReady
 import cmc.delta.domain.problem.application.common.exception.ProblemScanRenderModeMissingException;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemJpaRepository;
+import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;

@@ -13,7 +13,7 @@ import cmc.delta.domain.problem.application.command.validation.ProblemCreateScan
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ProblemJpaRepository;
+import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.persistence.scan.ProblemScanJpaRepository;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.persistence.UserJpaRepository;
