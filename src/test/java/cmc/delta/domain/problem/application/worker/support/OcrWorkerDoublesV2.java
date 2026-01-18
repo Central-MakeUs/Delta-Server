@@ -13,10 +13,13 @@ import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPoli
 import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
 import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record OcrWorkerDoublesV2(
 	ScanRepository scanRepo,
+	ScanWorkRepository scanWorkRepo,
 	ObjectStorageReader storageReader,
 	OcrClient ocrClient,
 	OcrWorkerProperties props,
@@ -35,6 +38,7 @@ public record OcrWorkerDoublesV2(
 
 		return new OcrWorkerDoublesV2(
 			mock(ScanRepository.class),
+			mock(ScanWorkRepository.class),
 			mock(ObjectStorageReader.class),
 			mock(OcrClient.class),
 			props,

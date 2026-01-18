@@ -47,7 +47,7 @@ class OcrScanWorkerAdditionalTest {
 			fixedClock,
 			d.tx(),
 			direct,
-			d.scanRepo(),
+			d.scanWorkRepo(),
 			d.storageReader(),
 			d.ocrClient(),
 			d.props(),
@@ -59,6 +59,7 @@ class OcrScanWorkerAdditionalTest {
 			d.validator(),
 			d.persister()
 		);
+
 	}
 
 	@Test

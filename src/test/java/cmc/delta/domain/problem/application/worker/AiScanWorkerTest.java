@@ -40,6 +40,7 @@ class AiScanWorkerTest {
 			d.tx(),
 			direct,
 			d.scanRepo(),
+			d.scanWorkRepo(),
 			d.aiClient(),
 			d.props(),
 			d.lockGuard(),

@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.worker.support;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
 
 import cmc.delta.domain.problem.application.scan.port.out.ai.AiClient;
 import cmc.delta.domain.problem.application.worker.properties.AiWorkerProperties;
@@ -13,11 +13,12 @@ import cmc.delta.domain.problem.application.worker.support.persistence.AiScanPer
 import cmc.delta.domain.problem.application.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.persistence.scan.ScanRepository;
-
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record AiWorkerDoublesV2(
 	ScanRepository scanRepo,
+	ScanWorkRepository scanWorkRepo,
 	AiClient aiClient,
 	TransactionTemplate tx,
 	AiWorkerProperties props,
@@ -36,6 +37,7 @@ public record AiWorkerDoublesV2(
 
 		return new AiWorkerDoublesV2(
 			mock(ScanRepository.class),
+			mock(ScanWorkRepository.class),
 			mock(AiClient.class),
 			tx,
 			props,

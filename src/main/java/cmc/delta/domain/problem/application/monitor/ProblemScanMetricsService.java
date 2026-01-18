@@ -1,10 +1,11 @@
 package cmc.delta.domain.problem.application.monitor;
 
 import cmc.delta.domain.problem.application.monitor.dto.WorkerMetricsSnapshot;
-import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProblemScanMetricsService {
 
 	private final Clock clock;
-	private final ScanRepository scanRepository;
+	private final ScanWorkRepository scanWorkRepository;
 
 	@Transactional(readOnly = true)
 	public WorkerMetricsSnapshot lastMinutes(
@@ -25,16 +26,16 @@ public class ProblemScanMetricsService {
 		LocalDateTime now = LocalDateTime.now(clock);
 		LocalDateTime from = now.minusMinutes(windowMinutes);
 
-		long ocrDoneCount = scanRepository.countByOcrCompletedAtGreaterThanEqual(from);
-		long aiDoneCount = scanRepository.countByAiCompletedAtGreaterThanEqual(from);
+		long ocrDoneCount = scanWorkRepository.countByOcrCompletedAtGreaterThanEqual(from);
+		long aiDoneCount = scanWorkRepository.countByAiCompletedAtGreaterThanEqual(from);
 
 		LocalDateTime ocrStaleBefore = now.minusSeconds(ocrLockLeaseSeconds);
 		LocalDateTime aiStaleBefore = now.minusSeconds(aiLockLeaseSeconds);
 
-		long failedCount = scanRepository.countFailedSince(from);
+		long failedCount = scanWorkRepository.countFailedSince(from);
 
-		long ocrBacklog = scanRepository.countOcrBacklog(now, ocrStaleBefore);
-		long aiBacklog = scanRepository.countAiBacklog(now, aiStaleBefore);
+		long ocrBacklog = scanWorkRepository.countOcrBacklog(now, ocrStaleBefore);
+		long aiBacklog = scanWorkRepository.countAiBacklog(now, aiStaleBefore);
 
 		return new WorkerMetricsSnapshot(
 			windowMinutes,

@@ -1,5 +1,6 @@
 package cmc.delta.domain.problem.application.query.support;
 
+import cmc.delta.domain.problem.persistence.scan.query.ScanDetailRepository;
 import cmc.delta.domain.problem.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import cmc.delta.global.error.ErrorCode;
@@ -13,11 +14,11 @@ public class ProblemScanDetailValidator {
 	private static final String MSG_ASSET_NOT_FOUND = "원본 이미지를 찾을 수 없습니다.";
 
 	public ScanDetailProjection getOwnedDetail(
-		ScanRepository scanRepository,
+		ScanDetailRepository scanDetailRepository,
 		Long scanId,
 		Long userId
 	) {
-		return scanRepository.findOwnedDetail(scanId, userId)
+		return scanDetailRepository.findOwnedDetail(scanId, userId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_SCAN_NOT_FOUND, MSG_SCAN_NOT_FOUND));
 	}
 

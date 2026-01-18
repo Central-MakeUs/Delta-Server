@@ -36,7 +36,7 @@ class OcrScanWorkerTest {
 			Clock.systemDefaultZone(),
 			d.tx(),
 			direct,
-			d.scanRepo(),
+			d.scanWorkRepo(),
 			d.storageReader(),
 			d.ocrClient(),
 			d.props(),

@@ -18,12 +18,12 @@ import cmc.delta.domain.problem.application.worker.support.validation.AiScanVali
 import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator.AiValidatedInput;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -36,7 +36,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 
 	private static final String WORKER_KEY = "worker:ai:backlog";
 
-	private final ScanRepository problemScanRepository;
+	private final ScanRepository scanRepository; // CRUD only
+	private final ScanWorkRepository scanWorkRepository; // claim/backlog only
+
 	private final AiClient aiClient;
 	private final AiWorkerProperties properties;
 
@@ -54,7 +56,8 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
 		@Qualifier("aiExecutor") Executor aiExecutor,
-		ScanRepository problemScanRepository,
+		ScanRepository scanRepository,
+		ScanWorkRepository scanWorkRepository,
 		AiClient aiClient,
 		AiWorkerProperties properties,
 		ScanLockGuard lockGuard,
@@ -67,7 +70,9 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		AiScanPersister persister
 	) {
 		super(clock, workerTxTemplate, aiExecutor, "ai");
-		this.problemScanRepository = problemScanRepository;
+		this.scanRepository = scanRepository;
+		this.scanWorkRepository = scanWorkRepository;
+
 		this.aiClient = aiClient;
 		this.properties = properties;
 
@@ -83,13 +88,20 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	@Override
-	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
-		return problemScanRepository.claimAiCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
+	protected int claim(
+		LocalDateTime now,
+		LocalDateTime staleBefore,
+		String lockOwner,
+		String lockToken,
+		LocalDateTime lockedAt,
+		int limit
+	) {
+		return scanWorkRepository.claimAiCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return problemScanRepository.findClaimedAiIds(lockOwner, lockToken, limit);
+		return scanWorkRepository.findClaimedAiIds(lockOwner, lockToken, limit);
 	}
 
 	@Override
@@ -101,7 +113,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 			WORKER_KEY,
 			now,
 			properties.backlogLogMinutes(),
-			() -> problemScanRepository.countAiBacklog(now, staleBefore),
+			() -> scanWorkRepository.countAiBacklog(now, staleBefore),
 			(backlog) -> log.info("AI 워커 - 처리 대상 없음 (aiBacklog={})", backlog)
 		);
 	}
@@ -116,37 +128,50 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
 
 		try {
-			ProblemScan scan = loadScanOrThrow(scanId);
-			AiValidatedInput input = validator.validateAndNormalize(scanId, scan);
-
-			AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
-			AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
-
-			// 외부 호출 후 저장 직전 락 재확인
-			if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
-
-			persister.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, LocalDateTime.now());
-			log.info("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
-
+			handleSuccessPath(scanId, lockOwner, lockToken);
 		} catch (Exception exception) {
-			FailureDecision decision = failureDecider.decide(exception);
-			persister.persistAiFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
-
-			if (exception instanceof RestClientResponseException restClientResponseException
-				&& logPolicy.shouldSuppressStacktrace(restClientResponseException)) {
-				log.warn("AI 호출 4xx scanId={} reason={} status={}",
-					scanId, logPolicy.reasonCode(decision), restClientResponseException.getRawStatusCode()
-				);
-			} else {
-				log.error("AI 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
-			}
+			handleFailure(scanId, lockOwner, lockToken, exception);
 		} finally {
 			unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
 		}
 	}
 
+	private void handleSuccessPath(Long scanId, String lockOwner, String lockToken) {
+		ProblemScan scan = loadScanOrThrow(scanId);
+		AiValidatedInput input = validator.validateAndNormalize(scanId, scan);
+
+		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
+		AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
+
+		// 외부 호출 후 저장 직전 락 재확인
+		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
+
+		persister.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, LocalDateTime.now());
+		log.info("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
+	}
+
+	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception exception) {
+		FailureDecision decision = failureDecider.decide(exception);
+		persister.persistAiFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
+
+		if (shouldSuppressStacktrace(exception)) {
+			RestClientResponseException rest = (RestClientResponseException) exception;
+			log.warn("AI 호출 4xx scanId={} reason={} status={}",
+				scanId, logPolicy.reasonCode(decision), rest.getRawStatusCode()
+			);
+			return;
+		}
+
+		log.error("AI 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
+	}
+
+	private boolean shouldSuppressStacktrace(Exception exception) {
+		if (!(exception instanceof RestClientResponseException rest)) return false;
+		return logPolicy.shouldSuppressStacktrace(rest);
+	}
+
 	private ProblemScan loadScanOrThrow(Long scanId) {
-		Optional<ProblemScan> optionalScan = problemScanRepository.findById(scanId);
+		Optional<ProblemScan> optionalScan = scanRepository.findById(scanId);
 		if (optionalScan.isEmpty()) {
 			throw new ProblemScanNotFoundException(scanId);
 		}

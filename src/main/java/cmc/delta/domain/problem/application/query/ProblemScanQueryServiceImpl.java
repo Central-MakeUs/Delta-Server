@@ -11,8 +11,9 @@ import cmc.delta.domain.problem.application.query.support.ProblemScanDetailMappe
 import cmc.delta.domain.problem.application.query.support.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.query.support.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.query.validation.ProblemScanQueryValidator;
+import cmc.delta.domain.problem.persistence.scan.query.ScanDetailRepository;
+import cmc.delta.domain.problem.persistence.scan.query.ScanListRepository;
 import cmc.delta.domain.problem.persistence.scan.query.projection.ScanDetailProjection;
-import cmc.delta.domain.problem.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.persistence.scan.query.dto.ScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.storage.StorageService;
@@ -29,7 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 
-	private final ScanRepository scanRepository;
+	private final ScanListRepository scanListRepository;
+	private final ScanDetailRepository scanDetailRepository;
 	private final StorageService storageService;
 
 	// detail 전용
@@ -45,7 +47,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 	@Override
 	@Transactional(readOnly = true)
 	public ProblemScanSummaryResponse getSummary(Long userId, Long scanId) {
-		ScanListRow row = scanRepository.findSummaryRow(userId, scanId).orElse(null);
+		ScanListRow row = scanListRepository.findListRow(userId, scanId).orElse(null);
 		if (row == null) {
 			throw new ProblemScanNotFoundException();
 		}
@@ -62,7 +64,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
-		ScanDetailProjection p = detailValidator.getOwnedDetail(scanRepository, scanId, userId);
+		ScanDetailProjection p = detailValidator.getOwnedDetail(scanDetailRepository, scanId, userId);
 		detailValidator.validateOriginalAsset(p);
 
 		StoragePresignedGetData presigned = storageService.issueReadUrl(p.getStorageKey(), null);
