@@ -242,4 +242,6 @@ public interface ProblemScanJpaRepository extends JpaRepository<ProblemScan, Lon
 	long countByOcrCompletedAtGreaterThanEqual(LocalDateTime from);
 
 	long countByAiCompletedAtGreaterThanEqual(LocalDateTime from);
+
+	Optional<ProblemScan> findByIdAndUserId(Long id, Long userId);
 }

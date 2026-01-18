@@ -4,13 +4,13 @@ import cmc.delta.domain.problem.model.enums.AnswerFormat;
 
 public record ProblemCreateRequest(
 	Long scanId,
-	String subjectId,
-	String unitId,
-	String typeId,
+	String finalUnitId,
+	String finalTypeId,
 
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
 
-	String solutionText
+	String solutionText,
+	String memo
 ) { }

@@ -30,7 +30,6 @@ public class ProblemController {
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.PROBLEM_SCAN_NOT_FOUND,
 		ErrorCode.PROBLEM_ASSET_NOT_FOUND,
-		// 있으면 추천: ErrorCode.PROBLEM_ALREADY_CREATED
 		ErrorCode.INTERNAL_ERROR
 	})
 	@PostMapping
