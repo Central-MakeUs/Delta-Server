@@ -43,7 +43,7 @@ public enum ErrorCode {
 	PROBLEM_FINAL_TYPE_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_006", "선택한 유형을 찾을 수 없습니다.", LogLevel.WARN),
 	PROBLEM_SCAN_NOT_READY(HttpStatus.BAD_REQUEST, "PROB_007", "AI 분석이 완료된 스캔만 오답카드를 생성할 수 있습니다.", LogLevel.WARN),
 	PROBLEM_ALREADY_CREATED(HttpStatus.CONFLICT, "PROB_008", "이미 해당 스캔으로 생성된 오답카드가 있습니다.", LogLevel.WARN),
-
+	PROBLEM_SCAN_RENDER_MODE_MISSING (HttpStatus.BAD_REQUEST,"PROB_009","스캔 렌더 모드가 누락되었습니다.", LogLevel.WARN),
 	// OCR / AI
 	OCR_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_010", "OCR 처리에 실패했습니다.", LogLevel.ERROR),
 	AI_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_020", "AI 처리에 실패했습니다.", LogLevel.ERROR);
