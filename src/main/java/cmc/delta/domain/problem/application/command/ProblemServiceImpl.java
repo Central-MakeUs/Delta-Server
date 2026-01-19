@@ -1,5 +1,7 @@
 package cmc.delta.domain.problem.application.command;
 
+import java.time.LocalDateTime;
+
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
@@ -9,6 +11,7 @@ import cmc.delta.domain.problem.application.command.support.ProblemCreateAssembl
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateRequestValidator;
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateScanValidator;
+import cmc.delta.domain.problem.application.common.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
@@ -49,6 +52,15 @@ public class ProblemServiceImpl implements ProblemService {
 		Problem savedProblem = saveProblemWithDuplicateGuard(newProblem);
 
 		return mapper.toResponse(savedProblem);
+	}
+
+	@Override
+	@Transactional
+	public void completeWrongAnswerCard(Long currentUserId, Long problemId) {
+		Problem problem = problemRepository.findByIdAndUserId(problemId, currentUserId)
+			.orElseThrow(() -> new ProblemScanNotFoundException());
+
+		problem.markCompleted(LocalDateTime.now());
 	}
 
 	private void validateCreateRequest(ProblemCreateRequest request) {

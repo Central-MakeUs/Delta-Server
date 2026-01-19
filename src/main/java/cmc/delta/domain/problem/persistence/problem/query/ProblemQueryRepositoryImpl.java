@@ -78,12 +78,12 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
 		}
 
 		if (status == ProblemStatusFilter.SOLVED) {
-			where.and(problem.solutionText.isNotNull());
+			where.and(problem.completedAt.isNotNull());
 			return;
 		}
 
 		if (status == ProblemStatusFilter.UNSOLVED) {
-			where.and(problem.solutionText.isNull());
+			where.and(problem.completedAt.isNull());
 		}
 	}
 

@@ -75,4 +75,19 @@ public class ProblemController {
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
+
+	@Operation(summary = "오답카드 오답 완료 처리")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@PostMapping("/{problemId}/complete")
+	public ApiResponse<Void> completeWrongAnswerCard(
+		@CurrentUser UserPrincipal principal,
+		@PathVariable Long problemId
+	) {
+		problemService.completeWrongAnswerCard(principal.userId(), problemId);
+		return ApiResponses.success(SuccessCode.OK, null);
+	}
 }
