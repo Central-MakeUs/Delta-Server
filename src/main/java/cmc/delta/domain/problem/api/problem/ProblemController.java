@@ -1,11 +1,13 @@
 package cmc.delta.domain.problem.api.problem;
 
+import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemListSort;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
+import cmc.delta.domain.problem.application.query.mapper.ProblemListConditionMapper;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -31,6 +33,7 @@ public class ProblemController {
 
 	private final ProblemService problemService;
 	private final ProblemQueryService problemQueryService;
+	private final ProblemListConditionMapper conditionMapper;
 
 	@Operation(summary = "오답카드 생성 (scan 기반 최종 저장)")
 	@ApiErrorCodeExamples({
@@ -63,18 +66,13 @@ public class ProblemController {
 	@GetMapping
 	public ApiResponse<PagedResponse<ProblemListItemResponse>> getMyProblemList(
 		@CurrentUser UserPrincipal principal,
-		@RequestParam(required = false) String subjectId,
-		@RequestParam(required = false) String unitId,
-		@RequestParam(required = false) String typeId,
-		@RequestParam(defaultValue = "RECENT") ProblemListSort sort,
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "20") int size
+		@ModelAttribute MyProblemListRequest query
 	) {
-		Pageable pageable = PageRequest.of(page, size);
-		ProblemListCondition condition = new ProblemListCondition(subjectId, unitId, typeId, sort);
+		Pageable paging = PageRequest.of(query.page(), query.size());
+		ProblemListCondition condition = conditionMapper.toCondition(query);
 
 		PagedResponse<ProblemListItemResponse> data =
-			problemQueryService.getMyProblemCardList(principal.userId(), condition, pageable);
+			problemQueryService.getMyProblemCardList(principal.userId(), condition, paging);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
