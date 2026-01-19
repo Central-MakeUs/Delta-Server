@@ -102,20 +102,4 @@ public class Problem extends BaseTimeEntity {
 		p.solutionText = solutionText;
 		return p;
 	}
-
-	public void replaceChoices(List<ProblemChoice> newChoices) {
-		this.choices.clear();
-		for (ProblemChoice c : newChoices) {
-			c.attachTo(this);
-			this.choices.add(c);
-		}
-	}
-
-	public void replaceUnitTags(List<ProblemUnitTag> newTags) {
-		this.unitTags.clear();
-		for (ProblemUnitTag t : newTags) {
-			t.attachTo(this);
-			this.unitTags.add(t);
-		}
-	}
 }
