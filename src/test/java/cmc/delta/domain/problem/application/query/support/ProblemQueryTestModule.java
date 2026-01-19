@@ -7,6 +7,7 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse
 import cmc.delta.domain.problem.application.query.ProblemQueryServiceImpl;
 import cmc.delta.domain.problem.application.query.mapper.ProblemListMapper;
 import cmc.delta.domain.problem.application.query.validation.ProblemListRequestValidator;
+import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
@@ -62,7 +63,13 @@ public final class ProblemQueryTestModule {
 		StorageService storage = mock(StorageService.class);
 
 		Long userId = 10L;
-		ProblemListCondition condition = new ProblemListCondition("S1", "U1", "T1", ProblemListSort.RECENT);
+		ProblemListCondition condition = new ProblemListCondition(
+			"S1",
+			"U1",
+			"T1",
+			ProblemListSort.RECENT,
+			ProblemStatusFilter.ALL
+		);
 		Pageable pageable = PageRequest.of(0, 20);
 
 		ProblemQueryTestModule m = new ProblemQueryTestModule(repo, validator, mapper, storage, userId, condition, pageable);
@@ -88,7 +95,13 @@ public final class ProblemQueryTestModule {
 		StorageService storage = mock(StorageService.class);
 
 		Long userId = 10L;
-		ProblemListCondition condition = new ProblemListCondition(null, null, null, ProblemListSort.RECENT);
+		ProblemListCondition condition = new ProblemListCondition(
+			"S1",
+			"U1",
+			"T1",
+			ProblemListSort.RECENT,
+			ProblemStatusFilter.ALL
+		);
 
 		Pageable pageable = PageRequest.of(0, 20);
 

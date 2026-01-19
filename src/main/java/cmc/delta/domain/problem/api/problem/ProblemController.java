@@ -2,12 +2,11 @@ package cmc.delta.domain.problem.api.problem;
 
 import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
-import cmc.delta.domain.problem.api.problem.dto.request.ProblemListSort;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
-import cmc.delta.domain.problem.application.query.mapper.ProblemListConditionMapper;
+import cmc.delta.domain.problem.application.query.support.ProblemListConditionFactory;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -33,7 +32,7 @@ public class ProblemController {
 
 	private final ProblemService problemService;
 	private final ProblemQueryService problemQueryService;
-	private final ProblemListConditionMapper conditionMapper;
+	private final ProblemListConditionFactory conditionFactory;
 
 	@Operation(summary = "오답카드 생성 (scan 기반 최종 저장)")
 	@ApiErrorCodeExamples({
@@ -68,11 +67,11 @@ public class ProblemController {
 		@CurrentUser UserPrincipal principal,
 		@ModelAttribute MyProblemListRequest query
 	) {
-		Pageable paging = PageRequest.of(query.page(), query.size());
-		ProblemListCondition condition = conditionMapper.toCondition(query);
+		Pageable pageable = PageRequest.of(query.page(), query.size());
+		ProblemListCondition condition = conditionFactory.from(query);
 
 		PagedResponse<ProblemListItemResponse> data =
-			problemQueryService.getMyProblemCardList(principal.userId(), condition, paging);
+			problemQueryService.getMyProblemCardList(principal.userId(), condition, pageable);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

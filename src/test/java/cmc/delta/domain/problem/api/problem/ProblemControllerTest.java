@@ -27,7 +27,7 @@ class ProblemControllerTest {
 		ProblemControllerTestModule m = ProblemControllerTestModule.listCase();
 
 		// when
-		m.callList("S1", "U1", "T1", ProblemListSort.RECENT, 0, 20);
+		m.callList();
 
 		// then
 		m.thenListCalled();
