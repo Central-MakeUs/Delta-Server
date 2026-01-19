@@ -9,6 +9,8 @@ import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -71,6 +73,9 @@ public class Problem extends BaseTimeEntity {
 	@Column(name = "solution_text", columnDefinition = "MEDIUMTEXT")
 	private String solutionText;
 
+	@Column(name = "completed_at")
+	private LocalDateTime completedAt;
+
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemChoice> choices = new ArrayList<>();
 
@@ -101,5 +106,15 @@ public class Problem extends BaseTimeEntity {
 		p.answerChoiceNo = answerChoiceNo;
 		p.solutionText = solutionText;
 		return p;
+	}
+
+	public boolean isCompleted() {
+		return completedAt != null;
+	}
+
+	public void markCompleted(LocalDateTime now) {
+		if (this.completedAt == null) {
+			this.completedAt = now;
+		}
 	}
 }
