@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.adapter.out.persistence;
+package cmc.delta.domain.auth.application.port.in.provisioning;
 
 import cmc.delta.domain.auth.model.SocialProvider;
 

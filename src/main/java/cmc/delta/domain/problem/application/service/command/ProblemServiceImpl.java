@@ -7,7 +7,6 @@ import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.application.exception.ProblemNotFoundException;
-import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
@@ -64,7 +63,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Transactional
 	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
 		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, currentUserId)
-			.orElseThrow(ProblemScanNotFoundException::new);
+			.orElseThrow(ProblemNotFoundException::new);
 
 		LocalDateTime now = LocalDateTime.now();
 		problem.complete(solutionText, now);
