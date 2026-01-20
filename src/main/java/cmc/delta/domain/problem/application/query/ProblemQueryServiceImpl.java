@@ -1,9 +1,14 @@
 package cmc.delta.domain.problem.application.query;
 
+import cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.common.exception.ProblemScanNotFoundException;
+import cmc.delta.domain.problem.application.query.mapper.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.query.mapper.ProblemListMapper;
 import cmc.delta.domain.problem.application.query.validation.ProblemListRequestValidator;
 import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
+import cmc.delta.domain.problem.persistence.problem.query.ProblemQueryRepository;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
 import cmc.delta.global.api.response.PagedResponse;
@@ -26,6 +31,8 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemListMapper problemListMapper;
 	private final StorageService storageService;
+	private final ProblemQueryRepository problemQueryRepository;
+	private final ProblemDetailMapper problemDetailMapper;
 
 	@Override
 	public PagedResponse<ProblemListItemResponse> getMyProblemCardList(
@@ -35,7 +42,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 	) {
 		requestValidator.validatePagination(pageable);
 
-		Page<ProblemListRow> rows = problemRepository.findMyProblemList(userId, condition, pageable);
+		Page<ProblemListRow> rows = problemQueryRepository.findMyProblemList(userId, condition, pageable);
 		List<ProblemListItemResponse> content = toProblemListItemResponses(rows.getContent());
 
 		return new PagedResponse<ProblemListItemResponse>(
@@ -45,6 +52,15 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 			rows.getTotalElements(),
 			rows.getTotalPages()
 		);
+	}
+
+	@Override
+	public ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId) {
+		ProblemDetailRow row = problemQueryRepository.findMyProblemDetail(userId, problemId)
+			.orElseThrow(() -> new ProblemScanNotFoundException());
+
+		StoragePresignedGetData presigned = storageService.issueReadUrl(row.storageKey(), null);
+		return problemDetailMapper.toResponse(row, presigned.url());
 	}
 
 	private List<ProblemListItemResponse> toProblemListItemResponses(List<ProblemListRow> rows) {

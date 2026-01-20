@@ -100,4 +100,23 @@ public class ProblemController {
 		problemService.completeWrongAnswerCard(principal.userId(), problemId);
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
+
+	@Operation(summary = "내 오답카드 상세 조회")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/{problemId}")
+	public ApiResponse<cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse> getMyProblemDetail(
+		@CurrentUser UserPrincipal principal,
+		@PathVariable Long problemId
+	) {
+		cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse data =
+			problemQueryService.getMyProblemDetail(principal.userId(), problemId);
+
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
 }
