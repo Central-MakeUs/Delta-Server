@@ -1,7 +1,10 @@
 package cmc.delta.domain.user.application.port.out;
 
 import cmc.delta.domain.user.model.User;
+import java.util.Optional;
 
 public interface UserRepositoryPort {
-	User getReferenceById(Long id);
+	Optional<User> findById(Long id);
+	User save(User user);
+	void delete(User user);
 }

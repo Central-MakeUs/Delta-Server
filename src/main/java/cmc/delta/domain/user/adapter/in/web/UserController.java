@@ -1,7 +1,7 @@
 package cmc.delta.domain.user.adapter.in.web;
 
 import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
-import cmc.delta.domain.user.application.service.UserService;
+import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/users")
 public class UserController {
 
-	private final UserService userService;
+	private final UserUseCase userUseCase;
 
 	@Operation(summary = "내 프로필 조회")
 	@ApiErrorCodeExamples({
@@ -31,7 +31,7 @@ public class UserController {
 	})
 	@GetMapping("/me")
 	public ApiResponse<UserMeData> getMyProfile(@CurrentUser UserPrincipal principal) {
-		UserMeData data = userService.getMyProfile(principal.userId());
+		UserMeData data = userUseCase.getMyProfile(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -44,7 +44,7 @@ public class UserController {
 	})
 	@PostMapping("/withdrawal")
 	public ApiResponse<Void> withdrawMyAccount(@CurrentUser UserPrincipal principal) {
-		userService.withdrawAccount(principal.userId());
+		userUseCase.withdrawAccount(principal.userId());
 		return ApiResponses.success(SuccessCode.OK);
 	}
 }
