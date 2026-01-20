@@ -4,7 +4,7 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsR
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemUnitStatsItemResponse;
-import cmc.delta.domain.problem.application.service.query.ProblemStatsQueryService;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.support.query.ProblemStatsConditionFactory;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
 import cmc.delta.global.api.response.ApiResponse;
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/problems/stats")
 public class ProblemStatsController {
 
-	private final ProblemStatsQueryService statsQueryService;
+	private final ProblemStatsUseCase statsUseCase;
 	private final ProblemStatsConditionFactory statsConditionFactory;
 
 	@Operation(
@@ -47,7 +47,7 @@ public class ProblemStatsController {
 	) {
 		ProblemStatsCondition condition = statsConditionFactory.from(query);
 		ProblemStatsResponse<ProblemUnitStatsItemResponse> data =
-			statsQueryService.getUnitStats(principal.userId(), condition);
+			statsUseCase.getUnitStats(principal.userId(), condition);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -69,7 +69,7 @@ public class ProblemStatsController {
 	) {
 		ProblemStatsCondition condition = statsConditionFactory.from(query);
 		ProblemStatsResponse<ProblemTypeStatsItemResponse> data =
-			statsQueryService.getTypeStats(principal.userId(), condition);
+			statsUseCase.getTypeStats(principal.userId(), condition);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }

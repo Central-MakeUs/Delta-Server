@@ -7,8 +7,8 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdate
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.application.service.command.ProblemService;
-import cmc.delta.domain.problem.application.service.query.ProblemQueryService;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.support.query.ProblemListConditionFactory;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
@@ -34,8 +34,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/problems")
 public class ProblemController {
 
-	private final ProblemService problemService;
-	private final ProblemQueryService problemQueryService;
+	private final ProblemCommandUseCase problemCommandUseCase;
+	private final ProblemQueryUseCase problemQueryUseCase;
 	private final ProblemListConditionFactory conditionFactory;
 
 	@Operation(
@@ -56,7 +56,7 @@ public class ProblemController {
 		@CurrentUser UserPrincipal principal,
 		@RequestBody ProblemCreateRequest request
 	) {
-		ProblemCreateResponse data = problemService.createWrongAnswerCard(principal.userId(), request);
+		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -81,7 +81,7 @@ public class ProblemController {
 		ProblemListCondition condition = conditionFactory.from(query);
 
 		PagedResponse<ProblemListItemResponse> data =
-			problemQueryService.getMyProblemCardList(principal.userId(), condition, pageable);
+			problemQueryUseCase.getMyProblemCardList(principal.userId(), condition, pageable);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -101,7 +101,7 @@ public class ProblemController {
 		@PathVariable Long problemId,
 		@RequestBody ProblemCompleteRequest request
 	) {
-		problemService.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
+		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 
@@ -119,7 +119,7 @@ public class ProblemController {
 		@CurrentUser UserPrincipal principal,
 		@PathVariable Long problemId
 	) {
-		ProblemDetailResponse data = problemQueryService.getMyProblemDetail(principal.userId(), problemId);
+		ProblemDetailResponse data = problemQueryUseCase.getMyProblemDetail(principal.userId(), problemId);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -142,7 +142,7 @@ public class ProblemController {
 		@PathVariable Long problemId,
 		@RequestBody ProblemUpdateRequest request
 	) {
-		problemService.updateWrongAnswerCard(principal.userId(), problemId, request);
+		problemCommandUseCase.updateWrongAnswerCard(principal.userId(), problemId, request);
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 }
