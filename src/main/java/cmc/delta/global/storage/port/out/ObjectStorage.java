@@ -1,4 +1,4 @@
-package cmc.delta.global.storage;
+package cmc.delta.global.storage.port.out;
 
 import java.time.Duration;
 

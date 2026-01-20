@@ -1,4 +1,4 @@
-package cmc.delta.global.storage.s3;
+package cmc.delta.global.storage.adapter.out.s3;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package cmc.delta.global.storage;
+package cmc.delta.global.storage.exception;
 
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;

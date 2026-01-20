@@ -14,7 +14,7 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.Proble
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
-import cmc.delta.global.storage.StorageService;
+import cmc.delta.global.storage.application.StorageService;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;

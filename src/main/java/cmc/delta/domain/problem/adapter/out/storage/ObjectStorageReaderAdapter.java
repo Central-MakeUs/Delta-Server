@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.adapter.out.storage;
 
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
-import cmc.delta.global.storage.ObjectStorage;
+import cmc.delta.global.storage.port.out.ObjectStorage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

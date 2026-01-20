@@ -16,7 +16,7 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.query.ScanListRepos
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
-import cmc.delta.global.storage.StorageService;
+import cmc.delta.global.storage.application.StorageService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;

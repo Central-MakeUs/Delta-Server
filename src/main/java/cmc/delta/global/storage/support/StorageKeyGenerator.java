@@ -1,7 +1,7 @@
 package cmc.delta.global.storage.support;
 
-import cmc.delta.global.storage.StorageException;
-import cmc.delta.global.storage.s3.S3Properties;
+import cmc.delta.global.storage.exception.StorageException;
+import cmc.delta.global.storage.adapter.out.s3.S3Properties;
 import jakarta.annotation.PostConstruct;
 import java.util.Locale;
 import java.util.UUID;

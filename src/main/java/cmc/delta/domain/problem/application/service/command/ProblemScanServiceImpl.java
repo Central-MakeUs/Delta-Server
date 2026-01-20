@@ -14,7 +14,7 @@ import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import cmc.delta.global.storage.StorageService;
+import cmc.delta.global.storage.application.StorageService;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;

@@ -6,7 +6,7 @@ import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.storage.StorageController;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
-import cmc.delta.global.storage.StorageService;
+import cmc.delta.global.storage.application.StorageService;
 import cmc.delta.global.storage.support.StorageFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

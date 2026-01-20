@@ -1,8 +1,10 @@
-package cmc.delta.global.storage;
+package cmc.delta.global.storage.application;
 
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
-import cmc.delta.global.storage.s3.S3Properties;
+import cmc.delta.global.storage.port.out.ObjectStorage;
+import cmc.delta.global.storage.exception.StorageException;
+import cmc.delta.global.storage.adapter.out.s3.S3Properties;
 import cmc.delta.global.storage.support.ImageMetadataExtractor;
 import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
