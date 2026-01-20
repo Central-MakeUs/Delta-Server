@@ -1,6 +1,5 @@
 package cmc.delta.domain.problem.application.port.in.problem;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;

@@ -1,14 +1,16 @@
 package cmc.delta.domain.problem.application.service.command;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanCreateResponse;
-import cmc.delta.domain.problem.application.validation.command.ProblemScanStatusValidator;
+import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
+import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.support.command.ProblemScanStoragePaths;
-import cmc.delta.domain.problem.model.asset.Asset;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
+import cmc.delta.domain.problem.application.validation.command.ProblemScanStatusValidator;
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
-import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
+import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
@@ -22,7 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
-public class ProblemScanServiceImpl implements ProblemScanService {
+public class ProblemScanServiceImpl implements ScanCommandUseCase {
 
 	private final StorageService storageService;
 	private final UserJpaRepository userRepository;
@@ -34,7 +36,12 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 
 	@Transactional
 	@Override
-	public ProblemScanCreateResponse createScan(Long userId, MultipartFile file) {
+	public ScanCreateResult createScan(Long userId, CreateScanCommand command) {
+		MultipartFile file = command.file();
+		if (file == null || file.isEmpty()) {
+			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일이 비어있습니다.");
+		}
+
 		StorageUploadData uploaded = storageService.uploadImage(file, ProblemScanStoragePaths.ORIGINAL_DIR);
 
 		User userRef = userRepository.getReferenceById(userId);
@@ -47,7 +54,7 @@ public class ProblemScanServiceImpl implements ProblemScanService {
 			uploaded.height()
 		));
 
-		return new ProblemScanCreateResponse(
+		return new ScanCreateResult(
 			scan.getId(),
 			original.getId(),
 			scan.getStatus().name()

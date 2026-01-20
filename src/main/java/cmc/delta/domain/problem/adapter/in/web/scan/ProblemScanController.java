@@ -3,8 +3,10 @@ package cmc.delta.domain.problem.adapter.in.web.scan;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanCreateResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
+import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.service.query.ProblemScanQueryService;
-import cmc.delta.domain.problem.application.service.command.ProblemScanService;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -25,7 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/v1/problem-scans")
 public class ProblemScanController {
 
-	private final ProblemScanService problemScanService;
+	private final ScanCommandUseCase scanCommandUseCase;
 	private final ProblemScanQueryService problemScanQueryService;
 
 	@Operation(summary = "문제 스캔 생성 (업로드 + scan/asset 생성)")
@@ -42,8 +44,8 @@ public class ProblemScanController {
 		@CurrentUser UserPrincipal principal,
 		@RequestPart("file") MultipartFile file
 	) {
-		ProblemScanCreateResponse data = problemScanService.createScan(principal.userId(), file);
-		return ApiResponses.success(SuccessCode.OK, data);
+		ScanCreateResult result = scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(file));
+		return ApiResponses.success(SuccessCode.OK, ProblemScanCreateResponse.from(result));
 	}
 
 	@Operation(summary = "문제 스캔 상세 조회 (원본 이미지 URL + OCR/LaTeX 상태)")
