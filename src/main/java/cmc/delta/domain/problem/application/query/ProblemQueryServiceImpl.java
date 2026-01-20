@@ -51,7 +51,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 		List<ProblemListItemResponse> result = new ArrayList<ProblemListItemResponse>(rows.size());
 
 		for (ProblemListRow row : rows) {
-			String previewImageUrl = issuePreviewImageUrl(row.getStorageKey());
+			String previewImageUrl = issuePreviewImageUrl(row.storageKey());
 			ProblemListItemResponse item = problemListMapper.toResponse(row, previewImageUrl);
 			result.add(item);
 		}
