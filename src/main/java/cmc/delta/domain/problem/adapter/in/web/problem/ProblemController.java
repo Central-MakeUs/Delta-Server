@@ -56,7 +56,7 @@ public class ProblemController {
 		@CurrentUser UserPrincipal principal,
 		@RequestBody ProblemCreateRequest request
 	) {
-		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request);
+		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -142,7 +142,7 @@ public class ProblemController {
 		@PathVariable Long problemId,
 		@RequestBody ProblemUpdateRequest request
 	) {
-		problemCommandUseCase.updateWrongAnswerCard(principal.userId(), problemId, request);
+		problemCommandUseCase.updateWrongAnswerCard(principal.userId(), problemId, request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 }

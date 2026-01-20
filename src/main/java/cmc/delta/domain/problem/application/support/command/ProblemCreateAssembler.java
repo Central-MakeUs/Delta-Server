@@ -2,9 +2,9 @@ package cmc.delta.domain.problem.application.support.command;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
-import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.application.exception.ProblemScanRenderModeMissingException;
+import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
@@ -25,7 +25,7 @@ public class ProblemCreateAssembler {
 		ProblemScan scan,
 		Unit finalUnit,
 		ProblemType finalType,
-		ProblemCreateRequest request
+		CreateWrongAnswerCardCommand command
 	) {
 		RenderMode renderMode = extractRenderMode(scan);
 		String problemMarkdown = extractProblemMarkdown(scan);
@@ -37,10 +37,10 @@ public class ProblemCreateAssembler {
 			finalType,
 			renderMode,
 			problemMarkdown,
-			request.answerFormat(),
-			request.answerValue(),
-			request.answerChoiceNo(),
-			request.solutionText()
+			command.answerFormat(),
+			command.answerValue(),
+			command.answerChoiceNo(),
+			command.solutionText()
 		);
 	}
 
