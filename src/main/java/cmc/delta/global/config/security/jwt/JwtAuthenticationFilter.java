@@ -1,6 +1,6 @@
 package cmc.delta.global.config.security.jwt;
 
-import cmc.delta.domain.auth.application.port.AccessBlacklistStore;
+import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import jakarta.servlet.FilterChain;

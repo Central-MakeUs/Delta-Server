@@ -1,6 +1,6 @@
 package cmc.delta.global.storage.support;
 
-import cmc.delta.global.storage.ObjectStorage;
+import cmc.delta.global.storage.port.out.ObjectStorage;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

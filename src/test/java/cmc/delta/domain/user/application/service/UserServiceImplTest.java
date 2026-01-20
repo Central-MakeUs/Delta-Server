@@ -2,12 +2,12 @@ package cmc.delta.domain.user.application.service;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.user.api.dto.response.UserMeData;
+import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserJpaRepository;
 import cmc.delta.domain.user.application.support.UserFixtures;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.enums.UserStatus;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;

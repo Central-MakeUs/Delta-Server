@@ -1,6 +1,6 @@
 package cmc.delta.domain.user.application.validator;
 
-import cmc.delta.domain.auth.persistence.SocialUserProvisionCommand;
+import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.user.application.exception.UserException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;

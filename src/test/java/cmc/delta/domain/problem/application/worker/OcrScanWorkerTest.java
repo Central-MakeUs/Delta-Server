@@ -4,9 +4,10 @@ import static cmc.delta.domain.problem.application.worker.support.ProblemScanFix
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.adapter.in.worker.OcrScanWorker;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.OcrWorkerDoublesV2;
-import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.model.asset.Asset;
 import java.time.Clock;
 import java.time.LocalDateTime;

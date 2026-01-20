@@ -1,7 +1,7 @@
 package cmc.delta.domain.user.application.support;
 
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;

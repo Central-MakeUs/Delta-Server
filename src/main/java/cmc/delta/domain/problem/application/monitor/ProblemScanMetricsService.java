@@ -1,11 +1,9 @@
 package cmc.delta.domain.problem.application.monitor;
 
-import cmc.delta.domain.problem.application.monitor.dto.WorkerMetricsSnapshot;
-
 import java.time.Clock;
 import java.time.LocalDateTime;
 
-import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

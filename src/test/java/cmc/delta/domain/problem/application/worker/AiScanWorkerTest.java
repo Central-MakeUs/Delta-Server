@@ -4,11 +4,12 @@ import static cmc.delta.domain.problem.application.worker.support.ProblemScanFix
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.adapter.in.worker.AiScanWorker;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.application.worker.support.AiWorkerDoublesV2;
-import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
-import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator.AiValidatedInput;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator.AiValidatedInput;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.Clock;
 import java.time.LocalDateTime;

@@ -4,15 +4,15 @@ import static cmc.delta.domain.problem.application.worker.support.ProblemScanFix
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.worker.support.WorkerTestTx;
-import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
-import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
-import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
+import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.persistence.scan.ScanRepository;
-import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;

@@ -2,18 +2,18 @@ package cmc.delta.domain.problem.application.worker.support;
 
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.scan.port.out.ocr.OcrClient;
-import cmc.delta.domain.problem.application.scan.port.out.storage.ObjectStorageReader;
-import cmc.delta.domain.problem.application.worker.properties.OcrWorkerProperties;
-import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
-import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
-import cmc.delta.domain.problem.application.worker.support.lock.ScanUnlocker;
-import cmc.delta.domain.problem.application.worker.support.logging.BacklogLogger;
-import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.application.worker.support.persistence.OcrScanPersister;
-import cmc.delta.domain.problem.application.worker.support.validation.OcrScanValidator;
-import cmc.delta.domain.problem.persistence.scan.ScanRepository;
-import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
+import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.OcrFailureDecider;
+import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
+import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
+import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
+import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
+import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
+import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 
 import org.springframework.transaction.support.TransactionTemplate;
 

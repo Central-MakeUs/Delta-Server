@@ -1,6 +1,6 @@
 package cmc.delta.domain.auth.application.support;
 
-import cmc.delta.domain.auth.application.port.RefreshTokenStore;
+import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

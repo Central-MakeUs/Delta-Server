@@ -2,18 +2,18 @@ package cmc.delta.domain.problem.application.worker.support;
 
 import static org.mockito.Mockito.mock;
 
-import cmc.delta.domain.problem.application.scan.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.worker.properties.AiWorkerProperties;
-import cmc.delta.domain.problem.application.worker.support.failure.AiFailureDecider;
-import cmc.delta.domain.problem.application.worker.support.lock.ScanLockGuard;
-import cmc.delta.domain.problem.application.worker.support.lock.ScanUnlocker;
-import cmc.delta.domain.problem.application.worker.support.logging.BacklogLogger;
-import cmc.delta.domain.problem.application.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.application.worker.support.persistence.AiScanPersister;
-import cmc.delta.domain.problem.application.worker.support.prompt.AiCurriculumPromptBuilder;
-import cmc.delta.domain.problem.application.worker.support.validation.AiScanValidator;
-import cmc.delta.domain.problem.persistence.scan.ScanRepository;
-import cmc.delta.domain.problem.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.AiFailureDecider;
+import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
+import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
+import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
+import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
+import cmc.delta.domain.problem.adapter.in.worker.support.persistence.AiScanPersister;
+import cmc.delta.domain.problem.adapter.in.worker.support.prompt.AiCurriculumPromptBuilder;
+import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public record AiWorkerDoublesV2(

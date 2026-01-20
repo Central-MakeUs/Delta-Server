@@ -1,6 +1,5 @@
 package cmc.delta.domain.problem.api.problem;
 
-import cmc.delta.domain.problem.api.problem.dto.request.ProblemListSort;
 import cmc.delta.domain.problem.api.problem.support.ProblemControllerTestModule;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

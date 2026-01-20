@@ -1,6 +1,6 @@
 package cmc.delta.global.storage.support;
 
-import cmc.delta.global.storage.StorageException;
+import cmc.delta.global.storage.exception.StorageException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
