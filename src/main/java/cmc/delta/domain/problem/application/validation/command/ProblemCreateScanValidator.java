@@ -7,9 +7,11 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @RequiredArgsConstructor
@@ -38,5 +40,11 @@ public class ProblemCreateScanValidator {
 
 	public ProblemStateException toProblemAlreadyCreatedException(DataIntegrityViolationException e) {
 		return new ProblemStateException(ErrorCode.PROBLEM_ALREADY_CREATED);
+	}
+
+	public void validateFileNotEmpty(MultipartFile file) {
+		if (file == null || file.isEmpty()) {
+			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일이 비어있습니다.");
+		}
 	}
 }
