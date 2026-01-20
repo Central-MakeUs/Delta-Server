@@ -3,10 +3,10 @@ package cmc.delta.domain.problem.adapter.in.web.scan;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanCreateResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
-import cmc.delta.domain.problem.application.service.query.ProblemScanQueryService;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -28,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProblemScanController {
 
 	private final ScanCommandUseCase scanCommandUseCase;
-	private final ProblemScanQueryService problemScanQueryService;
+	private final ProblemScanQueryUseCase problemScanQueryUseCase;
 
 	@Operation(summary = "문제 스캔 생성 (업로드 + scan/asset 생성)")
 	@ApiErrorCodeExamples({
@@ -63,7 +63,7 @@ public class ProblemScanController {
 		@CurrentUser UserPrincipal principal,
 		@PathVariable Long scanId
 	) {
-		ProblemScanDetailResponse data = problemScanQueryService.getDetail(principal.userId(), scanId);
+		ProblemScanDetailResponse data = problemScanQueryUseCase.getDetail(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -82,7 +82,7 @@ public class ProblemScanController {
 		@CurrentUser UserPrincipal principal,
 		@PathVariable Long scanId
 	) {
-		ProblemScanSummaryResponse data = problemScanQueryService.getSummary(principal.userId(), scanId);
+		ProblemScanSummaryResponse data = problemScanQueryUseCase.getSummary(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }

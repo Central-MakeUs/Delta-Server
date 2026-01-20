@@ -5,6 +5,7 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListI
 import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.application.mapper.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.ProblemListMapper;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemDetailRow;
@@ -24,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ProblemQueryServiceImpl implements ProblemQueryService {
+public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemListMapper problemListMapper;

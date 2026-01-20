@@ -5,14 +5,14 @@ import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDeta
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.application.mapper.ProblemScanSummaryMapper;
+import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
+import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import cmc.delta.domain.problem.application.support.query.CandidateIdScore;
 import cmc.delta.domain.problem.application.support.query.CandidateJsonParser;
 import cmc.delta.domain.problem.application.mapper.ProblemScanDetailMapper;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanQueryValidator;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.ScanDetailRepository;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.ScanListRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
@@ -28,10 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
+public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 
-	private final ScanListRepository scanListRepository;
-	private final ScanDetailRepository scanDetailRepository;
+	private final ScanQueryPort scanQueryPort;
 	private final StorageService storageService;
 
 	// detail 전용
@@ -47,7 +46,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 	@Override
 	@Transactional(readOnly = true)
 	public ProblemScanSummaryResponse getSummary(Long userId, Long scanId) {
-		ScanListRow row = scanListRepository.findListRow(userId, scanId).orElse(null);
+		ScanListRow row = scanQueryPort.findListRow(userId, scanId).orElse(null);
 		if (row == null) {
 			throw new ProblemScanNotFoundException();
 		}
@@ -64,7 +63,9 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryService {
 
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
-		ScanDetailProjection p = detailValidator.getOwnedDetail(scanDetailRepository, scanId, userId);
+		ScanDetailProjection p = scanQueryPort.findDetail(userId, scanId)
+			.orElseThrow(ProblemScanNotFoundException::new);
+
 		detailValidator.validateOriginalAsset(p);
 
 		StoragePresignedGetData presigned = storageService.issueReadUrl(p.getStorageKey(), null);
