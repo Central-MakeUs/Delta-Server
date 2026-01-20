@@ -15,6 +15,7 @@ import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.config.swagger.ProblemApiDocs;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +35,10 @@ public class ProblemController {
 	private final ProblemQueryService problemQueryService;
 	private final ProblemListConditionFactory conditionFactory;
 
-	@Operation(summary = "오답카드 생성 (scan 기반 최종 저장)")
+	@Operation(
+		summary = "오답카드 생성 (scan 기반 최종 저장)",
+		description = ProblemApiDocs.CREATE_WRONG_ANSWER_CARD
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -53,7 +57,10 @@ public class ProblemController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "내 오답 카드 목록 조회")
+	@Operation(
+		summary = "내 오답 카드 목록 조회",
+		description = ProblemApiDocs.LIST_MY_PROBLEMS
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -76,7 +83,10 @@ public class ProblemController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "오답카드 오답 완료 처리")
+	@Operation(
+		summary = "오답카드 오답 완료 처리",
+		description = ProblemApiDocs.COMPLETE_WRONG_ANSWER_CARD
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
