@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.support.query;
 
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.curriculum.adapter.out.persistence.UnitJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
 import java.util.Optional;
 
 import cmc.delta.domain.problem.application.mapper.ProblemScanDetailMapper;

@@ -2,8 +2,8 @@ package cmc.delta.domain.problem.application.validation.command;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.curriculum.adapter.out.persistence.ProblemTypeJpaRepository;
-import cmc.delta.domain.curriculum.adapter.out.persistence.UnitJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.ProblemTypeJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
 import cmc.delta.domain.problem.application.exception.FinalUnitMustBeChildUnitException;
 import cmc.delta.domain.problem.application.exception.ProblemFinalTypeNotFoundException;
 import cmc.delta.domain.problem.application.exception.ProblemFinalUnitNotFoundException;
