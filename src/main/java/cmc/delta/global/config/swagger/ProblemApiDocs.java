@@ -97,4 +97,49 @@ public final class ProblemApiDocs {
 	  - TEXT/NUMBER/EXPRESSION: answerValue만 의미 있음 (answerChoiceNo는 무시/초기화)
 	- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
 	""";
+
+	public static final String STATS_BY_UNIT = """
+		내 오답카드를 단원(Unit) 기준으로 집계합니다.
+		
+		집계 기준:
+		- 단원(unitId = 자식 Unit) 단위로 그룹핑하여
+		  solvedCount / unsolvedCount / totalCount 를 제공합니다.
+		
+		필터(선택):
+		- subjectId: 과목(Unit) ID (부모 단원) 예) U_COMMON_1
+		- unitId: 단원(Unit) ID (자식 단원) 예) U_C1_POLY
+		  (unitId를 주면 해당 단원만 집계됩니다.)
+		
+		정렬(sort):
+		- DEFAULT: 단원순(기본)  ※ 현재는 이름 정렬 기반(추후 sortOrder 컬럼 도입 시 커리큘럼 순서로 변경 가능)
+		- MAX: 최다 등록순(totalCount desc)
+		- MIN: 최소 등록순(totalCount asc)
+		
+		주의:
+		- 필터 미적용은 파라미터를 생략하거나 빈값으로 보내면 됩니다.
+		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
+		""";
+
+	public static final String STATS_BY_TYPE = """
+		내 오답카드를 유형(ProblemType) 기준으로 집계합니다.
+		
+		집계 기준:
+		- 문제 유형(typeId) 단위로 그룹핑하여
+		  solvedCount / unsolvedCount / totalCount 를 제공합니다.
+		
+		필터(선택):
+		- subjectId: 과목(Unit) ID (부모 단원) 예) U_COMMON_1
+		- unitId: 단원(Unit) ID (자식 단원) 예) U_C1_POLY
+		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+		  (typeId를 주면 해당 유형만 집계됩니다.)
+		
+		정렬(sort):
+		- DEFAULT: 유형순(기본)  ※ 현재는 이름 정렬 기반(추후 sortOrder 컬럼 도입 시 커리큘럼 순서로 변경 가능)
+		- MAX: 최다 등록순(totalCount desc)
+		- MIN: 최소 등록순(totalCount asc)
+		
+		주의:
+		- 필터 미적용은 파라미터를 생략하거나 빈값으로 보내면 됩니다.
+		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
+		""";
 }
