@@ -2,7 +2,7 @@ package cmc.delta.domain.problem.application.service.query;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
@@ -13,6 +13,7 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.Proble
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
+import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.application.StorageService;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	@Override
 	public ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId) {
 		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
-			.orElseThrow(() -> new ProblemScanNotFoundException());
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND));
 
 		StoragePresignedGetData presigned = storageService.issueReadUrl(row.storageKey(), null);
 		return problemDetailMapper.toResponse(row, presigned.url());

@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.application.service.query;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CandidateResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.ProblemScanSummaryMapper;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
@@ -16,6 +16,7 @@ import cmc.delta.domain.problem.application.validation.query.ProblemScanQueryVal
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
+import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.application.StorageService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 	public ProblemScanSummaryResponse getSummary(Long userId, Long scanId) {
 		ScanListRow row = scanQueryPort.findListRow(userId, scanId).orElse(null);
 		if (row == null) {
-			throw new ProblemScanNotFoundException();
+			throw new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);
 		}
 
 		summaryValidator.validateHasOriginalAsset(row);
@@ -64,7 +65,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
 		ScanDetailProjection p = scanQueryPort.findDetail(userId, scanId)
-			.orElseThrow(ProblemScanNotFoundException::new);
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND));
 
 		detailValidator.validateOriginalAsset(p);
 

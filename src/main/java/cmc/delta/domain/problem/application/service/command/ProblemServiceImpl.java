@@ -6,7 +6,7 @@ import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
-import cmc.delta.domain.problem.application.exception.ProblemNotFoundException;
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
@@ -21,6 +21,7 @@ import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Transactional
 	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
 		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, currentUserId)
-			.orElseThrow(ProblemNotFoundException::new);
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
 		LocalDateTime now = LocalDateTime.now();
 		problem.complete(solutionText, now);
@@ -73,7 +74,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Transactional
 	public void updateWrongAnswerCard(Long userId, Long problemId, UpdateWrongAnswerCardCommand command) {
 		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, userId)
-			.orElseThrow(ProblemNotFoundException::new);
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
 		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, command);
 		problem.applyUpdate(cmd);

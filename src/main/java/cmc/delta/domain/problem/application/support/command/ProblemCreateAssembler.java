@@ -2,13 +2,14 @@ package cmc.delta.domain.problem.application.support.command;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.problem.application.exception.ProblemScanRenderModeMissingException;
+import cmc.delta.domain.problem.application.exception.ProblemStateException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,7 +48,7 @@ public class ProblemCreateAssembler {
 	private RenderMode extractRenderMode(ProblemScan scan) {
 		RenderMode renderMode = scan.getRenderMode();
 		if (renderMode == null) {
-			throw new ProblemScanRenderModeMissingException();
+			throw new ProblemStateException(ErrorCode.PROBLEM_SCAN_RENDER_MODE_MISSING);
 		}
 		return renderMode;
 	}

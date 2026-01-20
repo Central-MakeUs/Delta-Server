@@ -1,11 +1,12 @@
 package cmc.delta.domain.problem.application.validation.command;
 
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
-import cmc.delta.domain.problem.application.exception.ProblemUpdateEmptyException;
-import cmc.delta.domain.problem.application.exception.ProblemUpdateInvalidAnswerException;
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.problem.Problem;
+import cmc.delta.global.error.ErrorCode;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,7 +17,7 @@ public class ProblemUpdateRequestValidator {
 		boolean hasSolutionChange = command.solutionText() != null;
 
 		if (!hasAnswerChange && !hasSolutionChange) {
-			throw new ProblemUpdateEmptyException();
+			throw new ProblemValidationException(ErrorCode.PROBLEM_UPDATE_EMPTY);
 		}
 
 		String normalizedAnswerValue = trimToNull(command.answerValue());
@@ -30,7 +31,7 @@ public class ProblemUpdateRequestValidator {
 
 			if (format == AnswerFormat.CHOICE) {
 				if (command.answerChoiceNo() == null) {
-					throw new ProblemUpdateInvalidAnswerException();
+					throw new ProblemValidationException(ErrorCode.PROBLEM_UPDATE_INVALID_ANSWER);
 				}
 				answerChoiceNo = command.answerChoiceNo();
 				answerValue = null;
