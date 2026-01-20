@@ -3,18 +3,19 @@ package cmc.delta.domain.problem.application.service.query;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CandidateResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
+import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.application.exception.ProblemException;
-import cmc.delta.domain.problem.application.mapper.ProblemScanSummaryMapper;
+import cmc.delta.domain.problem.application.mapper.scan.ProblemScanDetailMapper;
+import cmc.delta.domain.problem.application.mapper.scan.ProblemScanSummaryMapper;
+import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import cmc.delta.domain.problem.application.support.query.CandidateIdScore;
 import cmc.delta.domain.problem.application.support.query.CandidateJsonParser;
-import cmc.delta.domain.problem.application.mapper.ProblemScanDetailMapper;
-import cmc.delta.domain.problem.application.validation.query.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
+import cmc.delta.domain.problem.application.validation.query.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanQueryValidator;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.application.StorageService;
@@ -31,75 +32,75 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 
+	private static final Comparator<CandidateIdScore> SCORE_DESC_NULLS_LAST =
+		Comparator.comparing(CandidateIdScore::score, Comparator.nullsLast(Comparator.reverseOrder()));
+
 	private final ScanQueryPort scanQueryPort;
 	private final StorageService storageService;
 
-	// detail 전용
+	// detail
 	private final ProblemScanDetailValidator detailValidator;
 	private final UnitSubjectResolver subjectResolver;
 	private final ProblemScanDetailMapper detailMapper;
 
-	// summary 전용
+	// summary
 	private final ProblemScanQueryValidator summaryValidator;
 	private final CandidateJsonParser candidateJsonParser;
 	private final ProblemScanSummaryMapper summaryMapper;
 
 	@Override
-	@Transactional(readOnly = true)
 	public ProblemScanSummaryResponse getSummary(Long userId, Long scanId) {
-		ScanListRow row = scanQueryPort.findListRow(userId, scanId).orElse(null);
-		if (row == null) {
-			throw new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);
-		}
+		ScanListRow row = scanQueryPort.findListRow(userId, scanId)
+			.orElseThrow(this::scanNotFound);
 
 		summaryValidator.validateHasOriginalAsset(row);
 
-		StoragePresignedGetData presigned = storageService.issueReadUrl(row.getStorageKey(), null);
+		String viewUrl = presignedUrl(row.getStorageKey());
+		SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
 
-		ProblemScanDetailMapper.SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
-
-		return summaryMapper.toSummaryResponse(row, presigned.url(), subject);
+		return summaryMapper.toSummaryResponse(row, viewUrl, subject);
 	}
-
 
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
 		ScanDetailProjection p = scanQueryPort.findDetail(userId, scanId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND));
+			.orElseThrow(this::scanNotFound);
 
 		detailValidator.validateOriginalAsset(p);
 
-		StoragePresignedGetData presigned = storageService.issueReadUrl(p.getStorageKey(), null);
-		ProblemScanDetailMapper.SubjectInfo subject = subjectResolver.resolveByUnitId(p.getPredictedUnitId());
+		String viewUrl = presignedUrl(p.getStorageKey());
+		SubjectInfo subject = subjectResolver.resolveByUnitId(p.getPredictedUnitId());
 
 		ProblemScanDetailResponse.AiClassification ai = detailMapper.toAiClassification(p, subject);
-		return detailMapper.toDetailResponse(p, presigned.url(), ai);
+		return detailMapper.toDetailResponse(p, viewUrl, ai);
+	}
+
+	private String presignedUrl(String storageKey) {
+		StoragePresignedGetData presigned = storageService.issueReadUrl(storageKey, null);
+		return presigned.url();
+	}
+
+	private ProblemException scanNotFound() {
+		return new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);
 	}
 
 	private List<CandidateResponse> toTopCandidates(String json, int topN) {
+		if (topN <= 0) {
+			return Collections.emptyList();
+		}
+		if (json == null || json.isBlank()) {
+			return Collections.emptyList();
+		}
+
 		List<CandidateIdScore> parsed = candidateJsonParser.parse(json);
 		if (parsed.isEmpty()) {
 			return Collections.emptyList();
 		}
 
-		parsed.sort(new Comparator<CandidateIdScore>() {
-			@Override
-			public int compare(CandidateIdScore a, CandidateIdScore b) {
-				if (a.score() == null && b.score() == null) {
-					return 0;
-				}
-				if (a.score() == null) {
-					return 1;
-				}
-				if (b.score() == null) {
-					return -1;
-				}
-				return b.score().compareTo(a.score());
-			}
-		});
+		parsed.sort(SCORE_DESC_NULLS_LAST);
 
 		int limit = Math.min(parsed.size(), topN);
-		List<CandidateResponse> result = new ArrayList<CandidateResponse>(limit);
+		List<CandidateResponse> result = new ArrayList<>(limit);
 
 		for (int i = 0; i < limit; i++) {
 			CandidateIdScore c = parsed.get(i);

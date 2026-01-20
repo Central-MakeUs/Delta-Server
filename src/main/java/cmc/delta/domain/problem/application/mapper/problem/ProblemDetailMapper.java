@@ -1,13 +1,14 @@
-package cmc.delta.domain.problem.application.mapper;
+package cmc.delta.domain.problem.application.mapper.problem;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
+
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface ProblemDetailMapper {
+public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 
 	@Mapping(target = "problemId", source = "row.problemId")
 	@Mapping(target = "answerFormat", source = "row.answerFormat")
@@ -25,16 +26,6 @@ public interface ProblemDetailMapper {
 		target = "originalImage",
 		expression = "java(new ProblemDetailResponse.OriginalImageResponse(row.assetId(), viewUrl))"
 	)
-	@Mapping(
-		target = "completed",
-		expression = "java(row.completedAt() != null)"
-	)
+	@Mapping(target = "completed", expression = "java(row.completedAt() != null)")
 	ProblemDetailResponse toResponse(ProblemDetailRow row, String viewUrl);
-
-	default CurriculumItemResponse toItem(String id, String name) {
-		if (id == null) {
-			return null;
-		}
-		return new CurriculumItemResponse(id, name);
-	}
 }

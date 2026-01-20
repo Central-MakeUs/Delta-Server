@@ -1,15 +1,13 @@
-package cmc.delta.domain.problem.application.mapper;
+package cmc.delta.domain.problem.application.mapper.scan;
 
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class ProblemScanDetailMapper {
-
-	public record SubjectInfo(String subjectId, String subjectName) {
-		public static SubjectInfo empty() { return new SubjectInfo(null, null); }
-	}
 
 	public ProblemScanDetailResponse toDetailResponse(
 		ScanDetailProjection p,
@@ -18,15 +16,10 @@ public class ProblemScanDetailMapper {
 	) {
 		return new ProblemScanDetailResponse(
 			p.getScanId(),
-			p.getStatus().name(),
+			enumName(p.getStatus()),
 			Boolean.TRUE.equals(p.getHasFigure()),
-			p.getRenderMode().name(),
-			new ProblemScanDetailResponse.OriginalImage(
-				p.getAssetId(),
-				viewUrl,
-				p.getWidth(),
-				p.getHeight()
-			),
+			enumName(p.getRenderMode()),
+			toOriginalImage(p, viewUrl),
 			p.getOcrPlainText(),
 			p.getAiProblemLatex(),
 			p.getAiSolutionLatex(),
@@ -55,5 +48,18 @@ public class ProblemScanDetailMapper {
 			p.getAiTypeCandidatesJson(),
 			p.getAiDraftJson()
 		);
+	}
+
+	private ProblemScanDetailResponse.OriginalImage toOriginalImage(ScanDetailProjection p, String viewUrl) {
+		return new ProblemScanDetailResponse.OriginalImage(
+			p.getAssetId(),
+			viewUrl,
+			p.getWidth(),
+			p.getHeight()
+		);
+	}
+
+	private String enumName(Enum<?> value) {
+		return value == null ? null : value.name();
 	}
 }
