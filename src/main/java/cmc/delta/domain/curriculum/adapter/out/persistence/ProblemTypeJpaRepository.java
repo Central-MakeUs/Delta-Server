@@ -1,4 +1,4 @@
-package cmc.delta.domain.curriculum.persistence;
+package cmc.delta.domain.curriculum.adapter.out.persistence;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import java.util.List;

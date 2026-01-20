@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.worker.support.prompt;
 
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.curriculum.persistence.UnitJpaRepository;
-import cmc.delta.domain.curriculum.persistence.ProblemTypeJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.UnitJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.ProblemTypeJpaRepository;
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumPrompt;
 import java.util.List;

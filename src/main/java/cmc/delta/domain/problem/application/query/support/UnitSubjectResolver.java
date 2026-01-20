@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.query.support;
 
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.curriculum.persistence.UnitJpaRepository;
+import cmc.delta.domain.curriculum.adapter.out.persistence.UnitJpaRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
