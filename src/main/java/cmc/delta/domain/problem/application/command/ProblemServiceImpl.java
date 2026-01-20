@@ -5,12 +5,15 @@ import java.time.LocalDateTime;
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
+import cmc.delta.domain.problem.api.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.command.mapper.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.command.support.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateRequestValidator;
 import cmc.delta.domain.problem.application.command.validation.ProblemCreateScanValidator;
+import cmc.delta.domain.problem.application.command.validation.ProblemUpdateRequestValidator;
+import cmc.delta.domain.problem.application.common.exception.ProblemNotFoundException;
 import cmc.delta.domain.problem.application.common.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
@@ -35,6 +38,7 @@ public class ProblemServiceImpl implements ProblemService {
 
 	private final ProblemCreateAssembler assembler;
 	private final ProblemCreateMapper mapper;
+	private final ProblemUpdateRequestValidator updateRequestValidator;
 
 	@Override
 	@Transactional
@@ -62,6 +66,16 @@ public class ProblemServiceImpl implements ProblemService {
 
 		LocalDateTime now = LocalDateTime.now();
 		problem.complete(solutionText, now);
+	}
+
+	@Override
+	@Transactional
+	public void updateWrongAnswerCard(Long userId, Long problemId, ProblemUpdateRequest request) {
+		Problem problem = problemRepository.findByIdAndUserId(problemId, userId)
+			.orElseThrow(ProblemNotFoundException::new);
+
+		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, request);
+		problem.applyUpdate(cmd);
 	}
 
 	private void validateCreateRequest(ProblemCreateRequest request) {

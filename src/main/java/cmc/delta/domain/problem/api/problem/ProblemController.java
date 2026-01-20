@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.api.problem;
 import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCompleteRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
+import cmc.delta.domain.problem.api.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
@@ -121,5 +122,27 @@ public class ProblemController {
 		ProblemDetailResponse data = problemQueryService.getMyProblemDetail(principal.userId(), problemId);
 
 		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(
+		summary = "오답카드 정답/풀이 수정",
+		description = ProblemApiDocs.UPDATE_WRONG_ANSWER_CARD
+	)
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@PatchMapping("/{problemId}")
+	public ApiResponse<Void> updateWrongAnswerCard(
+		@CurrentUser UserPrincipal principal,
+		@PathVariable Long problemId,
+		@RequestBody ProblemUpdateRequest request
+	) {
+		problemService.updateWrongAnswerCard(principal.userId(), problemId, request);
+		return ApiResponses.success(SuccessCode.OK, null);
 	}
 }

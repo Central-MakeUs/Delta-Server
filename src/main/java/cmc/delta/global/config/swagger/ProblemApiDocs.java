@@ -82,4 +82,19 @@ public final class ProblemApiDocs {
 		- status(SOLVED/UNSOLVED)는 풀이/정답 입력 여부가 아니라, 이 API 호출 여부(완료 상태값) 기준입니다.
 		- 이미 완료된 오답카드에 재호출해도 멱등으로 동작하도록(변화 없음) 처리하는 것을 권장합니다.
 		""";
+
+	public static final String UPDATE_WRONG_ANSWER_CARD = """
+	오답카드의 정답/풀이를 수정합니다.
+
+	수정 가능 필드:
+	- answerChoiceNo: 객관식 정답 번호 (answerFormat=CHOICE 인 문제에 사용)
+	- answerValue: 단답/서술/숫자/수식 정답 값 (answerFormat!=CHOICE 인 문제에 사용)
+	- solutionText: 풀이 텍스트
+
+	주의:
+	- 문제의 answerFormat(정답 형식)에 따라 유효한 필드가 다릅니다.
+	  - CHOICE: answerChoiceNo만 의미 있음 (answerValue는 무시/초기화)
+	  - TEXT/NUMBER/EXPRESSION: answerValue만 의미 있음 (answerChoiceNo는 무시/초기화)
+	- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
+	""";
 }

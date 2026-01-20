@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.model.problem;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
+import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
@@ -108,16 +109,38 @@ public class Problem extends BaseTimeEntity {
 		return p;
 	}
 
-	public void markCompleted(LocalDateTime now) {
+	public void complete(String solutionText, java.time.LocalDateTime now) {
+		this.solutionText = solutionText;
 		if (this.completedAt == null) {
 			this.completedAt = now;
 		}
 	}
 
-	public void complete(String solutionText, java.time.LocalDateTime now) {
+	public void updateAnswer(Integer answerChoiceNo, String answerValue) {
+		if (this.answerFormat == null) {
+			throw new IllegalStateException("답변 형식이 설정되지 않았습니다.");
+		}
+
+		if (this.answerFormat == cmc.delta.domain.problem.model.enums.AnswerFormat.CHOICE) {
+			this.answerChoiceNo = answerChoiceNo;
+			this.answerValue = null; // CHOICE면 value는 의미 없으니 정리
+			return;
+		}
+
+		this.answerValue = answerValue;
+		this.answerChoiceNo = null; // 비-CHOICE면 choiceNo는 의미 없으니 정리
+	}
+
+	public void updateSolutionText(String solutionText) {
 		this.solutionText = solutionText;
-		if (this.completedAt == null) {
-			this.completedAt = now;
+	}
+
+	public void applyUpdate(ProblemUpdateCommand cmd) {
+		if (cmd.hasAnswerChange()) {
+			updateAnswer(cmd.answerChoiceNo(), cmd.answerValue());
+		}
+		if (cmd.hasSolutionChange()) {
+			updateSolutionText(cmd.solutionText());
 		}
 	}
 }

@@ -36,6 +36,9 @@ public enum ErrorCode {
 	PROBLEM_SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_001", "스캔을 찾을 수 없습니다.", LogLevel.WARN),
 	PROBLEM_ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_002", "원본 이미지를 찾을 수 없습니다.", LogLevel.WARN),
 	PROBLEM_SCAN_FORBIDDEN(HttpStatus.FORBIDDEN, "PROB_003", "해당 스캔에 접근할 수 없습니다.", LogLevel.WARN),
+	PROBLEM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_200", "오답카드를 찾을 수 없습니다.", LogLevel.WARN),
+	PROBLEM_UPDATE_EMPTY(HttpStatus.BAD_REQUEST, "PROB_201", "수정할 값이 없습니다.", LogLevel.WARN),
+	PROBLEM_UPDATE_INVALID_ANSWER(HttpStatus.BAD_REQUEST, "PROB_202", "정답 입력값이 올바르지 않습니다.", LogLevel.WARN),
 
 	// 오답카드 생성/저장
 	PROBLEM_FINAL_UNIT_MUST_BE_CHILD(HttpStatus.BAD_REQUEST, "PROB_004", "단원은 과목이 아닌 하위 단원을 선택해야 합니다.", LogLevel.WARN),
