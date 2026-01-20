@@ -20,7 +20,7 @@ import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

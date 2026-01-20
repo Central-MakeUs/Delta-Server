@@ -5,7 +5,7 @@ import cmc.delta.domain.auth.adapter.out.persistence.repository.SocialAccountJpa
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;

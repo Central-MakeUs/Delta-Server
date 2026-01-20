@@ -1,9 +1,9 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.user.api.dto.response.UserMeData;
+import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.user.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
