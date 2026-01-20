@@ -11,11 +11,13 @@ public interface ProblemListMapper {
 
 	@Mapping(target = "problemId", source = "row.problemId")
 	@Mapping(target = "createdAt", source = "row.createdAt")
-	@Mapping(target = "subject", expression = "java(toItem(row.getSubjectId(), row.getSubjectName()))")
-	@Mapping(target = "unit", expression = "java(toItem(row.getUnitId(), row.getUnitName()))")
-	@Mapping(target = "type", expression = "java(toItem(row.getTypeId(), row.getTypeName()))")
-	@Mapping(target = "previewImage",
-		expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.getAssetId(), viewUrl))")
+	@Mapping(target = "subject", expression = "java(toItem(row.subjectId(), row.subjectName()))")
+	@Mapping(target = "unit", expression = "java(toItem(row.unitId(), row.unitName()))")
+	@Mapping(target = "type", expression = "java(toItem(row.typeId(), row.typeName()))")
+	@Mapping(
+		target = "previewImage",
+		expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.assetId(), viewUrl))"
+	)
 	ProblemListItemResponse toResponse(ProblemListRow row, String viewUrl);
 
 	default CurriculumItemResponse toItem(String id, String name) {

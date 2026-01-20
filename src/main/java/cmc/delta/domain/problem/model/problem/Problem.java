@@ -3,12 +3,15 @@ package cmc.delta.domain.problem.model.problem;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
+import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -71,6 +74,9 @@ public class Problem extends BaseTimeEntity {
 	@Column(name = "solution_text", columnDefinition = "MEDIUMTEXT")
 	private String solutionText;
 
+	@Column(name = "completed_at")
+	private LocalDateTime completedAt;
+
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemChoice> choices = new ArrayList<>();
 
@@ -103,19 +109,38 @@ public class Problem extends BaseTimeEntity {
 		return p;
 	}
 
-	public void replaceChoices(List<ProblemChoice> newChoices) {
-		this.choices.clear();
-		for (ProblemChoice c : newChoices) {
-			c.attachTo(this);
-			this.choices.add(c);
+	public void complete(String solutionText, java.time.LocalDateTime now) {
+		this.solutionText = solutionText;
+		if (this.completedAt == null) {
+			this.completedAt = now;
 		}
 	}
 
-	public void replaceUnitTags(List<ProblemUnitTag> newTags) {
-		this.unitTags.clear();
-		for (ProblemUnitTag t : newTags) {
-			t.attachTo(this);
-			this.unitTags.add(t);
+	public void updateAnswer(Integer answerChoiceNo, String answerValue) {
+		if (this.answerFormat == null) {
+			throw new IllegalStateException("답변 형식이 설정되지 않았습니다.");
+		}
+
+		if (this.answerFormat == cmc.delta.domain.problem.model.enums.AnswerFormat.CHOICE) {
+			this.answerChoiceNo = answerChoiceNo;
+			this.answerValue = null; // CHOICE면 value는 의미 없으니 정리
+			return;
+		}
+
+		this.answerValue = answerValue;
+		this.answerChoiceNo = null; // 비-CHOICE면 choiceNo는 의미 없으니 정리
+	}
+
+	public void updateSolutionText(String solutionText) {
+		this.solutionText = solutionText;
+	}
+
+	public void applyUpdate(ProblemUpdateCommand cmd) {
+		if (cmd.hasAnswerChange()) {
+			updateAnswer(cmd.answerChoiceNo(), cmd.answerValue());
+		}
+		if (cmd.hasSolutionChange()) {
+			updateSolutionText(cmd.solutionText());
 		}
 	}
 }

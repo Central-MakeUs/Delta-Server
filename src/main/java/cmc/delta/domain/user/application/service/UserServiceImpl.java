@@ -27,14 +27,14 @@ public class UserServiceImpl implements UserService {
 	}
 
 	@Override
+	@Transactional
 	public void withdrawAccount(Long userId) {
-		User user = userJpaRepository.findById(userId).orElseThrow(UserException::userNotFound);
-		if (user.isWithdrawn()) {
-			throw UserException.userWithdrawn();
-		}
-		user.withdraw();
+		User user = userJpaRepository.findById(userId)
+			.orElseThrow(UserException::userNotFound);
 
-		log.info("event=user.withdrawal userId={} result=success", userId);
+		userJpaRepository.delete(user);
+
+		log.info("event=user.delete userId={} result=success", userId);
 	}
 }
 

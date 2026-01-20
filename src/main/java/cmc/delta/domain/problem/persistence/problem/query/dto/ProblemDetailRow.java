@@ -1,8 +1,9 @@
 package cmc.delta.domain.problem.persistence.problem.query.dto;
 
+import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import java.time.LocalDateTime;
 
-public record ProblemListRow(
+public record ProblemDetailRow(
 	Long problemId,
 
 	String subjectId,
@@ -17,6 +18,12 @@ public record ProblemListRow(
 	Long assetId,
 	String storageKey,
 
+	AnswerFormat answerFormat,
+	Integer answerChoiceNo,
+	String answerValue,
+	String solutionText,
+
+	LocalDateTime completedAt,
 	LocalDateTime createdAt
 ) {
 }
