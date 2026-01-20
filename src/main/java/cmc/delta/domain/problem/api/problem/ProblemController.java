@@ -1,16 +1,25 @@
 package cmc.delta.domain.problem.api.problem;
 
+import java.util.List;
+
 import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCompleteRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
+import cmc.delta.domain.problem.api.problem.dto.request.ProblemStatsRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
+import cmc.delta.domain.problem.api.problem.dto.response.ProblemStatsResponse;
+import cmc.delta.domain.problem.api.problem.dto.response.ProblemTypeStatsItemResponse;
+import cmc.delta.domain.problem.api.problem.dto.response.ProblemUnitStatsItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
+import cmc.delta.domain.problem.application.query.ProblemStatsQueryService;
 import cmc.delta.domain.problem.application.query.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.query.support.ProblemStatsConditionFactory;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemStatsCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.PagedResponse;
@@ -37,6 +46,8 @@ public class ProblemController {
 	private final ProblemService problemService;
 	private final ProblemQueryService problemQueryService;
 	private final ProblemListConditionFactory conditionFactory;
+	private final ProblemStatsQueryService statsQueryService;
+	private final ProblemStatsConditionFactory statsConditionFactory;
 
 	@Operation(
 		summary = "오답카드 생성 (scan 기반 최종 저장)",
@@ -144,5 +155,41 @@ public class ProblemController {
 	) {
 		problemService.updateWrongAnswerCard(principal.userId(), problemId, request);
 		return ApiResponses.success(SuccessCode.OK, null);
+	}
+
+	@Operation(summary = "단원별 오답 통계(완료/미완료)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/stats/units")
+	public ApiResponse<ProblemStatsResponse<ProblemUnitStatsItemResponse>> getMyUnitStats(
+		@CurrentUser UserPrincipal principal,
+		@ModelAttribute ProblemStatsRequest query
+	) {
+		ProblemStatsCondition condition = statsConditionFactory.from(query);
+		ProblemStatsResponse<ProblemUnitStatsItemResponse> data = statsQueryService.getUnitStats(principal.userId(), condition);
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "유형별 오답 통계(완료/미완료)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/stats/types")
+	public ApiResponse<ProblemStatsResponse<ProblemTypeStatsItemResponse>> getMyTypeStats(
+		@CurrentUser UserPrincipal principal,
+		@ModelAttribute ProblemStatsRequest query
+	) {
+		ProblemStatsCondition condition = statsConditionFactory.from(query);
+		ProblemStatsResponse<ProblemTypeStatsItemResponse> data = statsQueryService.getTypeStats(principal.userId(), condition);
+		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }
