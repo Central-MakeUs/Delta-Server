@@ -5,8 +5,8 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListI
 import cmc.delta.domain.problem.application.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.application.mapper.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.ProblemListMapper;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.ProblemQueryRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
@@ -29,7 +29,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemListMapper problemListMapper;
 	private final StorageService storageService;
-	private final ProblemQueryRepository problemQueryRepository;
+	private final ProblemQueryPort problemQueryPort;
 	private final ProblemDetailMapper problemDetailMapper;
 
 	@Override
@@ -40,7 +40,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 	) {
 		requestValidator.validatePagination(pageable);
 
-		Page<ProblemListRow> rows = problemQueryRepository.findMyProblemList(userId, condition, pageable);
+		Page<ProblemListRow> rows = problemQueryPort.findMyProblemList(userId, condition, pageable);
 		List<ProblemListItemResponse> content = toProblemListItemResponses(rows.getContent());
 
 		return new PagedResponse<ProblemListItemResponse>(
@@ -54,7 +54,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryService {
 
 	@Override
 	public ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId) {
-		ProblemDetailRow row = problemQueryRepository.findMyProblemDetail(userId, problemId)
+		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
 			.orElseThrow(() -> new ProblemScanNotFoundException());
 
 		StoragePresignedGetData presigned = storageService.issueReadUrl(row.storageKey(), null);

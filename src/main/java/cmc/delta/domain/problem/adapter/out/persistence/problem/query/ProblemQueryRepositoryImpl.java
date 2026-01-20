@@ -5,6 +5,7 @@ import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
@@ -27,7 +28,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ProblemQueryRepositoryImpl implements ProblemQueryRepository {
+public class ProblemQueryRepositoryImpl implements ProblemQueryPort {
 
 	private final JPAQueryFactory queryFactory;
 

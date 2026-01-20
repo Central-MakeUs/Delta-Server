@@ -12,15 +12,15 @@ import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateRequestValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemUpdateRequestValidator;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,8 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProblemServiceImpl implements ProblemCommandUseCase {
 
-	private final ProblemJpaRepository problemRepository;
-	private final UserJpaRepository userRepository;
+	private final ProblemRepositoryPort problemRepositoryPort;
+	private final UserRepositoryPort userRepositoryPort;
 
 	private final ProblemCreateRequestValidator requestValidator;
 	private final ProblemCreateScanValidator scanValidator;
@@ -63,7 +63,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Override
 	@Transactional
 	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
-		Problem problem = problemRepository.findByIdAndUserId(problemId, currentUserId)
+		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, currentUserId)
 			.orElseThrow(ProblemScanNotFoundException::new);
 
 		LocalDateTime now = LocalDateTime.now();
@@ -73,7 +73,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Override
 	@Transactional
 	public void updateWrongAnswerCard(Long userId, Long problemId, UpdateWrongAnswerCardCommand command) {
-		Problem problem = problemRepository.findByIdAndUserId(problemId, userId)
+		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, userId)
 			.orElseThrow(ProblemNotFoundException::new);
 
 		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, command);
@@ -103,7 +103,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	}
 
 	private User loadUserReference(Long userId) {
-		return userRepository.getReferenceById(userId);
+		return userRepositoryPort.getReferenceById(userId);
 	}
 
 	private Problem assembleProblem(
@@ -118,7 +118,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	private Problem saveProblemWithDuplicateGuard(Problem problem) {
 		try {
-			return problemRepository.save(problem);
+			return problemRepositoryPort.save(problem);
 		} catch (DataIntegrityViolationException e) {
 			throw scanValidator.toProblemAlreadyCreatedException(e);
 		}

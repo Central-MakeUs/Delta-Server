@@ -4,7 +4,8 @@ import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsSort;
+import cmc.delta.domain.problem.model.enums.ProblemStatsSort;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemTypeStatsRow;
@@ -20,7 +21,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryRepository {
+public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 
 	private final JPAQueryFactory queryFactory;
 

@@ -4,13 +4,14 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumIt
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemUnitStatsItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.ProblemStatsQueryRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemUnitStatsRow;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,11 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProblemStatsQueryServiceImpl implements ProblemStatsQueryService {
 
-	private final ProblemStatsQueryRepository statsRepository;
+	private final ProblemStatsQueryPort problemStatsQueryPort;
 
 	@Override
 	public ProblemStatsResponse<ProblemUnitStatsItemResponse> getUnitStats(Long userId, ProblemStatsCondition condition) {
-		List<ProblemUnitStatsRow> rows = statsRepository.findUnitStats(userId, condition);
+		List<ProblemUnitStatsRow> rows = problemStatsQueryPort.findUnitStats(userId, condition);
 		List<ProblemUnitStatsItemResponse> items = new ArrayList<>(rows.size());
 
 		for (ProblemUnitStatsRow r : rows) {
@@ -42,7 +43,7 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsQueryService {
 
 	@Override
 	public ProblemStatsResponse<ProblemTypeStatsItemResponse> getTypeStats(Long userId, ProblemStatsCondition condition) {
-		List<ProblemTypeStatsRow> rows = statsRepository.findTypeStats(userId, condition);
+		List<ProblemTypeStatsRow> rows = problemStatsQueryPort.findTypeStats(userId, condition);
 		List<ProblemTypeStatsItemResponse> items = new ArrayList<>(rows.size());
 
 		for (ProblemTypeStatsRow r : rows) {

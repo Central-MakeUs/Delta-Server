@@ -9,7 +9,7 @@ import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.error.ErrorCode;
@@ -27,7 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProblemScanServiceImpl implements ScanCommandUseCase {
 
 	private final StorageService storageService;
-	private final UserJpaRepository userRepository;
+	private final UserRepositoryPort userRepositoryPort;
 	private final ScanRepository scanRepository;
 	private final AssetJpaRepository assetRepository;
 
@@ -44,7 +44,7 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 
 		StorageUploadData uploaded = storageService.uploadImage(file, ProblemScanStoragePaths.ORIGINAL_DIR);
 
-		User userRef = userRepository.getReferenceById(userId);
+		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScan scan = scanRepository.save(ProblemScan.uploaded(userRef));
 
 		Asset original = assetRepository.save(Asset.createOriginal(

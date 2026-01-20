@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.support.query;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsRequest;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsSort;
+import cmc.delta.domain.problem.model.enums.ProblemStatsSort;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
 import org.springframework.stereotype.Component;
 
