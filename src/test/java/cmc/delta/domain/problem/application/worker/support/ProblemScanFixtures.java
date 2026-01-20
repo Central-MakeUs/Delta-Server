@@ -4,8 +4,8 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.problem.application.scan.port.out.ai.dto.AiCurriculumResult;
-import cmc.delta.domain.problem.application.scan.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.model.User;

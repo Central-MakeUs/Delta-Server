@@ -6,8 +6,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-import cmc.delta.domain.problem.application.worker.properties.AiWorkerProperties;
-import cmc.delta.domain.problem.application.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 
 @EnableScheduling
 @EnableJpaAuditing

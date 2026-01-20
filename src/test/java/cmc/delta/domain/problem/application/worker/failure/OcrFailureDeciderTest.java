@@ -9,9 +9,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
-import cmc.delta.domain.problem.application.worker.support.failure.FailureDecision;
-import cmc.delta.domain.problem.application.worker.support.failure.FailureReason;
-import cmc.delta.domain.problem.application.worker.support.failure.OcrFailureDecider;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.OcrFailureDecider;
 
 class OcrFailureDeciderTest {
 
