@@ -56,11 +56,12 @@ public class ProblemServiceImpl implements ProblemService {
 
 	@Override
 	@Transactional
-	public void completeWrongAnswerCard(Long currentUserId, Long problemId) {
+	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
 		Problem problem = problemRepository.findByIdAndUserId(problemId, currentUserId)
 			.orElseThrow(() -> new ProblemScanNotFoundException());
 
-		problem.markCompleted(LocalDateTime.now());
+		LocalDateTime now = LocalDateTime.now();
+		problem.complete(solutionText, now);
 	}
 
 	private void validateCreateRequest(ProblemCreateRequest request) {

@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.api.problem;
 
 import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
+import cmc.delta.domain.problem.api.problem.dto.request.ProblemCompleteRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse;
@@ -96,9 +97,10 @@ public class ProblemController {
 	@PostMapping("/{problemId}/complete")
 	public ApiResponse<Void> completeWrongAnswerCard(
 		@CurrentUser UserPrincipal principal,
-		@PathVariable Long problemId
+		@PathVariable Long problemId,
+		@RequestBody ProblemCompleteRequest request
 	) {
-		problemService.completeWrongAnswerCard(principal.userId(), problemId);
+		problemService.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 

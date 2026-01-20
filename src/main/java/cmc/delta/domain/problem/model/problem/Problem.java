@@ -108,11 +108,14 @@ public class Problem extends BaseTimeEntity {
 		return p;
 	}
 
-	public boolean isCompleted() {
-		return completedAt != null;
+	public void markCompleted(LocalDateTime now) {
+		if (this.completedAt == null) {
+			this.completedAt = now;
+		}
 	}
 
-	public void markCompleted(LocalDateTime now) {
+	public void complete(String solutionText, java.time.LocalDateTime now) {
+		this.solutionText = solutionText;
 		if (this.completedAt == null) {
 			this.completedAt = now;
 		}

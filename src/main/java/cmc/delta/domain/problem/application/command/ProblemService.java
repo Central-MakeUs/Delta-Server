@@ -5,5 +5,5 @@ import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
 
 public interface ProblemService {
 	ProblemCreateResponse createWrongAnswerCard(Long currentUserId, ProblemCreateRequest request);
-	void completeWrongAnswerCard(Long currentUserId, Long problemId);
+	void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText);
 }
