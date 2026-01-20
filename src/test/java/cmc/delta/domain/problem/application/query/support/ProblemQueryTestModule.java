@@ -5,15 +5,17 @@ import static org.mockito.Mockito.*;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemListSort;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.query.ProblemQueryServiceImpl;
+import cmc.delta.domain.problem.application.query.mapper.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.query.mapper.ProblemListMapper;
 import cmc.delta.domain.problem.application.query.validation.ProblemListRequestValidator;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
-import cmc.delta.domain.problem.persistence.problem.ProblemJpaRepository;
+import cmc.delta.domain.problem.persistence.problem.query.ProblemQueryRepository;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListCondition;
 import cmc.delta.domain.problem.persistence.problem.query.dto.ProblemListRow;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.storage.StorageService;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -27,40 +29,44 @@ public final class ProblemQueryTestModule {
 	public final ProblemListCondition condition;
 	public final Pageable pageable;
 
-	private final ProblemJpaRepository repo;
+	private final ProblemQueryRepository queryRepo;
 	private final ProblemListRequestValidator validator;
-	private final ProblemListMapper mapper;
+	private final ProblemListMapper listMapper;
 	private final StorageService storage;
+	private final ProblemDetailMapper detailMapper;
 
 	private PagedResponse<ProblemListItemResponse> result;
 	private RuntimeException expected;
 
 	private ProblemQueryTestModule(
-		ProblemJpaRepository repo,
+		ProblemQueryRepository queryRepo,
 		ProblemListRequestValidator validator,
-		ProblemListMapper mapper,
+		ProblemListMapper listMapper,
 		StorageService storage,
+		ProblemDetailMapper detailMapper,
 		Long userId,
 		ProblemListCondition condition,
 		Pageable pageable
 	) {
-		this.repo = repo;
+		this.queryRepo = queryRepo;
 		this.validator = validator;
-		this.mapper = mapper;
+		this.listMapper = listMapper;
 		this.storage = storage;
+		this.detailMapper = detailMapper;
 
 		this.userId = userId;
 		this.condition = condition;
 		this.pageable = pageable;
 
-		this.sut = new ProblemQueryServiceImpl(repo, validator, mapper, storage);
+		this.sut = new ProblemQueryServiceImpl(validator, listMapper, storage, queryRepo, detailMapper);
 	}
 
 	public static ProblemQueryTestModule successCase() {
-		ProblemJpaRepository repo = mock(ProblemJpaRepository.class);
+		ProblemQueryRepository queryRepo = mock(ProblemQueryRepository.class);
 		ProblemListRequestValidator validator = mock(ProblemListRequestValidator.class);
-		ProblemListMapper mapper = mock(ProblemListMapper.class);
+		ProblemListMapper listMapper = mock(ProblemListMapper.class);
 		StorageService storage = mock(StorageService.class);
+		ProblemDetailMapper detailMapper = mock(ProblemDetailMapper.class);
 
 		Long userId = 10L;
 		ProblemListCondition condition = new ProblemListCondition(
@@ -72,27 +78,29 @@ public final class ProblemQueryTestModule {
 		);
 		Pageable pageable = PageRequest.of(0, 20);
 
-		ProblemQueryTestModule m = new ProblemQueryTestModule(repo, validator, mapper, storage, userId, condition, pageable);
+		ProblemQueryTestModule m =
+			new ProblemQueryTestModule(queryRepo, validator, listMapper, storage, detailMapper, userId, condition, pageable);
 
-		List<ProblemListRow> rows = List.of(row("k1"), row("k2"));
+		List<ProblemListRow> rows = List.of(row(1L, "k1"), row(2L, "k2"));
 		Page<ProblemListRow> page = new PageImpl<>(rows, (PageRequest) pageable, 2L);
 
-		org.mockito.Mockito.when(repo.findMyProblemList(userId, condition, pageable)).thenReturn(page);
+		when(queryRepo.findMyProblemList(userId, condition, pageable)).thenReturn(page);
 
-		org.mockito.Mockito.when(storage.issueReadUrl(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.isNull()))
+		when(storage.issueReadUrl(anyString(), isNull()))
 			.thenAnswer(inv -> presigned("https://cdn/" + inv.getArgument(0)));
 
-		org.mockito.Mockito.when(mapper.toResponse(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString()))
+		when(listMapper.toResponse(any(), anyString()))
 			.thenReturn(mock(ProblemListItemResponse.class));
 
 		return m;
 	}
 
 	public static ProblemQueryTestModule invalidPaginationCase() {
-		ProblemJpaRepository repo = mock(ProblemJpaRepository.class);
+		ProblemQueryRepository queryRepo = mock(ProblemQueryRepository.class);
 		ProblemListRequestValidator validator = mock(ProblemListRequestValidator.class);
-		ProblemListMapper mapper = mock(ProblemListMapper.class);
+		ProblemListMapper listMapper = mock(ProblemListMapper.class);
 		StorageService storage = mock(StorageService.class);
+		ProblemDetailMapper detailMapper = mock(ProblemDetailMapper.class);
 
 		Long userId = 10L;
 		ProblemListCondition condition = new ProblemListCondition(
@@ -102,10 +110,10 @@ public final class ProblemQueryTestModule {
 			ProblemListSort.RECENT,
 			ProblemStatusFilter.ALL
 		);
-
 		Pageable pageable = PageRequest.of(0, 20);
 
-		ProblemQueryTestModule m = new ProblemQueryTestModule(repo, validator, mapper, storage, userId, condition, pageable);
+		ProblemQueryTestModule m =
+			new ProblemQueryTestModule(queryRepo, validator, listMapper, storage, detailMapper, userId, condition, pageable);
 
 		RuntimeException ex = new RuntimeException("INVALID_PAGINATION");
 		m.expected = ex;
@@ -113,7 +121,6 @@ public final class ProblemQueryTestModule {
 
 		return m;
 	}
-
 
 	public void call() {
 		this.result = sut.getMyProblemCardList(userId, condition, pageable);
@@ -129,26 +136,38 @@ public final class ProblemQueryTestModule {
 	}
 
 	public void thenSuccess() {
-		org.mockito.Mockito.verify(validator).validatePagination(pageable);
-		org.mockito.Mockito.verify(repo).findMyProblemList(userId, condition, pageable);
-		org.mockito.Mockito.verify(storage, org.mockito.Mockito.times(2)).issueReadUrl(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.isNull());
-		org.mockito.Mockito.verify(mapper, org.mockito.Mockito.times(2)).toResponse(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString());
+		verify(validator).validatePagination(pageable);
+		verify(queryRepo).findMyProblemList(userId, condition, pageable);
+		verify(storage, times(2)).issueReadUrl(anyString(), isNull());
+		verify(listMapper, times(2)).toResponse(any(), anyString());
+
+		// list 조회에서는 상세 매퍼는 쓰지 않음
+		verifyNoInteractions(detailMapper);
 	}
 
 	public void thenInvalidPagination() {
-		org.mockito.Mockito.verify(validator).validatePagination(pageable);
-		org.mockito.Mockito.verifyNoInteractions(repo, storage, mapper);
+		verify(validator).validatePagination(pageable);
+		verifyNoInteractions(queryRepo, storage, listMapper, detailMapper);
 	}
 
-	private static ProblemListRow row(String storageKey) {
-		ProblemListRow r = mock(ProblemListRow.class);
-		org.mockito.Mockito.when(r.getStorageKey()).thenReturn(storageKey);
-		return r;
+	private static ProblemListRow row(Long problemId, String storageKey) {
+		return new ProblemListRow(
+			problemId,
+			"S1",
+			"SUBJECT",
+			"U1",
+			"UNIT",
+			"T1",
+			"TYPE",
+			100L,
+			storageKey,
+			LocalDateTime.now()
+		);
 	}
 
 	private static StoragePresignedGetData presigned(String url) {
 		StoragePresignedGetData p = mock(StoragePresignedGetData.class);
-		org.mockito.Mockito.when(p.url()).thenReturn(url);
+		when(p.url()).thenReturn(url);
 		return p;
 	}
 }

@@ -27,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProblemQueryServiceImpl implements ProblemQueryService {
 
-	private final ProblemJpaRepository problemRepository;
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemListMapper problemListMapper;
 	private final StorageService storageService;

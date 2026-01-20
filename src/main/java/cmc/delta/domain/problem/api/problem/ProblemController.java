@@ -112,7 +112,7 @@ public class ProblemController {
 		ErrorCode.INTERNAL_ERROR
 	})
 	@GetMapping("/{problemId}")
-	public ApiResponse<cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse> getMyProblemDetail(
+	public ApiResponse<ProblemDetailResponse> getMyProblemDetail(
 		@CurrentUser UserPrincipal principal,
 		@PathVariable Long problemId
 	) {
