@@ -28,35 +28,47 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 
 		return socialAccountRepositoryPort
 			.findByProviderAndProviderUserId(command.provider(), command.providerUserId())
-			.map(this::resultForExistingAccount)
-			.orElseGet(() -> createUserAndLinkAccountSafely(command));
+			.map(this::toExistingUserResult)
+			.orElseGet(() -> createOrSyncByRaceCondition(command));
 	}
 
-	private ProvisioningResult resultForExistingAccount(SocialAccount account) {
-		User user = ensureActive(account.getUser());
+	private ProvisioningResult toExistingUserResult(SocialAccount account) {
+		User user = requireActive(account.getUser());
 		return new ProvisioningResult(user.getId(), false);
 	}
 
-	private ProvisioningResult createUserAndLinkAccountSafely(SocialUserProvisionCommand command) {
+	private ProvisioningResult createOrSyncByRaceCondition(SocialUserProvisionCommand command) {
 		try {
-			User user = userRepositoryPort.save(User.create(command.email(), command.nickname()));
-			SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
-			socialAccountRepositoryPort.save(account);
-			return new ProvisioningResult(user.getId(), true);
-
+			return createAndLink(command);
 		} catch (DataIntegrityViolationException e) {
-			SocialAccount existing = socialAccountRepositoryPort
-				.findByProviderAndProviderUserId(command.provider(), command.providerUserId())
-				.orElseThrow(() -> e);
-
-			User user = ensureActive(existing.getUser());
-			user.syncProfile(command.email(), command.nickname());
-			return new ProvisioningResult(user.getId(), false);
+			return syncExistingAfterDuplicate(command, e);
 		}
 	}
 
-	private User ensureActive(User user) {
-		if (user.isWithdrawn()) throw UserException.userWithdrawn();
+	private ProvisioningResult createAndLink(SocialUserProvisionCommand command) {
+		User user = userRepositoryPort.save(User.create(command.email(), command.nickname()));
+		SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
+		socialAccountRepositoryPort.save(account);
+		return new ProvisioningResult(user.getId(), true);
+	}
+
+	private ProvisioningResult syncExistingAfterDuplicate(
+		SocialUserProvisionCommand command,
+		DataIntegrityViolationException originalException
+	) {
+		SocialAccount existing = socialAccountRepositoryPort
+			.findByProviderAndProviderUserId(command.provider(), command.providerUserId())
+			.orElseThrow(() -> originalException);
+
+		User user = requireActive(existing.getUser());
+		user.syncProfile(command.email(), command.nickname());
+		return new ProvisioningResult(user.getId(), false);
+	}
+
+	private User requireActive(User user) {
+		if (user.isWithdrawn()) {
+			throw UserException.userWithdrawn();
+		}
 		return user;
 	}
 }
