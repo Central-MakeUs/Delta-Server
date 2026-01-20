@@ -5,6 +5,7 @@ import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore.RotationResult;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.application.exception.TokenException;
+import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.logging.TokenAuditLogger;

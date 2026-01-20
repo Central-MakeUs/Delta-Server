@@ -3,7 +3,7 @@ package cmc.delta.domain.auth.application.token;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.service.token.RefreshTokenHasher;
+import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.domain.auth.application.service.token.TokenServiceImpl;
 import cmc.delta.domain.auth.application.support.FakeTokenIssuer;
 import cmc.delta.domain.auth.application.support.InMemoryAccessBlacklistStore;
