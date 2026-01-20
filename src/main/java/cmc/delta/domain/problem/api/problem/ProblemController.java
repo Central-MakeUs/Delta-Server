@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.api.problem;
 import cmc.delta.domain.problem.api.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.api.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemCreateResponse;
+import cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.api.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.command.ProblemService;
 import cmc.delta.domain.problem.application.query.ProblemQueryService;
@@ -101,7 +102,8 @@ public class ProblemController {
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 
-	@Operation(summary = "내 오답카드 상세 조회")
+	@Operation(summary = "내 오답카드 상세 조회",
+	description = ProblemApiDocs.GET_MY_PROBLEM_DETAIL)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -114,8 +116,7 @@ public class ProblemController {
 		@CurrentUser UserPrincipal principal,
 		@PathVariable Long problemId
 	) {
-		cmc.delta.domain.problem.api.problem.dto.response.ProblemDetailResponse data =
-			problemQueryService.getMyProblemDetail(principal.userId(), problemId);
+		ProblemDetailResponse data = problemQueryService.getMyProblemDetail(principal.userId(), problemId);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

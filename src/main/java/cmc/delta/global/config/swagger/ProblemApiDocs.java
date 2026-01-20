@@ -46,6 +46,35 @@ public final class ProblemApiDocs {
 		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
 		""";
 
+	public static final String GET_MY_PROBLEM_DETAIL = """
+		내 오답카드 상세 정보를 조회합니다.
+
+		응답 필드:
+		- problemId: 오답카드 ID
+		- subject/unit/type: 커리큘럼 정보 (id, name)
+		  - subject: 과목(Unit, parent_id = null)
+		  - unit: 단원(Unit, parent_id = subject)
+		  - type: 문제 유형(ProblemType)
+
+		- originalImage:
+		  - assetId: 원본 이미지 Asset ID
+		  - viewUrl: 원본 이미지 Presigned GET URL (만료 시간 존재)
+
+		- answerFormat: 정답 형식
+		  - CHOICE: 객관식 (answerChoiceNo 사용)
+		  - TEXT/NUMBER/EXPRESSION: 단답/숫자/수식 텍스트 (answerValue 사용)
+
+		- answerChoiceNo/answerValue: 저장된 정답 값(없으면 null)
+		- solutionText: 저장된 풀이 텍스트(없으면 null)
+
+		- completed: 오답 완료 여부 (completedAt != null)
+		- completedAt: 오답 완료 처리 시각(완료 전이면 null)
+		- createdAt: 오답카드 생성 시각
+
+		상태 정책:
+		- SOLVED/UNSOLVED는 풀이/정답 입력 여부가 아니라, 오답 완료 처리 API 호출 여부(completedAt) 기준입니다.
+		""";
+
 	public static final String COMPLETE_WRONG_ANSWER_CARD = """
 		오답카드를 '오답 완료(SOLVED)' 상태로 전환합니다.
 		
