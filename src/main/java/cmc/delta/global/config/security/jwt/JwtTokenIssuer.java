@@ -1,6 +1,6 @@
 package cmc.delta.global.config.security.jwt;
 
-import cmc.delta.domain.auth.application.port.TokenIssuer;
+import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import java.time.Duration;
 import java.time.Instant;

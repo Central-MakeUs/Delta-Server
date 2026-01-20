@@ -1,6 +1,6 @@
 package cmc.delta.domain.auth.application.support;
 
-import cmc.delta.domain.auth.application.port.AccessBlacklistStore;
+import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

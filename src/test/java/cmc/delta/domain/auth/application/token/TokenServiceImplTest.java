@@ -2,12 +2,14 @@ package cmc.delta.domain.auth.application.token;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.auth.application.port.TokenIssuer;
+import cmc.delta.domain.auth.application.port.out.TokenIssuer;
+import cmc.delta.domain.auth.application.service.token.RefreshTokenHasher;
+import cmc.delta.domain.auth.application.service.token.TokenServiceImpl;
 import cmc.delta.domain.auth.application.support.FakeTokenIssuer;
 import cmc.delta.domain.auth.application.support.InMemoryAccessBlacklistStore;
 import cmc.delta.domain.auth.application.support.InMemoryRefreshTokenStore;
 import cmc.delta.domain.auth.application.support.TokenFixtures;
-import cmc.delta.domain.auth.application.token.exception.TokenException;
+import cmc.delta.domain.auth.application.exception.TokenException;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import java.time.Clock;
