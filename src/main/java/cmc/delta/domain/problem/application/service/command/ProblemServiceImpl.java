@@ -1,7 +1,5 @@
 package cmc.delta.domain.problem.application.service.command;
 
-import java.time.LocalDateTime;
-
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
@@ -22,8 +20,9 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,20 +41,24 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	private final ProblemCreateMapper mapper;
 	private final ProblemUpdateRequestValidator updateRequestValidator;
 
+	private final Clock clock;
+
 	@Override
 	@Transactional
 	public ProblemCreateResponse createWrongAnswerCard(Long currentUserId, CreateWrongAnswerCardCommand command) {
-		validateCreateCommand(command);
+		requestValidator.validate(command);
 
-		ProblemScan scan = loadOwnedAiDoneScan(currentUserId, command.scanId());
-		ensureProblemNotExistsForScan(command.scanId());
+		ProblemScan scan = scanValidator.getOwnedScan(currentUserId, command.scanId());
+		scanValidator.validateScanIsAiDone(scan);
+		scanValidator.validateProblemNotAlreadyCreated(command.scanId());
 
-		Unit finalUnit = loadFinalUnit(command.finalUnitId());
-		ProblemType finalType = loadFinalType(command.finalTypeId());
-		User userRef = loadUserReference(currentUserId);
+		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
+		ProblemType finalType = curriculumValidator.getFinalType(command.finalTypeId());
+		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembleProblem(userRef, scan, finalUnit, finalType, command);
-		Problem savedProblem = saveProblemWithDuplicateGuard(newProblem);
+		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, finalType, command);
+
+		Problem savedProblem = problemRepositoryPort.save(newProblem);
 
 		return mapper.toResponse(savedProblem);
 	}
@@ -66,8 +69,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, currentUserId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
-		LocalDateTime now = LocalDateTime.now();
-		problem.complete(solutionText, now);
+		problem.complete(solutionText, LocalDateTime.now(clock));
 	}
 
 	@Override
@@ -78,49 +80,5 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, command);
 		problem.applyUpdate(cmd);
-	}
-
-	private void validateCreateCommand(CreateWrongAnswerCardCommand command) {
-		requestValidator.validate(command);
-	}
-
-	private ProblemScan loadOwnedAiDoneScan(Long userId, Long scanId) {
-		ProblemScan scan = scanValidator.getOwnedScan(userId, scanId);
-		scanValidator.validateScanIsAiDone(scan);
-		return scan;
-	}
-
-	private void ensureProblemNotExistsForScan(Long scanId) {
-		scanValidator.validateProblemNotAlreadyCreated(scanId);
-	}
-
-	private Unit loadFinalUnit(String finalUnitId) {
-		return curriculumValidator.getFinalUnit(finalUnitId);
-	}
-
-	private ProblemType loadFinalType(String finalTypeId) {
-		return curriculumValidator.getFinalType(finalTypeId);
-	}
-
-	private User loadUserReference(Long userId) {
-		return userRepositoryPort.getReferenceById(userId);
-	}
-
-	private Problem assembleProblem(
-		User userRef,
-		ProblemScan scan,
-		Unit finalUnit,
-		ProblemType finalType,
-		CreateWrongAnswerCardCommand command
-	) {
-		return assembler.assemble(userRef, scan, finalUnit, finalType, command);
-	}
-
-	private Problem saveProblemWithDuplicateGuard(Problem problem) {
-		try {
-			return problemRepositoryPort.save(problem);
-		} catch (DataIntegrityViolationException e) {
-			throw scanValidator.toProblemAlreadyCreatedException(e);
-		}
 	}
 }

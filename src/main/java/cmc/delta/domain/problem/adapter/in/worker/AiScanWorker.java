@@ -5,7 +5,8 @@ import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
-import cmc.delta.domain.problem.adapter.in.worker.support.AbstractClaimingScanWorker;
+import cmc.delta.domain.problem.adapter.in.worker.support.AbstractExternalCallScanWorker;
+import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.AiFailureDecider;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
@@ -28,24 +29,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.web.client.RestClientResponseException;
 
 @Slf4j
 @Component
-public class AiScanWorker extends AbstractClaimingScanWorker {
+public class AiScanWorker extends AbstractExternalCallScanWorker {
 
-	private static final String WORKER_KEY = "worker:ai:backlog";
+	private static final WorkerIdentity IDENTITY =
+		new WorkerIdentity("ai", "AI", "worker:ai:backlog");
 
-	private final ScanRepository scanRepository; // CRUD only
-	private final ScanWorkRepository scanWorkRepository; // claim/backlog only
+	private final ScanRepository scanRepository;
+	private final ScanWorkRepository scanWorkRepository;
 
 	private final AiClient aiClient;
 	private final AiWorkerProperties properties;
-
-	private final ScanLockGuard lockGuard;
-	private final ScanUnlocker unlocker;
-	private final BacklogLogger backlogLogger;
-	private final WorkerLogPolicy logPolicy;
 
 	private final AiFailureDecider failureDecider;
 	private final AiScanValidator validator;
@@ -69,18 +65,11 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 		AiCurriculumPromptBuilder promptBuilder,
 		AiScanPersister persister
 	) {
-		super(clock, workerTxTemplate, aiExecutor, "ai");
+		super(clock, workerTxTemplate, aiExecutor, IDENTITY, lockGuard, unlocker, backlogLogger, logPolicy);
 		this.scanRepository = scanRepository;
 		this.scanWorkRepository = scanWorkRepository;
-
 		this.aiClient = aiClient;
 		this.properties = properties;
-
-		this.lockGuard = lockGuard;
-		this.unlocker = unlocker;
-		this.backlogLogger = backlogLogger;
-		this.logPolicy = logPolicy;
-
 		this.failureDecider = failureDecider;
 		this.validator = validator;
 		this.promptBuilder = promptBuilder;
@@ -88,14 +77,7 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	@Override
-	protected int claim(
-		LocalDateTime now,
-		LocalDateTime staleBefore,
-		String lockOwner,
-		String lockToken,
-		LocalDateTime lockedAt,
-		int limit
-	) {
+	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
 		return scanWorkRepository.claimAiCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
@@ -105,76 +87,42 @@ public class AiScanWorker extends AbstractClaimingScanWorker {
 	}
 
 	@Override
-	protected void onNoCandidate(LocalDateTime now) {
-		log.debug("AI 워커 tick - 처리 대상 없음");
-
-		LocalDateTime staleBefore = now.minusSeconds(lockLeaseSeconds());
-		backlogLogger.logIfDue(
-			WORKER_KEY,
-			now,
-			properties.backlogLogMinutes(),
-			() -> scanWorkRepository.countAiBacklog(now, staleBefore),
-			(backlog) -> log.info("AI 워커 - 처리 대상 없음 (aiBacklog={})", backlog)
-		);
+	protected long backlogLogMinutes() {
+		return properties.backlogLogMinutes();
 	}
 
 	@Override
-	protected void onClaimed(LocalDateTime now, int count) {
-		log.info("AI 워커 tick - 이번 배치 처리 대상={}건", count);
+	protected long countBacklog(LocalDateTime now, LocalDateTime staleBefore) {
+		return scanWorkRepository.countAiBacklog(now, staleBefore);
 	}
 
 	@Override
-	protected void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
-
-		try {
-			handleSuccessPath(scanId, lockOwner, lockToken);
-		} catch (Exception exception) {
-			handleFailure(scanId, lockOwner, lockToken, exception);
-		} finally {
-			unlocker.unlockBestEffort(scanId, lockOwner, lockToken);
-		}
-	}
-
-	private void handleSuccessPath(Long scanId, String lockOwner, String lockToken) {
+	protected void handleSuccess(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
 		ProblemScan scan = loadScanOrThrow(scanId);
 		AiValidatedInput input = validator.validateAndNormalize(scanId, scan);
 
 		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
 		AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
 
-		// 외부 호출 후 저장 직전 락 재확인
-		if (!lockGuard.isOwned(scanId, lockOwner, lockToken)) return;
+		if (!isOwned(scanId, lockOwner, lockToken)) return;
 
-		persister.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, LocalDateTime.now());
+		persister.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
 		log.info("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
 	}
 
-	private void handleFailure(Long scanId, String lockOwner, String lockToken, Exception exception) {
-		FailureDecision decision = failureDecider.decide(exception);
-		persister.persistAiFailed(scanId, lockOwner, lockToken, decision, LocalDateTime.now());
-
-		if (shouldSuppressStacktrace(exception)) {
-			RestClientResponseException rest = (RestClientResponseException) exception;
-			log.warn("AI 호출 4xx scanId={} reason={} status={}",
-				scanId, logPolicy.reasonCode(decision), rest.getRawStatusCode()
-			);
-			return;
-		}
-
-		log.error("AI 처리 실패 scanId={} reason={}", scanId, logPolicy.reasonCode(decision), exception);
+	@Override
+	protected FailureDecision decideFailure(Exception exception) {
+		return failureDecider.decide(exception);
 	}
 
-	private boolean shouldSuppressStacktrace(Exception exception) {
-		if (!(exception instanceof RestClientResponseException rest)) return false;
-		return logPolicy.shouldSuppressStacktrace(rest);
+	@Override
+	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision, LocalDateTime batchNow) {
+		persister.persistAiFailed(scanId, lockOwner, lockToken, decision, batchNow);
 	}
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
-		Optional<ProblemScan> optionalScan = scanRepository.findById(scanId);
-		if (optionalScan.isEmpty()) {
-			throw new ProblemScanNotFoundException(scanId);
-		}
-		return optionalScan.get();
+		Optional<ProblemScan> optional = scanRepository.findById(scanId);
+		if (optional.isEmpty()) throw new ProblemScanNotFoundException(scanId);
+		return optional.get();
 	}
 }

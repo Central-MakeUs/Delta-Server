@@ -12,8 +12,4 @@ public record FailureDecision(
 	public static FailureDecision retryable(FailureReason reasonCode) {
 		return new FailureDecision(reasonCode, true, null);
 	}
-
-	public static FailureDecision rateLimited(Long retryAfterSeconds) {
-		return new FailureDecision(FailureReason.AI_RATE_LIMIT, true, retryAfterSeconds);
-	}
 }

@@ -3,11 +3,10 @@ package cmc.delta.domain.user.application.service;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
-import cmc.delta.domain.user.application.support.FakeUserJpaRepository;
+import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.user.model.enums.UserStatus;
-import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,20 +15,20 @@ import org.junit.jupiter.api.Test;
 
 class UserServiceImplTest {
 
-	private UserJpaRepository userJpaRepository;
+	private FakeUserRepositoryPort userRepositoryPort;
 	private UserServiceImpl userService;
 
 	@BeforeEach
 	void setUp() {
-		userJpaRepository = FakeUserJpaRepository.create();
-		userService = new UserServiceImpl(userJpaRepository);
+		userRepositoryPort = FakeUserRepositoryPort.create();
+		userService = new UserServiceImpl(userRepositoryPort);
 	}
 
 	@Test
 	@DisplayName("내 프로필 조회: 유저가 있으면 UserMeData를 반환함")
 	void getMyProfile_whenUserExists_thenReturnsUserMeData() {
 		// given
-		User user = userJpaRepository.save(UserFixtures.activeUser());
+		User user = userRepositoryPort.save(UserFixtures.activeUser());
 
 		// when
 		UserMeData result = userService.getMyProfile(user.getId());
@@ -57,24 +56,42 @@ class UserServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("회원 탈퇴: ACTIVE 유저면 status가 WITHDRAWN으로 변경됨")
-	void withdrawAccount_whenActiveUser_thenStatusBecomesWithdrawn() {
+	@DisplayName("회원 탈퇴: 유저가 있으면 delete가 호출되고 유저가 삭제됨")
+	void withdrawAccount_whenUserExists_thenDeletesUser() {
 		// given
-		User user = userJpaRepository.save(UserFixtures.activeUser());
+		User user = userRepositoryPort.save(UserFixtures.activeUser());
 
 		// when
 		userService.withdrawAccount(user.getId());
 
 		// then
-		User reloaded = userJpaRepository.findById(user.getId()).orElseThrow();
-		assertThat(reloaded.getStatus()).isEqualTo(UserStatus.WITHDRAWN);
+		assertThat(userRepositoryPort.deleteCallCount()).isEqualTo(1);
+		assertThat(userRepositoryPort.deletedIds()).containsExactly(user.getId());
+		assertThat(userRepositoryPort.findById(user.getId())).isEmpty();
 	}
 
 	@Test
-	@DisplayName("회원 탈퇴: 이미 탈퇴한 유저면 USER_WITHDRAWN이 발생함")
-	void withdrawAccount_whenAlreadyWithdrawn_thenThrowsUserWithdrawn() {
+	@DisplayName("회원 탈퇴: 유저가 없으면 USER_NOT_FOUND가 발생함")
+	void withdrawAccount_whenUserMissing_thenThrowsUserNotFound() {
 		// given
-		User user = userJpaRepository.save(UserFixtures.withdrawnUser());
+		long userId = 999L;
+
+		// when
+		BusinessException ex = catchThrowableOfType(
+			() -> userService.withdrawAccount(userId),
+			BusinessException.class
+		);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("회원 탈퇴: 이미 삭제된 유저를 다시 탈퇴하면 USER_NOT_FOUND가 발생함(하드 삭제 정책)")
+	void withdrawAccount_whenAlreadyDeleted_thenThrowsUserNotFound() {
+		// given
+		User user = userRepositoryPort.save(UserFixtures.activeUser());
+		userService.withdrawAccount(user.getId());
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -83,6 +100,6 @@ class UserServiceImplTest {
 		);
 
 		// then
-		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_WITHDRAWN);
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
 	}
 }
