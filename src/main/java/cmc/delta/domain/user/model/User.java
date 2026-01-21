@@ -33,6 +33,9 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private UserStatus status;
 
+	@Column(name = "profile_image_storage_key", length = 512)
+	private String profileImageStorageKey;
+
 	private User(String email, String nickname) {
 		this.email = normalize(email);
 		this.nickname = normalize(nickname);
@@ -51,6 +54,14 @@ public class User extends BaseTimeEntity {
 		this.status = UserStatus.WITHDRAWN;
 	}
 
+	public void updateProfileImage(String storageKey) {
+		this.profileImageStorageKey = normalize(storageKey);
+	}
+
+	public void clearProfileImage() {
+		this.profileImageStorageKey = null;
+	}
+
 	public void syncProfile(String email, String nickname) {
 		String nextEmail = normalize(email);
 		if (nextEmail != null && !Objects.equals(this.email, nextEmail)) {
@@ -64,7 +75,8 @@ public class User extends BaseTimeEntity {
 	}
 
 	private static String normalize(String value) {
-		if (value == null) return null;
+		if (value == null)
+			return null;
 		String trimmed = value.trim();
 		return trimmed.isEmpty() ? null : trimmed;
 	}
