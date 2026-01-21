@@ -22,6 +22,8 @@ import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,13 +55,21 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		scanValidator.validateProblemNotAlreadyCreated(command.scanId());
 
 		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
-		ProblemType finalType = curriculumValidator.getFinalType(command.finalTypeId());
+
+		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(command.finalTypeIds());
+		if (finalTypes.isEmpty()) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST); // 너희 에러코드 맞게 조정
+		}
+
+		ProblemType primaryType = finalTypes.get(0);
+
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, finalType, command);
+		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
+
+		newProblem.replaceTypes(finalTypes);
 
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
-
 		return mapper.toResponse(savedProblem);
 	}
 

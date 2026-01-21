@@ -83,6 +83,9 @@ public class Problem extends BaseTimeEntity {
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemUnitTag> unitTags = new ArrayList<>();
 
+	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
+	private final List<ProblemTypeTag> typeTags = new ArrayList<>();
+
 	public static Problem create(
 		User user,
 		ProblemScan scan,
@@ -133,6 +136,21 @@ public class Problem extends BaseTimeEntity {
 
 	public void updateSolutionText(String solutionText) {
 		this.solutionText = solutionText;
+	}
+
+	public void replaceTypes(List<ProblemType> types) {
+		this.typeTags.clear();
+		if (types == null) return;
+
+		for (ProblemType t : types) {
+			ProblemTypeTag tag = new ProblemTypeTag(t);
+			tag.attachTo(this);
+			this.typeTags.add(tag);
+		}
+	}
+
+	public List<ProblemTypeTag> getTypeTags() {
+		return typeTags;
 	}
 
 	public void applyUpdate(ProblemUpdateCommand cmd) {

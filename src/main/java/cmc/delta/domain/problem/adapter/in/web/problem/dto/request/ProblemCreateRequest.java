@@ -2,11 +2,12 @@ package cmc.delta.domain.problem.adapter.in.web.problem.dto.request;
 
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import java.util.List;
 
 public record ProblemCreateRequest(
 	Long scanId,
 	String finalUnitId,
-	String finalTypeId,
+	List<String> finalTypeIds,
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
@@ -14,8 +15,13 @@ public record ProblemCreateRequest(
 ) {
 	public CreateWrongAnswerCardCommand toCommand() {
 		return new CreateWrongAnswerCardCommand(
-			scanId, finalUnitId, finalTypeId,
-			answerFormat, answerChoiceNo, answerValue, solutionText
+			scanId,
+			finalUnitId,
+			finalTypeIds,
+			answerFormat,
+			answerChoiceNo,
+			answerValue,
+			solutionText
 		);
 	}
 }

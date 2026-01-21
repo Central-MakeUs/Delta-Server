@@ -1,5 +1,8 @@
 package cmc.delta.domain.problem.application.validation.command;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.ProblemTypeJpaRepository;
@@ -31,5 +34,20 @@ public class ProblemCreateCurriculumValidator {
 	public ProblemType getFinalType(String finalTypeId) {
 		return typeRepository.findById(finalTypeId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
+	}
+
+
+	public List<ProblemType> getFinalTypes(List<String> typeIds) {
+		if (typeIds == null || typeIds.isEmpty()) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST);
+		}
+
+		List<String> distinct = typeIds.stream().distinct().toList();
+
+		List<ProblemType> types = new ArrayList<>();
+		for (String id : distinct) {
+			types.add(getFinalType(id));
+		}
+		return types;
 	}
 }
