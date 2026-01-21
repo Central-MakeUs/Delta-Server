@@ -26,21 +26,36 @@ public final class ProblemApiDocs {
 
 	public static final String LIST_MY_PROBLEMS = """
 		내 오답카드를 페이징 조회합니다.
-		
+
 		필터(선택):
 		- subjectId: 과목(Unit) ID (부모 단원, parent_id = null) 예) U_COMMON_1
 		- unitId: 단원(Unit) ID (자식 단원, parent_id = subjectId) 예) U_C1_POLY
 		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
-		
+
 		정렬(sort):
 		- RECENT: 최신순(기본)
 		- OLDEST: 오래된순
-		
+		- UNIT_MOST: 단원별 최다 등록순 (완료 여부 무관, 동률이면 최신/ID 순)
+		- UNIT_LEAST: 단원별 최소 등록순 (완료 여부 무관, 동률이면 최신/ID 순)
+		- TYPE_MOST: 유형별 최다 등록순 (완료 여부 무관, 동률이면 최신/ID 순)
+		- TYPE_LEAST: 유형별 최소 등록순 (완료 여부 무관, 동률이면 최신/ID 순)
+
 		상태(status): '오답 완료 버튼' 기준
 		- ALL: 전체(기본)
 		- UNSOLVED: 오답 완료 전
 		- SOLVED: 오답 완료
-		
+
+		정렬 동작 설명:
+		- UNIT_MOST/UNIT_LEAST는 '같은 단원(finalUnitId)'으로 등록된 오답카드 개수를 기준으로 정렬합니다.
+		- TYPE_MOST/TYPE_LEAST는 '같은 유형(finalTypeId)'으로 등록된 오답카드 개수를 기준으로 정렬합니다.
+		- 위 4개 정렬은 완료/미완료(status)와 관계없이 "등록된 개수"로만 정렬합니다.
+		  (단, status 필터를 함께 주면 목록 자체는 필터링되지만, 정렬 기준이 되는 "개수"는 전체 기준으로 계산됩니다.)
+		- 최다/최소 정렬에서 동률이면 최신(createdAt desc) → problemId desc 순으로 정렬합니다.
+
+		페이징:
+		- page: 0부터 시작
+		- size: 페이지 크기
+
 		주의:
 		- 필터 미적용은 파라미터를 생략하거나 빈값으로 보내면 됩니다.
 		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
