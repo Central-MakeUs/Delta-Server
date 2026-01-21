@@ -68,7 +68,7 @@
 
 ### UserMeData
 
-- 패키지: `cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData`
+- 패키지: `cmc.delta.domain.user.adapter.in.dto.response.UserMeData`
 
 | Field | Type | Description |
 | --- | --- | --- |

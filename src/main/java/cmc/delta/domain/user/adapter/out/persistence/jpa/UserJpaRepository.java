@@ -1,4 +1,4 @@
-package cmc.delta.domain.user.adapter.out.persistence;
+package cmc.delta.domain.user.adapter.out.persistence.jpa;
 
 import cmc.delta.domain.user.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;

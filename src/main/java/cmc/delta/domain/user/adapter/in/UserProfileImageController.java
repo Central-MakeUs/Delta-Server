@@ -1,4 +1,4 @@
-package cmc.delta.domain.user.adapter.in.web;
+package cmc.delta.domain.user.adapter.in;
 
 import cmc.delta.domain.user.application.port.in.UserProfileImageUseCase;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;

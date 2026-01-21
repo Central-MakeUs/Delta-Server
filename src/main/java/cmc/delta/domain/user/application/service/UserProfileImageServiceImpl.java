@@ -1,6 +1,6 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.user.adapter.out.persistence.UserJpaRepository;
+import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.UserProfileImageUseCase;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;
@@ -21,7 +21,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserProfileImageService implements UserProfileImageUseCase {
+public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 
 	private static final String PROFILE_DIR = "users/profile";
 

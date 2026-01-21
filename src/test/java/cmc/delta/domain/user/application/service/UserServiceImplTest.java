@@ -2,10 +2,9 @@ package cmc.delta.domain.user.application.service;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
+import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
-import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;

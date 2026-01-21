@@ -1,6 +1,6 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
+import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
