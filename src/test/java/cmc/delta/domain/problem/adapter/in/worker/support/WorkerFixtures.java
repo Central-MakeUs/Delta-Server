@@ -1,9 +1,8 @@
-package cmc.delta.domain.problem.application.worker.support;
+package cmc.delta.domain.problem.adapter.in.worker.support;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.model.asset.Asset;
@@ -11,9 +10,9 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.model.User;
 import java.time.LocalDateTime;
 
-public final class ProblemScanFixtures {
+public final class WorkerFixtures {
 
-	private ProblemScanFixtures() {}
+	private WorkerFixtures() {}
 
 	public static User user(long id) {
 		User u = mock(User.class);
@@ -26,14 +25,14 @@ public final class ProblemScanFixtures {
 	}
 
 	public static ProblemScan ocrDone(User user, String text) {
-		ProblemScan s = ProblemScan.createUploaded(user);
-		s.markOcrSucceeded(text, "{}", LocalDateTime.now());
-		return s;
+		ProblemScan scan = ProblemScan.createUploaded(user);
+		scan.markOcrSucceeded(text, "{}", LocalDateTime.now());
+		return scan;
 	}
 
-	public static Asset originalAsset(String key) {
+	public static Asset asset(String storageKey) {
 		Asset a = mock(Asset.class);
-		when(a.getStorageKey()).thenReturn(key);
+		when(a.getStorageKey()).thenReturn(storageKey);
 		return a;
 	}
 
@@ -53,17 +52,5 @@ public final class ProblemScanFixtures {
 		when(r.typeCandidatesJson()).thenReturn("[]");
 		when(r.aiDraftJson()).thenReturn("{}");
 		return r;
-	}
-
-	public static Unit unit(String id) {
-		Unit u = mock(Unit.class);
-		when(u.getId()).thenReturn(id);
-		return u;
-	}
-
-	public static ProblemType type(String id) {
-		ProblemType t = mock(ProblemType.class);
-		when(t.getId()).thenReturn(id);
-		return t;
 	}
 }
