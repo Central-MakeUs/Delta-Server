@@ -5,7 +5,9 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.*;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;

@@ -10,7 +10,7 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListI
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.support.query.ProblemListConditionFactory;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.PagedResponse;

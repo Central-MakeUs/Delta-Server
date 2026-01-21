@@ -1,11 +1,11 @@
-package cmc.delta.domain.problem.adapter.out.persistence.problem.query;
+package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 
 import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
 import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.problem.QProblem;

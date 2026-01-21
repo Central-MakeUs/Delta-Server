@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto;
+package cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto;
 
 public record ProblemTypeStatsRow(
 	String typeId,

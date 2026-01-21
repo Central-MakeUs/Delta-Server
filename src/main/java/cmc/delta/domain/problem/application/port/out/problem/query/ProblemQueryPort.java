@@ -4,9 +4,9 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
 
 public interface ProblemQueryPort {
 

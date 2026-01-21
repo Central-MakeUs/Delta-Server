@@ -4,9 +4,9 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumIt
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemUnitStatsItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemTypeStatsRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemUnitStatsRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemStatsCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemTypeStatsRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import java.util.ArrayList;

@@ -1,6 +1,6 @@
-package cmc.delta.domain.problem.adapter.out.persistence.problem.query;
+package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import com.querydsl.core.BooleanBuilder;
