@@ -2,9 +2,9 @@ package cmc.delta.domain.problem.application.port.out.problem.query;
 
 import java.util.List;
 
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemStatsCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemTypeStatsRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemUnitStatsRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemStatsCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemTypeStatsRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemUnitStatsRow;
 
 public interface ProblemStatsQueryPort {
 

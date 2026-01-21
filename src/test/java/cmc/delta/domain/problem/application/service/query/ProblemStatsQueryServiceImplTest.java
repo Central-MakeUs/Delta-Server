@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.*;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.*;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemStatsCondition;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemTypeStatsRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import java.util.List;
 import org.junit.jupiter.api.*;

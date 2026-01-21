@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.mapper.problem;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 
 import org.mapstruct.Mapper;

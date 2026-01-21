@@ -1,4 +1,4 @@
-package cmc.delta.domain.problem.adapter.out.persistence.problem.query.dto;
+package cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto;
 
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import java.time.LocalDateTime;
