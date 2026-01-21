@@ -1,5 +1,6 @@
 package cmc.delta.domain.user.adapter.out.persistence;
 
+import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import jakarta.persistence.EntityManager;

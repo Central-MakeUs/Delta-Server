@@ -46,4 +46,13 @@ public class StorageRequestValidator {
 		}
 		return ttlSeconds;
 	}
+
+	public void validateUploadBytes(byte[] bytes, long maxBytes) {
+		if (bytes == null || bytes.length == 0) {
+			throw StorageException.invalidRequest("업로드 파일이 비어있습니다.");
+		}
+		if (bytes.length > maxBytes) {
+			throw StorageException.invalidRequest("업로드 파일 용량이 제한을 초과했습니다.");
+		}
+	}
 }

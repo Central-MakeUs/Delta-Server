@@ -1,6 +1,6 @@
-package cmc.delta.domain.user.adapter.in.web;
+package cmc.delta.domain.user.adapter.in;
 
-import cmc.delta.domain.user.adapter.in.web.dto.response.UserMeData;
+import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;

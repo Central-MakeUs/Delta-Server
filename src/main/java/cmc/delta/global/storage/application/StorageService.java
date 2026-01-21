@@ -2,13 +2,12 @@ package cmc.delta.global.storage.application;
 
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
-import cmc.delta.global.storage.port.out.ObjectStorage;
-import cmc.delta.global.storage.exception.StorageException;
 import cmc.delta.global.storage.adapter.out.s3.S3Properties;
+import cmc.delta.global.storage.exception.StorageException;
+import cmc.delta.global.storage.port.out.ObjectStorage;
 import cmc.delta.global.storage.support.ImageMetadataExtractor;
 import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
-import cmc.delta.global.storage.support.StorageUploadSource;
 import java.time.Duration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -35,33 +34,71 @@ public class StorageService {
 	public StorageUploadData uploadImage(MultipartFile file, String directory) {
 		long startedAt = System.nanoTime();
 
-		StorageUploadSource source = prepareUploadSource(file, directory);
-		String storageKey = keyGenerator.generate(source.getDirectory(), file.getOriginalFilename());
+		validator.validateUploadFile(file, properties.maxUploadBytes());
 
-		objectStorage.put(storageKey, source.getBytes(), source.getContentType());
+		String resolvedDirectory = resolveDirectory(directory);
+		String contentType = resolveContentType(file.getContentType());
+		if (!isImageContentType(contentType)) {
+			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
+		}
 
-		String viewUrl = issueViewUrl(storageKey);
+		byte[] bytes = readBytes(file);
 
+		// (추가해둔 validator라면) bytes 기반으로도 한 번 더 방어 가능
+		validator.validateUploadBytes(bytes, properties.maxUploadBytes());
+
+		ImageMetadataExtractor.ImageSize imageSize = requireValidImage(bytes);
+
+		String storageKey = keyGenerator.generate(resolvedDirectory, file.getOriginalFilename());
+		objectStorage.put(storageKey, bytes, contentType);
+
+		String viewUrl = createPresignedGetUrl(storageKey, properties.presignGetTtlSeconds());
 		long durationMs = elapsedMs(startedAt);
 
-		log.info(
-			"스토리지 업로드 완료 storageKey={} directory={} contentType={} sizeBytes={} width={} height={} durationMs={}",
-			storageKey,
-			source.getDirectory(),
-			source.getContentType(),
-			source.sizeBytes(),
-			source.getImageWidth(),
-			source.getImageHeight(),
-			durationMs
-		);
+		logUploadComplete(storageKey, resolvedDirectory, contentType, bytes.length, imageSize, durationMs);
 
 		return new StorageUploadData(
 			storageKey,
 			viewUrl,
-			source.getContentType(),
-			source.sizeBytes(),
-			source.getImageWidth(),
-			source.getImageHeight()
+			contentType,
+			bytes.length,
+			imageSize.width(),
+			imageSize.height()
+		);
+	}
+
+	/**
+	 * UseCase가 MultipartFile을 모르도록 하고 싶을 때 쓰는 오버로드.
+	 */
+	public StorageUploadData uploadImage(byte[] bytes, String contentType, String originalFilename, String directory) {
+		long startedAt = System.nanoTime();
+
+		validator.validateUploadBytes(bytes, properties.maxUploadBytes());
+
+		String resolvedDirectory = resolveDirectory(directory);
+		String resolvedContentType = resolveContentType(contentType);
+
+		if (!isImageContentType(resolvedContentType)) {
+			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
+		}
+
+		ImageMetadataExtractor.ImageSize imageSize = requireValidImage(bytes);
+
+		String storageKey = keyGenerator.generate(resolvedDirectory, originalFilename);
+		objectStorage.put(storageKey, bytes, resolvedContentType);
+
+		String viewUrl = createPresignedGetUrl(storageKey, properties.presignGetTtlSeconds());
+		long durationMs = elapsedMs(startedAt);
+
+		logUploadComplete(storageKey, resolvedDirectory, resolvedContentType, bytes.length, imageSize, durationMs);
+
+		return new StorageUploadData(
+			storageKey,
+			viewUrl,
+			resolvedContentType,
+			bytes.length,
+			imageSize.width(),
+			imageSize.height()
 		);
 	}
 
@@ -71,7 +108,7 @@ public class StorageService {
 		validator.validateStorageKey(storageKey);
 
 		int ttlSeconds = validator.resolveTtlSeconds(ttlSecondsOrNull, properties.presignGetTtlSeconds());
-		String url = objectStorage.createPresignedGetUrl(storageKey, Duration.ofSeconds(ttlSeconds));
+		String url = createPresignedGetUrl(storageKey, ttlSeconds);
 
 		long durationMs = elapsedMs(startedAt);
 
@@ -94,42 +131,25 @@ public class StorageService {
 		log.info("스토리지 삭제 완료 storageKey={} durationMs={}", storageKey, durationMs);
 	}
 
-	private StorageUploadSource prepareUploadSource(MultipartFile file, String directory) {
-		validator.validateUploadFile(file, properties.maxUploadBytes());
+	private String resolveDirectory(String directory) {
+		return keyGenerator.resolveDirectoryOrDefault(directory, DEFAULT_DIRECTORY);
+	}
 
-		String resolvedDirectory = keyGenerator.resolveDirectoryOrDefault(directory, DEFAULT_DIRECTORY);
-		String contentType = resolveContentType(file.getContentType());
-
-		if (!isImage(contentType)) {
-			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
-		}
-
-		byte[] bytes = readBytes(file);
-
+	private ImageMetadataExtractor.ImageSize requireValidImage(byte[] bytes) {
 		ImageMetadataExtractor.ImageSize imageSize = ImageMetadataExtractor.tryReadImageSize(bytes);
 		if (imageSize.width() == null || imageSize.height() == null) {
 			throw StorageException.invalidRequest("이미지 파일 형식이 올바르지 않습니다.");
 		}
-
-		return new StorageUploadSource(
-			resolvedDirectory,
-			contentType,
-			bytes,
-			imageSize.width(),
-			imageSize.height()
-		);
+		return imageSize;
 	}
 
-
-	private boolean isImage(String contentType) {
+	private boolean isImageContentType(String contentType) {
 		return StringUtils.hasText(contentType)
 			&& contentType.toLowerCase(Locale.ROOT).startsWith("image/");
 	}
 
-
-	private String issueViewUrl(String storageKey) {
-		Duration ttl = Duration.ofSeconds(properties.presignGetTtlSeconds());
-		return objectStorage.createPresignedGetUrl(storageKey, ttl);
+	private String createPresignedGetUrl(String storageKey, int ttlSeconds) {
+		return objectStorage.createPresignedGetUrl(storageKey, Duration.ofSeconds(ttlSeconds));
 	}
 
 	private byte[] readBytes(MultipartFile file) {
@@ -142,6 +162,26 @@ public class StorageService {
 
 	private String resolveContentType(String contentType) {
 		return StringUtils.hasText(contentType) ? contentType : DEFAULT_CONTENT_TYPE;
+	}
+
+	private void logUploadComplete(
+		String storageKey,
+		String directory,
+		String contentType,
+		long sizeBytes,
+		ImageMetadataExtractor.ImageSize imageSize,
+		long durationMs
+	) {
+		log.info(
+			"스토리지 업로드 완료 storageKey={} directory={} contentType={} sizeBytes={} width={} height={} durationMs={}",
+			storageKey,
+			directory,
+			contentType,
+			sizeBytes,
+			imageSize.width(),
+			imageSize.height(),
+			durationMs
+		);
 	}
 
 	private long elapsedMs(long startedAtNano) {
