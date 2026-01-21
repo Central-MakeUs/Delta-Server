@@ -1,5 +1,7 @@
 package cmc.delta.domain.problem.application.service.query;
 
+import java.util.List;
+
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
@@ -9,6 +11,7 @@ import cmc.delta.domain.problem.application.mapper.scan.ProblemScanDetailMapper;
 import cmc.delta.domain.problem.application.mapper.scan.ProblemScanSummaryMapper;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
+import cmc.delta.domain.problem.application.port.out.prediction.ScanTypePredictionReader;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanDetailValidator;
@@ -26,6 +29,7 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 
 	private final ScanQueryPort scanQueryPort;
 	private final StoragePort storagePort;
+	private final ScanTypePredictionReader scanTypePredictionReader;
 
 	// detail
 	private final ProblemScanDetailValidator detailValidator;
@@ -59,9 +63,22 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 		String viewUrl = storagePort.issueReadUrl(p.getStorageKey());
 		SubjectInfo subject = subjectResolver.resolveByUnitId(p.getPredictedUnitId());
 
-		ProblemScanDetailResponse.AiClassification ai = detailMapper.toAiClassification(p, subject);
+		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes =
+			scanTypePredictionReader.findByScanId(scanId).stream()
+				.map(v -> new ProblemScanDetailResponse.PredictedTypeResponse(
+					v.typeId(),
+					v.typeName(),
+					v.rankNo(),
+					v.confidence()
+				))
+				.toList();
+
+		ProblemScanDetailResponse.AiClassification ai =
+			detailMapper.toAiClassification(p, subject, predictedTypes);
+
 		return detailMapper.toDetailResponse(p, viewUrl, ai);
 	}
+
 
 	private ProblemException scanNotFound() {
 		return new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);

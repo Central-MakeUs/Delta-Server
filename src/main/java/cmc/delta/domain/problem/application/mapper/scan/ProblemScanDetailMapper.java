@@ -1,9 +1,10 @@
 package cmc.delta.domain.problem.application.mapper.scan;
 
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse.PredictedTypeResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
-
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,7 +34,8 @@ public class ProblemScanDetailMapper {
 
 	public ProblemScanDetailResponse.AiClassification toAiClassification(
 		ScanDetailProjection p,
-		SubjectInfo subject
+		SubjectInfo subject,
+		List<PredictedTypeResponse> predictedTypes
 	) {
 		return new ProblemScanDetailResponse.AiClassification(
 			subject.subjectId(),
@@ -44,6 +46,7 @@ public class ProblemScanDetailMapper {
 			p.getPredictedTypeName(),
 			p.getConfidence(),
 			p.getNeedsReview(),
+			predictedTypes == null ? List.of() : predictedTypes,
 			p.getAiUnitCandidatesJson(),
 			p.getAiTypeCandidatesJson(),
 			p.getAiDraftJson()

@@ -1,5 +1,6 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
+import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
 import cmc.delta.domain.problem.application.port.out.ai.AiClient;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
@@ -13,7 +14,6 @@ import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.adapter.in.worker.support.persistence.AiScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator.AiValidatedInput;
@@ -46,7 +46,8 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 	private final AiFailureDecider failureDecider;
 	private final AiScanValidator validator;
 	private final AiCurriculumPromptBuilder promptBuilder;
-	private final AiScanPersister persister;
+
+	private final AiScanPersistUseCase persistUseCase;
 
 	public AiScanWorker(
 		Clock clock,
@@ -63,7 +64,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		AiFailureDecider failureDecider,
 		AiScanValidator validator,
 		AiCurriculumPromptBuilder promptBuilder,
-		AiScanPersister persister
+		AiScanPersistUseCase persistUseCase
 	) {
 		super(clock, workerTxTemplate, aiExecutor, IDENTITY, lockGuard, unlocker, backlogLogger, logPolicy);
 		this.scanRepository = scanRepository;
@@ -73,7 +74,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		this.failureDecider = failureDecider;
 		this.validator = validator;
 		this.promptBuilder = promptBuilder;
-		this.persister = persister;
+		this.persistUseCase = persistUseCase;
 	}
 
 	@Override
@@ -106,7 +107,8 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 
 		if (!isOwned(scanId, lockOwner, lockToken)) return;
 
-		persister.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
+		persistUseCase.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
+
 		log.info("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
 	}
 
@@ -117,7 +119,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision, LocalDateTime batchNow) {
-		persister.persistAiFailed(scanId, lockOwner, lockToken, decision, batchNow);
+		persistUseCase.persistAiFailed(scanId, lockOwner, lockToken, decision, batchNow);
 	}
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
