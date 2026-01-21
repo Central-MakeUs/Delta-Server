@@ -19,7 +19,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-@Tag(name = "유저")
+@Tag(name = "프로필 이미지")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users/me")
