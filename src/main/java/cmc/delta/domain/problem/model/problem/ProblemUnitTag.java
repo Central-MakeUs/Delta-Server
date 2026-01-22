@@ -33,13 +33,4 @@ public class ProblemUnitTag {
 	@Column(name = "is_primary", nullable = false)
 	private boolean primary;
 
-	public ProblemUnitTag(Unit unit, boolean primary) {
-		this.unit = unit;
-		this.primary = primary;
-	}
-
-	void attachTo(Problem problem) {
-		this.problem = problem;
-		this.id = new ProblemUnitTagId(problem.getId(), unit.getId());
-	}
 }

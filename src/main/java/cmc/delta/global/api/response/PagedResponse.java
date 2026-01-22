@@ -34,4 +34,14 @@ public record PagedResponse<T>(
 			pageData.getTotalPages()
 		);
 	}
+
+	public static <E, R> PagedResponse<R> of(Page<E> pageData, List<R> content) {
+		return new PagedResponse<R>(
+			content,
+			pageData.getNumber(),
+			pageData.getSize(),
+			pageData.getTotalElements(),
+			pageData.getTotalPages()
+		);
+	}
 }

@@ -9,14 +9,19 @@ import lombok.NoArgsConstructor;
 @Embeddable
 @NoArgsConstructor
 @EqualsAndHashCode
-public class ProblemUnitTagId implements Serializable {
+public class ProblemTypeTagId implements Serializable {
 
 	@Column(name = "problem_id", nullable = false)
 	private Long problemId;
 
-	@Column(name = "unit_id", length = 50, nullable = false)
-	private String unitId;
+	@Column(name = "type_id", length = 50, nullable = false)
+	private String typeId;
+
+	public ProblemTypeTagId(Long problemId, String typeId) {
+		this.problemId = problemId;
+		this.typeId = typeId;
+	}
 
 	public Long getProblemId() { return problemId; }
-	public String getUnitId() { return unitId; }
+	public String getTypeId() { return typeId; }
 }

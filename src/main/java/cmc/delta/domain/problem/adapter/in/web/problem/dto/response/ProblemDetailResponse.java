@@ -2,16 +2,15 @@ package cmc.delta.domain.problem.adapter.in.web.problem.dto.response;
 
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProblemDetailResponse(
 	Long problemId,
 
 	CurriculumItemResponse subject,
 	CurriculumItemResponse unit,
-	CurriculumItemResponse type,
-
+	List<CurriculumItemResponse> types,
 	OriginalImageResponse originalImage,
-
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,

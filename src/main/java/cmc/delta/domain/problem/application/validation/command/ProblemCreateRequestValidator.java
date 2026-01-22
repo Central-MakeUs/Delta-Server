@@ -1,8 +1,13 @@
 package cmc.delta.domain.problem.application.validation.command;
 
+import java.util.List;
+
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import cmc.delta.global.error.ErrorCode;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -12,7 +17,7 @@ public class ProblemCreateRequestValidator {
 		requireRequestBody(command);
 		requireScanId(command.scanId());
 		requireFinalUnitId(command.finalUnitId());
-		requireFinalTypeId(command.finalTypeId());
+		requireFinalTypeIds(command.finalTypeIds());
 		validateAnswerFields(command);
 	}
 
@@ -34,9 +39,16 @@ public class ProblemCreateRequestValidator {
 		}
 	}
 
-	private void requireFinalTypeId(String finalTypeId) {
-		if (isBlank(finalTypeId)) {
-			throw new ProblemValidationException("finalTypeId는 필수입니다.");
+	private void requireFinalTypeIds(List<String> finalTypeIds) {
+		if (finalTypeIds == null || finalTypeIds.isEmpty()) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST); // 너희 규칙대로
+		}
+
+		boolean hasValid = finalTypeIds.stream()
+			.anyMatch(id -> id != null && !id.isBlank());
+
+		if (!hasValid) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST);
 		}
 	}
 
