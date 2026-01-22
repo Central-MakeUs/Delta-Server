@@ -1,10 +1,5 @@
 package cmc.delta.domain.problem.application.validation.query;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.global.error.ErrorCode;
 

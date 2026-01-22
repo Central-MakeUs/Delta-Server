@@ -40,6 +40,9 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	private final ProblemListMapper problemListMapper;
 	private final ProblemDetailMapper problemDetailMapper;
 
+	/**
+	 * TODO: 코드 정리와 수정 필요
+	 */
 	@Override
 	public PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,

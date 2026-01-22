@@ -32,14 +32,4 @@ public class ProblemChoice {
 	@Lob
 	@Column(nullable = false, columnDefinition = "MEDIUMTEXT")
 	private String text;
-
-	public ProblemChoice(int choiceNo, String label, String text) {
-		this.choiceNo = choiceNo;
-		this.label = label;
-		this.text = text;
-	}
-
-	void attachTo(Problem problem) {
-		this.problem = problem;
-	}
 }
