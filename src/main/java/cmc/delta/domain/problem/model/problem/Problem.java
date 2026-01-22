@@ -138,19 +138,18 @@ public class Problem extends BaseTimeEntity {
 		this.solutionText = solutionText;
 	}
 
-	public void replaceTypes(List<ProblemType> types) {
+	public void replaceTypes(java.util.List<ProblemType> types) {
 		this.typeTags.clear();
-		if (types == null) return;
 
-		for (ProblemType t : types) {
-			ProblemTypeTag tag = new ProblemTypeTag(t);
+		if (types == null || types.isEmpty()) {
+			return;
+		}
+
+		for (ProblemType type : types) {
+			ProblemTypeTag tag = new ProblemTypeTag(type);
 			tag.attachTo(this);
 			this.typeTags.add(tag);
 		}
-	}
-
-	public List<ProblemTypeTag> getTypeTags() {
-		return typeTags;
 	}
 
 	public void applyUpdate(ProblemUpdateCommand cmd) {

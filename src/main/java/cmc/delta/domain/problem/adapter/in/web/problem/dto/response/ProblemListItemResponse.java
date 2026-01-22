@@ -7,9 +7,7 @@ public record ProblemListItemResponse(
 	Long problemId,
 	CurriculumItemResponse subject,
 	CurriculumItemResponse unit,
-	CurriculumItemResponse type,
 	List<CurriculumItemResponse> types,
-
 	PreviewImageResponse previewImage,
 	LocalDateTime createdAt
 ) {

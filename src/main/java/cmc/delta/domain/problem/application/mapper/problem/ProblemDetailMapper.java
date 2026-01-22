@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.application.mapper.problem;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
-
+import java.util.List;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -20,7 +20,8 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 
 	@Mapping(target = "subject", expression = "java(toItem(row.subjectId(), row.subjectName()))")
 	@Mapping(target = "unit", expression = "java(toItem(row.unitId(), row.unitName()))")
-	@Mapping(target = "type", expression = "java(toItem(row.typeId(), row.typeName()))")
+
+	@Mapping(target = "types", expression = "java(List.of())")
 
 	@Mapping(
 		target = "originalImage",

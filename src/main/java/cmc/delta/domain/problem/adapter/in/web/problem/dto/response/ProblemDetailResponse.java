@@ -9,7 +9,6 @@ public record ProblemDetailResponse(
 
 	CurriculumItemResponse subject,
 	CurriculumItemResponse unit,
-	CurriculumItemResponse type,
 	List<CurriculumItemResponse> types,
 	OriginalImageResponse originalImage,
 	AnswerFormat answerFormat,

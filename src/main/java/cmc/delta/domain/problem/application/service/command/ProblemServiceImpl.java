@@ -57,8 +57,8 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
 
 		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(command.finalTypeIds());
-		if (finalTypes.isEmpty()) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST); // 너희 에러코드 맞게 조정
+		if (finalTypes == null || finalTypes.isEmpty()) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST);
 		}
 
 		ProblemType primaryType = finalTypes.get(0);
@@ -66,12 +66,13 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
 		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
-
 		newProblem.replaceTypes(finalTypes);
 
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
+
 		return mapper.toResponse(savedProblem);
 	}
+
 
 	@Override
 	@Transactional

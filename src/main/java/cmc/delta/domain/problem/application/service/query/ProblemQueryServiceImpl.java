@@ -34,7 +34,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemQueryPort problemQueryPort;
-	private final ProblemTypeTagQueryPort problemTypeTagQueryPort; // ✅ 추가
+	private final ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private final StoragePort storagePort;
 
 	private final ProblemListMapper problemListMapper;
@@ -50,15 +50,12 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 		Page<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageable);
 
-		// ✅ 1) 현재 페이지의 problemIds 추출
 		List<Long> problemIds = pageData.getContent().stream()
 			.map(ProblemListRow::problemId) // record accessor
 			.toList();
 
-		// ✅ 2) 한방 조회 → (problemId -> types) 맵 만들기
 		Map<Long, List<CurriculumItemResponse>> typesMap = loadTypesMap(problemIds);
 
-		// ✅ 3) 기존 mapper 결과에 types만 채워서 record 재생성
 		List<ProblemListItemResponse> items = pageData.getContent().stream()
 			.map(row -> {
 				String previewUrl = storagePort.issueReadUrl(row.storageKey());
@@ -71,8 +68,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 					base.problemId(),
 					base.subject(),
 					base.unit(),
-					base.type(),     // 대표 타입(기존 유지)
-					types,           // ✅ 추가
+					types,
 					base.previewImage(),
 					base.createdAt()
 				);
@@ -98,8 +94,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.problemId(),
 			base.subject(),
 			base.unit(),
-			base.type(),  // 대표 타입 유지
-			types,        // ✅ 추가
+			types,
 			base.originalImage(),
 			base.answerFormat(),
 			base.answerChoiceNo(),
