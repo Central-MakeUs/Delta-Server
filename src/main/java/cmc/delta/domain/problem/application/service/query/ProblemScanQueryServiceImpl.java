@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.application.service.query;
 
 import java.util.List;
 
+import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CurriculumItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
@@ -50,8 +51,14 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 		String viewUrl = storagePort.issueReadUrl(row.getStorageKey());
 		SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
 
-		return summaryMapper.toSummaryResponse(row, viewUrl, subject);
+		List<CurriculumItemResponse> types =
+			scanTypePredictionReader.findByScanId(scanId).stream()
+				.map(v -> new CurriculumItemResponse(v.typeId(), v.typeName()))
+				.toList();
+
+		return summaryMapper.toSummaryResponse(row, viewUrl, subject, types);
 	}
+
 
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {

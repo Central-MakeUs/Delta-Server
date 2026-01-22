@@ -1,8 +1,10 @@
 package cmc.delta.domain.problem.adapter.in.web.scan.dto.response;
 
+import java.util.List;
+
 public record ProblemScanSummaryClassificationResponse(
 	CurriculumItemResponse subject,
 	CurriculumItemResponse unit,
-	CurriculumItemResponse type,
+	List<CurriculumItemResponse> types,
 	boolean needsReview
 ) { }
