@@ -46,7 +46,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 	}
 
 	private ProvisioningResult createAndLink(SocialUserProvisionCommand command) {
-		User user = userRepositoryPort.save(User.create(command.email(), command.nickname()));
+		User user = userRepositoryPort.save(User.createProvisioned(command.email(), command.nickname()));
 		SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
 		socialAccountRepositoryPort.save(account);
 		return new ProvisioningResult(user.getId(), true);

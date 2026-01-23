@@ -7,7 +7,7 @@ public final class UserFixtures {
 	private UserFixtures() {}
 
 	public static User activeUser() {
-		return User.create("user@example.com", "delta");
+		return User.createProvisioned("user@example.com", "delta");
 	}
 
 	public static User withdrawnUser() {

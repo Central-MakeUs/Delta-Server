@@ -1,9 +1,13 @@
 package cmc.delta.domain.user.application.service;
 
+import java.time.Instant;
+
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
+import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserUseCase {
 
 	private final UserRepositoryPort userRepositoryPort;
+	private final UserValidator userValidator;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -34,5 +39,22 @@ public class UserServiceImpl implements UserUseCase {
 		userRepositoryPort.delete(user);
 
 		log.info("event=user.delete userId={} result=success", userId);
+	}
+
+	@Override
+	public void completeOnboarding(long userId, UserOnboardingRequest request) {
+		userValidator.validate(request);
+
+		User user = userRepositoryPort.findById(userId)
+			.orElseThrow(UserException::userNotFound);
+
+		if (user.isWithdrawn()) {
+			throw UserException.userWithdrawn();
+		}
+
+		user.completeOnboarding(request.name(), request.birthDate(), Instant.now());
+		userRepositoryPort.save(user);
+
+		log.info("event=user.onboarding.complete userId={} result=success", userId);
 	}
 }

@@ -1,5 +1,6 @@
 package cmc.delta.domain.user.adapter.in;
 
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.api.response.ApiResponse;
@@ -33,6 +34,23 @@ public class UserController {
 	public ApiResponse<UserMeData> getMyProfile(@CurrentUser UserPrincipal principal) {
 		UserMeData data = userUseCase.getMyProfile(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "추가정보 입력(가입 완료)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN
+	})
+	@PostMapping("/me/onboarding")
+	public ApiResponse<Void> completeOnboarding(
+		@CurrentUser UserPrincipal principal,
+		@RequestBody UserOnboardingRequest request
+	) {
+		userUseCase.completeOnboarding(principal.userId(), request);
+		return ApiResponses.success(SuccessCode.OK);
 	}
 
 	@Operation(summary = "회원 탈퇴")
