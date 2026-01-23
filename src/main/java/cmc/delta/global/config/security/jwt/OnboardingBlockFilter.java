@@ -50,7 +50,7 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 
 		UserStatus status = userStatusQuery.getStatus(principal.userId());
 		if (status == UserStatus.ONBOARDING_REQUIRED) {
-			throw new JwtAuthenticationException(ErrorCode.AUTHENTICATION_FAILED);
+			throw new JwtAuthenticationException(ErrorCode.USER_ONBOARDING_REQUIRED);
 		}
 
 		filterChain.doFilter(request, response);

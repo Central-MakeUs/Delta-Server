@@ -31,6 +31,7 @@ public enum ErrorCode {
 	// USER
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.", LogLevel.WARN),
 	USER_WITHDRAWN(HttpStatus.FORBIDDEN, "USER_002", "탈퇴한 사용자입니다.", LogLevel.WARN),
+	USER_ONBOARDING_REQUIRED(HttpStatus.FORBIDDEN, "USER_003", "추가 정보 입력이 필요합니다.", LogLevel.WARN),
 
 	// PROBLEM
 	PROBLEM_SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_001", "스캔을 찾을 수 없습니다.", LogLevel.WARN),
