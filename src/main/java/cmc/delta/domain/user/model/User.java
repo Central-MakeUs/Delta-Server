@@ -3,6 +3,9 @@ package cmc.delta.domain.user.model;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
+
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -33,17 +36,27 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private UserStatus status;
 
+	@Column(name = "name", length = 50)
+	private String name;
+
+	@Column(name = "birth_date")
+	private LocalDate birthDate;
+
+	@Column(name = "terms_agreed_at")
+	private Instant termsAgreedAt;
+
+
 	@Column(name = "profile_image_storage_key", length = 512)
 	private String profileImageStorageKey;
 
-	private User(String email, String nickname) {
+	private User(String email, String nickname, UserStatus status) {
 		this.email = normalize(email);
 		this.nickname = normalize(nickname);
-		this.status = UserStatus.ACTIVE;
+		this.status = status;
 	}
 
-	public static User create(String email, String nickname) {
-		return new User(email, nickname);
+	public static User createProvisioned(String email, String nickname) {
+		return new User(email, nickname, UserStatus.ONBOARDING_REQUIRED);
 	}
 
 	public boolean isWithdrawn() {
@@ -71,6 +84,19 @@ public class User extends BaseTimeEntity {
 		String nextNickname = normalize(nickname);
 		if (nextNickname != null && !Objects.equals(this.nickname, nextNickname)) {
 			this.nickname = nextNickname;
+		}
+	}
+
+	public void completeOnboarding(String name, LocalDate birthDate, Instant agreedAt) {
+		this.name = normalize(name);
+		this.birthDate = birthDate;
+
+		if (this.termsAgreedAt == null) {
+			this.termsAgreedAt = agreedAt;
+		}
+
+		if (this.status == UserStatus.ONBOARDING_REQUIRED) {
+			this.status = UserStatus.ACTIVE;
 		}
 	}
 

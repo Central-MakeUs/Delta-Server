@@ -16,6 +16,8 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+
+import cmc.delta.domain.problem.model.problem.QProblemTypeTag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -77,6 +79,7 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 
 	@Override
 	public List<ProblemTypeStatsRow> findTypeStats(Long userId, ProblemStatsCondition condition) {
+		QProblemTypeTag tag = QProblemTypeTag.problemTypeTag;
 		QProblem problem = QProblem.problem;
 		QProblemType type = QProblemType.problemType;
 		QUnit unit = QUnit.unit;
@@ -105,7 +108,7 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 			.otherwise(0L)
 			.sum();
 
-		NumberExpression<Long> totalCount = problem.id.count();
+		NumberExpression<Long> totalCount = tag.id.problemId.count(); // tag row 기준 count
 
 		OrderSpecifier<?>[] orderBy = resolveTypeSort(condition.sort(), totalCount, type);
 
@@ -118,8 +121,9 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 				unsolvedCount,
 				totalCount
 			))
-			.from(problem)
-			.join(problem.finalType, type)
+			.from(tag)
+			.join(tag.problem, problem)
+			.join(tag.type, type)
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
 			.where(where)
@@ -127,6 +131,7 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 			.orderBy(orderBy)
 			.fetch();
 	}
+
 
 	private OrderSpecifier<?>[] resolveUnitSort(
 		ProblemStatsSort sort,

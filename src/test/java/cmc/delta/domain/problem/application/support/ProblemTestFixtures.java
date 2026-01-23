@@ -13,6 +13,6 @@ public final class ProblemTestFixtures {
 	}
 
 	public static User user() {
-		return User.create("user@example.com", "delta");
+		return User.createProvisioned("user@example.com", "delta");
 	}
 }
