@@ -9,6 +9,7 @@ import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.config.swagger.UserApiDocs;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +37,9 @@ public class UserController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "추가정보 입력(가입 완료)")
+	@Operation(summary = "추가정보 입력(가입 완료)",
+		description = UserApiDocs.COMPLETE_ONBOARDING
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
