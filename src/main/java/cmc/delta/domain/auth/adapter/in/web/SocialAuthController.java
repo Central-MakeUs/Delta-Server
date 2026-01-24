@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
-import cmc.delta.domain.auth.application.port.in.social.SocialLoginUseCase;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 public class SocialAuthController {
 
-	private final SocialLoginUseCase socialLoginUseCase;
+	private final SocialLoginCommandUseCase socialLoginCommandUseCase;
 	private final TokenHeaderWriter tokenHeaderWriter;
 
 	@Operation(
@@ -44,7 +44,7 @@ public class SocialAuthController {
 		@Valid @RequestBody KakaoLoginRequest request,
 		HttpServletResponse response
 	) {
-		SocialLoginUseCase.LoginResult result = socialLoginUseCase.loginKakao(request.code());
+		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginKakao(request.code());
 		tokenHeaderWriter.write(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
@@ -63,7 +63,7 @@ public class SocialAuthController {
 		@RequestParam(value = "user", required = false) String userJson,
 		HttpServletResponse response
 	) {
-		SocialLoginUseCase.LoginResult result = socialLoginUseCase.loginApple(code, userJson);
+		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginApple(code, userJson);
 		tokenHeaderWriter.write(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}

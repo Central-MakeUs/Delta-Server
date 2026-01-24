@@ -2,7 +2,7 @@ package cmc.delta.domain.auth.adapter.in.web;
 
 import cmc.delta.domain.auth.adapter.in.support.HttpTokenExtractor;
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
-import cmc.delta.domain.auth.application.port.in.token.ReissueTokenUseCase;
+import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class AuthTokenController {
 
-	private final ReissueTokenUseCase tokenUseCase;
+	private final TokenCommandUseCase tokenCommandUseCase;
 	private final HttpTokenExtractor httpTokenExtractor;
 	private final TokenHeaderWriter tokenHeaderWriter;
 
@@ -35,7 +35,7 @@ public class AuthTokenController {
 	@PostMapping("/reissue")
 	public ApiResponse<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
-		TokenIssuer.IssuedTokens tokens = tokenUseCase.reissue(refreshToken);
+		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.reissue(refreshToken);
 		tokenHeaderWriter.write(response, tokens);
 
 		return ApiResponses.success(200);
@@ -49,7 +49,7 @@ public class AuthTokenController {
 	@PostMapping("/logout")
 	public ApiResponse<Void> logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
-		tokenUseCase.invalidateAll(principal.userId(), accessToken);
+		tokenCommandUseCase.invalidateAll(principal.userId(), accessToken);
 
 		return ApiResponses.success(200);
 	}

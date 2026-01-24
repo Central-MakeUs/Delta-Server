@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
-import cmc.delta.domain.auth.application.port.in.social.SocialLoginUseCase;
-import cmc.delta.domain.auth.application.port.in.token.IssueTokenUseCase;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
+import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.auth.application.support.AuthRoleDefaults;
@@ -15,13 +15,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class SocialAuthFacade implements SocialLoginUseCase {
+public class SocialAuthFacade implements SocialLoginCommandUseCase {
 
 	private final KakaoOAuthService kakaoOAuthService;
 	private final AppleOAuthService appleOAuthService;
 
 	private final UserProvisioningUseCase userProvisioningUseCase;
-	private final IssueTokenUseCase issueTokenUseCase;
+	private final TokenCommandUseCase tokenCommandUseCase;
 
 	@Override
 	public LoginResult loginKakao(String code) {
@@ -35,7 +35,7 @@ public class SocialAuthFacade implements SocialLoginUseCase {
 					userInfo.nickname()
 				)
 			);
-		TokenIssuer.IssuedTokens tokens = issueTokenUseCase.issue(principalOf(provisioned.userId()));
+		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
 		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(), provisioned.isNewUser());
 		return new LoginResult(data, tokens);
 	}
@@ -56,7 +56,7 @@ public class SocialAuthFacade implements SocialLoginUseCase {
 			);
 
 
-		TokenIssuer.IssuedTokens tokens = issueTokenUseCase.issue(principalOf(provisioned.userId()));
+		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
 		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(), provisioned.isNewUser());
 		return new LoginResult(data, tokens);
 	}

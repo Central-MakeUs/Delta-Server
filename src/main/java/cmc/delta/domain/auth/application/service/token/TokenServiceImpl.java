@@ -6,8 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import cmc.delta.domain.auth.application.exception.TokenException;
-import cmc.delta.domain.auth.application.port.in.token.IssueTokenUseCase;
-import cmc.delta.domain.auth.application.port.in.token.ReissueTokenUseCase;
+import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore.RotationResult;
@@ -21,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class TokenServiceImpl implements IssueTokenUseCase, ReissueTokenUseCase {
+public class TokenServiceImpl implements TokenCommandUseCase {
 
 	private static final String DEFAULT_SESSION_ID = "DEFAULT";
 	private static final Duration DEFAULT_REFRESH_TTL = Duration.ofDays(14);
@@ -58,6 +57,7 @@ public class TokenServiceImpl implements IssueTokenUseCase, ReissueTokenUseCase 
 		return newTokens;
 	}
 
+	@Override
 	public void logout(long userId, String accessToken, String refreshToken) {
 		requireProvided(accessToken, ErrorCode.TOKEN_REQUIRED);
 		requireProvided(refreshToken, ErrorCode.REFRESH_TOKEN_REQUIRED);
