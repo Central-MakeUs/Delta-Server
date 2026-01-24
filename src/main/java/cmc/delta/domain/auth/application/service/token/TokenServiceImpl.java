@@ -1,24 +1,27 @@
 package cmc.delta.domain.auth.application.service.token;
 
+import java.time.Duration;
+
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import cmc.delta.domain.auth.application.exception.TokenException;
+import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore.RotationResult;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.exception.TokenException;
 import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
+import cmc.delta.domain.auth.application.support.AuthRoleDefaults;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.logging.TokenAuditLogger;
-import java.time.Duration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
-public class TokenServiceImpl implements TokenService {
+public class TokenServiceImpl implements TokenCommandUseCase {
 
-	private static final String DEFAULT_ROLE_FOR_DEV = "USER"; // TODO: role 정책 확정 시 교체
 	private static final String DEFAULT_SESSION_ID = "DEFAULT";
 	private static final Duration DEFAULT_REFRESH_TTL = Duration.ofDays(14);
 
@@ -123,7 +126,7 @@ public class TokenServiceImpl implements TokenService {
 	}
 
 	private UserPrincipal principalOf(long userId) {
-		return new UserPrincipal(userId, DEFAULT_ROLE_FOR_DEV);
+		return new UserPrincipal(userId, AuthRoleDefaults.DEFAULT_ROLE_FOR_DEV);
 	}
 
 	private void requireProvided(String value, ErrorCode errorCode) {

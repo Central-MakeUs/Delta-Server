@@ -3,8 +3,10 @@ package cmc.delta.domain.user.application.validator;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
+import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -52,6 +54,71 @@ class UserValidatorTest {
 			() -> validator.validateProvision(cmd),
 			BusinessException.class
 		);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("온보딩 검증: request가 null이면 INVALID_REQUEST")
+	void validateOnboarding_whenRequestNull_thenThrowsInvalidRequest() {
+		// when
+		BusinessException ex = catchThrowableOfType(
+			() -> validator.validate((UserOnboardingRequest) null),
+			BusinessException.class
+		);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("온보딩 검증: name이 blank면 INVALID_REQUEST")
+	void validateOnboarding_whenNameBlank_thenThrowsInvalidRequest() {
+		// given
+		UserOnboardingRequest req = new UserOnboardingRequest("  ", LocalDate.of(2000, 1, 1), true);
+
+		// when
+		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("온보딩 검증: birthDate가 null이면 INVALID_REQUEST")
+	void validateOnboarding_whenBirthDateNull_thenThrowsInvalidRequest() {
+		// given
+		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", null, true);
+
+		// when
+		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("온보딩 검증: 미래 birthDate면 INVALID_REQUEST")
+	void validateOnboarding_whenBirthDateFuture_thenThrowsInvalidRequest() {
+		// given
+		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", LocalDate.now().plusDays(1), true);
+
+		// when
+		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("온보딩 검증: 약관 미동의면 INVALID_REQUEST")
+	void validateOnboarding_whenTermsNotAgreed_thenThrowsInvalidRequest() {
+		// given
+		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), false);
+
+		// when
+		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
