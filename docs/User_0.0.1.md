@@ -1,199 +1,155 @@
 # User API
 
-> Base URL: /api/v1/users
->
+> Base URL: `/api/v1/users`
 >
 > 담당자: User 파트
 >
-> 최종 수정일: 2026.01.05
->
+> 최종 수정일: 2026.01.25
 
 ---
 
 ## 기본 설명
 
-- User는 내 프로필 조회 / 회원 탈퇴를 제공한다.
+- User는 **내 프로필 조회 / 온보딩 완료 / 회원 탈퇴 / 프로필 이미지 업로드/조회/삭제**를 제공한다.
 - 인증이 필요한 API는 Authorization 헤더의 Access Token으로 인증한다.
-- 응답 Body는 성공/실패 모두 고정 포맷으로 내려간다: `status / code / data / message`
-- 모든 응답에는 `X-Trace-Id` 헤더가 포함된다.
+
+관련 코드
+
+- 컨트롤러: `src/main/java/cmc/delta/domain/user/adapter/in/UserController.java`
+- 컨트롤러: `src/main/java/cmc/delta/domain/user/adapter/in/UserProfileImageController.java`
+- 응답 DTO: `src/main/java/cmc/delta/domain/user/adapter/in/dto/response/UserMeData.java`
+- 요청 DTO: `src/main/java/cmc/delta/domain/user/adapter/in/dto/request/UserOnboardingRequest.java`
+- 요청 DTO: `src/main/java/cmc/delta/domain/user/application/port/in/dto/ProfileImageUploadCommand.java`
+- 응답 DTO: `src/main/java/cmc/delta/domain/user/application/port/in/dto/UserProfileImageResult.java`
 
 ---
 
-## 공통 규칙
-
-### 공통 Response 형식 (모든 API 동일)
+## 공통 Response 형식
 
 ```json
-  {
-  "status":200,
-  "code":"SUC_...",
-  "data":{},
-  "message":"..."
-  }
+{
+  "status": 200,
+  "code": "SUC_...",
+  "data": {},
+  "message": "..."
+}
 ```
 
-- status: HTTP status code
-- code: 정책 코드(SuccessCode/ErrorCode)
-- data: 실제 payload (성공 시 DTO / 실패 시 null)
-- message: 정책 메시지
-
-### 인증 규칙
+## 인증 규칙
 
 - `Authorization: Bearer {accessToken}`
 
-### 공통 실패 Response 예시
-
-```json
-  {
-  "status":401,
-  "code":"AUTH_010",
-  "data":null,
-  "message":"토큰이 필요합니다."
-  }
-```
-
-### 공통 에러코드
-
-| Status | Code | Message | Description |
-| --- | --- | --- | --- |
-| 401 | TOKEN_REQUIRED (AUTH_010) | 토큰이 필요합니다 | Authorization 헤더 누락 |
-| 401 | AUTHENTICATION_FAILED (AUTH_001) | 인증에 실패했습니다 | 토큰 만료/위조/검증 실패 |
-| 403 | ACCESS_DENIED (AUTH_002) | 접근 권한이 없습니다 | 권한 부족 |
-| 404 | USER_NOT_FOUND (USER_001) | 사용자를 찾을 수 없습니다 | 인증된 사용자 ID가 DB에 존재하지 않음 |
-| 405 | METHOD_NOT_ALLOWED (REQ_002) | 허용되지 않은 메서드입니다 | 잘못된 HTTP Method 호출 |
-
 ---
 
-### DTO
+## 엔드포인트
 
-### UserMeData
+## `GET` /api/v1/users/me
 
-- 패키지: `cmc.delta.domain.user.adapter.in.dto.response.UserMeData`
+- 설명: 로그인된 사용자의 내 프로필 정보 조회
+- 인증: Required
 
-| Field | Type | Description |
-| --- | --- | --- |
-| id | Long | 내부 사용자 ID |
-| email | String | 이메일 (소셜 동의 기반, null 가능) |
-| nickname | String | 닉네임 (소셜 동의 기반, null 가능) |
-
----
-
-# GET /api/v1/users/me
-
-## 개요
-
-| 항목 | 내용 |
-| --- | --- |
-| 설명 | 로그인된 사용자의 내 프로필 정보를 조회한다 |
-| 인증 | Required |
-
-## Request
-
-### Headers
-
-| Key | Value | Required | Description |
-| --- | --- | --- | --- |
-| Authorization | Bearer {accessToken} | O | Access Token |
-
-### Path Params
-
-- 없음
-
-### Query Params
-
-- 없음
-
-### Body
-
-- 없음
-
-## 요청으로 받는 값
-
-- accessToken (Authorization 헤더)
-
-## Response
-
-### 성공 (200 OK)
+Response (200)
 
 ```json
 {
-  "status":200,
-  "code":"SUC_...",
-  "data":{
-    "id":1,
-    "email":"user@example.com",
-    "nickname":"delta"
+  "status": 200,
+  "code": "SUC_...",
+  "data": {
+    "userId": 1,
+    "email": "user@example.com",
+    "nickname": "delta"
   },
-  "message":"..."
+  "message": "..."
 }
-```
-
-### 실패 예시 (404 USER_NOT_FOUND)
-
-```json
-  {
-  "status":404,
-  "code":"USER_001",
-  "data":null,
-  "message":"사용자를 찾을 수 없습니다."
-  }
 ```
 
 ---
 
-# POST /api/v1/users/withdrawal
+## `POST` /api/v1/users/me/onboarding
 
-## 개요
+- 설명: 추가정보 입력(가입 완료)
+- 인증: Required
 
-| 항목 | 내용 |
-| --- | --- |
-| 설명 | 현재 로그인 사용자의 회원 탈퇴를 수행한다 (소프트 탈퇴: 상태 변경) |
-| 인증 | Required |
-
-## Request
-
-### Headers
-
-| Key | Value | Required | Description |
-| --- | --- | --- | --- |
-| Authorization | Bearer {accessToken} | O | Access Token |
-
-### Path Params
-
-- 없음
-
-### Query Params
-
-- 없음
-
-### Body
-
-- 없음
-
-## 요청으로 받는 값
-
-- accessToken (Authorization 헤더)
-
-## Response
-
-### 성공 (200 OK)
+Request
 
 ```json
 {
-  "status":200,
-  "code":"SUC_...",
-  "data":null,
-  "message":"..."
+  "name": "홍길동",
+  "birthDate": "2000-01-01",
+  "termsAgreed": true
 }
 ```
 
-### 실패 예시 (403 USER_WITHDRAWN)
+Response (200)
+
+- `ApiResponse<Void>`
+
+---
+
+## `POST` /api/v1/users/withdrawal
+
+- 설명: 회원 탈퇴
+- 인증: Required
+
+주의
+
+- 현재 구현은 **하드 삭제 정책**(삭제 후 조회 시 USER_NOT_FOUND)이다.
+
+Response (200)
+
+- `ApiResponse<Void>`
+
+---
+
+## 프로필 이미지
+
+> Base URL: `/api/v1/users/me`
+
+## `POST` /api/v1/users/me/profile-image
+
+- 설명: 내 프로필 이미지 업로드/교체
+- 인증: Required
+- Content-Type: `multipart/form-data`
+
+Multipart
+
+| Key | Type | Required |
+| --- | --- | --- |
+| file | file | O |
+
+Response (200)
 
 ```json
 {
-  "status":403,
-  "code":"USER_002",
-  "data":null,
-  "message":"탈퇴한 사용자입니다."
+  "status": 200,
+  "code": "SUC_...",
+  "data": {
+    "storageKey": "users/profile/...",
+    "viewUrl": "https://...presigned...",
+    "ttlSeconds": 60
+  },
+  "message": "..."
 }
 ```
+
+---
+
+## `GET` /api/v1/users/me/profile-image
+
+- 설명: 내 프로필 이미지 조회
+- 인증: Required
+
+Response (200)
+
+- 이미지가 없으면 `data`는 `{ "storageKey": null, "viewUrl": null, "ttlSeconds": null }`
+
+---
+
+## `DELETE` /api/v1/users/me/profile-image
+
+- 설명: 내 프로필 이미지 삭제
+- 인증: Required
+
+Response (200)
+
+- `ApiResponse<Void>`
