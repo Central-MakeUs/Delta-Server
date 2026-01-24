@@ -1,5 +1,9 @@
 package cmc.delta.domain.auth.application.service.provisioning;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
@@ -9,9 +13,6 @@ import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -61,7 +62,14 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 			.orElseThrow(() -> originalException);
 
 		User user = requireActive(existing.getUser());
-		user.syncProfile(command.email(), command.nickname());
+
+		String email = command.email();
+		String nickname = command.nickname();
+
+		if (org.springframework.util.StringUtils.hasText(email) || org.springframework.util.StringUtils.hasText(nickname)) {
+			user.syncProfile(email, nickname);
+		}
+
 		return new ProvisioningResult(user.getId(), false);
 	}
 

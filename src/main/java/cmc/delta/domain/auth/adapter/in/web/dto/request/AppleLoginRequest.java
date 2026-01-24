@@ -2,6 +2,6 @@ package cmc.delta.domain.auth.adapter.in.web.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record SocialLoginRequest(@NotBlank
-String code) {
-}
+public record AppleLoginRequest(
+	@NotBlank String code
+) {}

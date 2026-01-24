@@ -36,6 +36,14 @@ oauth:
     connect-timeout-ms: 2000
     read-timeout-ms: 4000
 
+  apple:
+    client-id: ${APPLE_CLIENT_ID}
+    team-id: ${APPLE_TEAM_ID}
+    key-id: ${APPLE_KEY_ID}
+    redirect-uri: ${APPLE_REDIRECT_URI}
+    private-key: ${APPLE_PRIVATE_KEY_PEM}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 4000
 
 worker:
   ocr:
