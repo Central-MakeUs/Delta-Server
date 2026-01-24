@@ -17,8 +17,7 @@ public class AppleOAuthService {
 
 	private final AppleOAuthClient appleOAuthClient;
 	private final AppleIdTokenVerifier appleIdTokenVerifier;
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	private final ObjectMapper objectMapper;
 
 	public AppleUserInfo fetchUserInfoByCode(String code, String userJson) {
 		AppleOAuthClient.AppleTokenResponse token = appleOAuthClient.exchangeCode(code);

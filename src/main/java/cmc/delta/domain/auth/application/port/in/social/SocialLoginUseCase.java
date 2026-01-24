@@ -1,6 +1,5 @@
 package cmc.delta.domain.auth.application.port.in.social;
 
-import cmc.delta.domain.auth.adapter.in.web.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 
 public interface SocialLoginUseCase {

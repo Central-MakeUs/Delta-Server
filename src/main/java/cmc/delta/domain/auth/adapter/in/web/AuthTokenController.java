@@ -1,7 +1,7 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
-import cmc.delta.domain.auth.adapter.in.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.adapter.in.support.HttpTokenExtractor;
+import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.application.port.in.token.ReissueTokenUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.global.api.response.ApiResponse;
@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "인증")
@@ -26,6 +25,7 @@ public class AuthTokenController {
 
 	private final ReissueTokenUseCase tokenUseCase;
 	private final HttpTokenExtractor httpTokenExtractor;
+	private final TokenHeaderWriter tokenHeaderWriter;
 
 	@Operation(summary = "토큰 재발급")
 	@ApiErrorCodeExamples({
@@ -36,10 +36,7 @@ public class AuthTokenController {
 	public ApiResponse<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
 		TokenIssuer.IssuedTokens tokens = tokenUseCase.reissue(refreshToken);
-
-		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
-		response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
-		response.setHeader(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, AuthHeaderConstants.EXPOSE_HEADERS_VALUE);
+		tokenHeaderWriter.write(response, tokens);
 
 		return ApiResponses.success(200);
 	}

@@ -12,7 +12,9 @@ import cmc.delta.domain.auth.model.SocialAccount;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +37,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 
 	private ProvisioningResult toExistingUserResult(SocialAccount account) {
 		User user = requireActive(account.getUser());
-		return new ProvisioningResult(user.getId(), false);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
 	}
 
 	private ProvisioningResult createOrSyncByRaceCondition(SocialUserProvisionCommand command) {
@@ -47,10 +49,11 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 	}
 
 	private ProvisioningResult createAndLink(SocialUserProvisionCommand command) {
+		requireProfileForNewUser(command);
 		User user = userRepositoryPort.save(User.createProvisioned(command.email(), command.nickname()));
 		SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
 		socialAccountRepositoryPort.save(account);
-		return new ProvisioningResult(user.getId(), true);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), true);
 	}
 
 	private ProvisioningResult syncExistingAfterDuplicate(
@@ -66,11 +69,20 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 		String email = command.email();
 		String nickname = command.nickname();
 
-		if (org.springframework.util.StringUtils.hasText(email) || org.springframework.util.StringUtils.hasText(nickname)) {
+		if (StringUtils.hasText(email) || StringUtils.hasText(nickname)) {
 			user.syncProfile(email, nickname);
 		}
 
-		return new ProvisioningResult(user.getId(), false);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
+	}
+
+	private void requireProfileForNewUser(SocialUserProvisionCommand command) {
+		if (!StringUtils.hasText(command.email())) {
+			throw new UserException(ErrorCode.INVALID_REQUEST, "소셜 로그인 이메일 제공 동의가 필요합니다.");
+		}
+		if (!StringUtils.hasText(command.nickname())) {
+			throw new UserException(ErrorCode.INVALID_REQUEST, "소셜 로그인 프로필(닉네임/이름) 제공 동의가 필요합니다.");
+		}
 	}
 
 	private User requireActive(User user) {
