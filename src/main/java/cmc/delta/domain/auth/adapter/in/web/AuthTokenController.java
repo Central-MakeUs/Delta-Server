@@ -1,9 +1,9 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
-import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.adapter.in.support.AuthHeaderConstants;
-import cmc.delta.domain.auth.application.service.token.TokenService;
 import cmc.delta.domain.auth.adapter.in.support.HttpTokenExtractor;
+import cmc.delta.domain.auth.application.port.in.token.ReissueTokenUseCase;
+import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.config.security.principal.CurrentUser;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/auth")
 public class AuthTokenController {
 
-	private final TokenService tokenService;
+	private final ReissueTokenUseCase tokenUseCase;
 	private final HttpTokenExtractor httpTokenExtractor;
 
 	@Operation(summary = "토큰 재발급")
@@ -35,7 +35,7 @@ public class AuthTokenController {
 	@PostMapping("/reissue")
 	public ApiResponse<Void> reissue(HttpServletRequest request, HttpServletResponse response) {
 		String refreshToken = httpTokenExtractor.extractRefreshToken(request);
-		TokenIssuer.IssuedTokens tokens = tokenService.reissue(refreshToken);
+		TokenIssuer.IssuedTokens tokens = tokenUseCase.reissue(refreshToken);
 
 		response.setHeader(HttpHeaders.AUTHORIZATION, tokens.authorizationHeaderValue());
 		response.setHeader(AuthHeaderConstants.REFRESH_TOKEN_HEADER, tokens.refreshToken());
@@ -52,7 +52,7 @@ public class AuthTokenController {
 	@PostMapping("/logout")
 	public ApiResponse<Void> logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
-		tokenService.invalidateAll(principal.userId(), accessToken);
+		tokenUseCase.invalidateAll(principal.userId(), accessToken);
 
 		return ApiResponses.success(200);
 	}

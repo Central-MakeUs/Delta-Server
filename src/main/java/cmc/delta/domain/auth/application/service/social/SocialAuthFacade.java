@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import cmc.delta.domain.auth.adapter.in.web.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginUseCase;
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.model.SocialAccount;
@@ -18,8 +19,8 @@ import cmc.delta.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
-public class SocialAuthFacade {
+	@RequiredArgsConstructor
+public class SocialAuthFacade implements SocialLoginUseCase {
 
 	private static final String DEFAULT_ROLE_FOR_DEV = "USER";
 
@@ -30,6 +31,7 @@ public class SocialAuthFacade {
 	private final UserProvisioningUseCase userProvisioningUseCase;
 	private final TokenIssuer tokenIssuer;
 
+	@Override
 	public LoginResult loginKakao(String code) {
 		KakaoOAuthService.SocialUserInfo userInfo = kakaoOAuthService.fetchUserInfoByCode(code);
 
@@ -51,6 +53,7 @@ public class SocialAuthFacade {
 		return new LoginResult(data, tokens);
 	}
 
+	@Override
 	public LoginResult loginApple(String code, String userJson) {
 		AppleOAuthService.AppleUserInfo apple = appleOAuthService.fetchUserInfoByCode(code, userJson);
 		String providerUserId = apple.providerUserId(); // sub
@@ -103,6 +106,4 @@ public class SocialAuthFacade {
 	private boolean hasText(String s) {
 		return s != null && !s.trim().isEmpty();
 	}
-
-	public record LoginResult(SocialLoginData data, TokenIssuer.IssuedTokens tokens) {}
 }

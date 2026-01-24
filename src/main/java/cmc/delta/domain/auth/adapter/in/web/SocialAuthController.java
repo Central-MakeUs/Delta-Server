@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RestController;
 import cmc.delta.domain.auth.adapter.in.support.AuthHeaderConstants;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
 import cmc.delta.domain.auth.adapter.in.web.dto.response.SocialLoginData;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.service.social.SocialAuthFacade;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/auth")
 public class SocialAuthController {
 
-	private final SocialAuthFacade socialAuthFacade;
+	private final SocialLoginUseCase socialLoginUseCase;
 
 	@Operation(
 		summary = "카카오 인가코드로 로그인",
@@ -45,7 +45,7 @@ public class SocialAuthController {
 		@Valid @RequestBody KakaoLoginRequest request,
 		HttpServletResponse response
 	) {
-		SocialAuthFacade.LoginResult result = socialAuthFacade.loginKakao(request.code());
+		SocialLoginUseCase.LoginResult result = socialLoginUseCase.loginKakao(request.code());
 		setTokenHeaders(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
@@ -64,7 +64,7 @@ public class SocialAuthController {
 		@RequestParam(value = "user", required = false) String userJson,
 		HttpServletResponse response
 	) {
-		SocialAuthFacade.LoginResult result = socialAuthFacade.loginApple(code, userJson);
+		SocialLoginUseCase.LoginResult result = socialLoginUseCase.loginApple(code, userJson);
 		setTokenHeaders(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
