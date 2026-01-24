@@ -1,6 +1,8 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cmc.delta.domain.auth.adapter.in.support.AuthHeaderConstants;
+import cmc.delta.domain.auth.adapter.in.web.dto.request.AppleLoginRequest;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
 import cmc.delta.domain.auth.adapter.in.web.dto.response.SocialLoginData;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
@@ -16,6 +19,7 @@ import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.config.swagger.AuthApiDocs;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,7 +35,10 @@ public class SocialAuthController {
 
 	private final SocialAuthFacade socialAuthFacade;
 
-	@Operation(summary = "카카오 인가코드로 로그인")
+	@Operation(
+		summary = "카카오 인가코드로 로그인",
+		description = AuthApiDocs.KAKAO_LOGIN
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
@@ -46,7 +53,10 @@ public class SocialAuthController {
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
 
-	@Operation(summary = "애플 콜백(form_post) 처리 후 로그인")
+	@Operation(
+		summary = "애플 콜백(form_post) 처리 후 로그인 서버용",
+		description = AuthApiDocs.APPLE_FORM_POST_CALLBACK
+	)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
@@ -58,6 +68,33 @@ public class SocialAuthController {
 		HttpServletResponse response
 	) {
 		SocialAuthFacade.LoginResult result = socialAuthFacade.loginApple(code, userJson);
+		setTokenHeaders(response, result.tokens());
+		return ApiResponses.success(SuccessCode.OK, result.data());
+	}
+
+	@Operation(
+		summary = "애플 인가코드(code) 출력 (디버그용)",
+		description = AuthApiDocs.APPLE_QUERY_CODE_CALLBACK
+	)
+	@GetMapping(value = "/oauth/apple/callback", produces = MediaType.TEXT_PLAIN_VALUE)
+	public String callback(@RequestParam("code") String code) {
+		return code;
+	}
+
+	@Operation(
+		summary = "애플 인가코드(code)로 로그인 (Swagger용)",
+		description = AuthApiDocs.APPLE_LOGIN_BY_CODE
+	)
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.AUTHENTICATION_FAILED
+	})
+	@PostMapping("/apple/code")
+	public ApiResponse<SocialLoginData> appleByCode(
+		@Valid @RequestBody AppleLoginRequest request,
+		HttpServletResponse response
+	) {
+		SocialAuthFacade.LoginResult result = socialAuthFacade.loginApple(request.code(), null);
 		setTokenHeaders(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
