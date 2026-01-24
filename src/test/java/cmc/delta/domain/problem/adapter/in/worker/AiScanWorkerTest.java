@@ -15,7 +15,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.adapter.in.worker.support.persistence.AiScanPersister;
+import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
 import cmc.delta.domain.problem.adapter.in.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator.AiValidatedInput;
@@ -40,7 +40,7 @@ class AiScanWorkerTest {
 	private AiScanValidator validator;
 	private AiCurriculumPromptBuilder promptBuilder;
 	private AiClient aiClient;
-	private AiScanPersister persister;
+	private AiScanPersistUseCase persister;
 
 	private ScanLockGuard lockGuard;
 	private ScanUnlocker unlocker;
@@ -58,7 +58,7 @@ class AiScanWorkerTest {
 		validator = mock(AiScanValidator.class);
 		promptBuilder = mock(AiCurriculumPromptBuilder.class);
 		aiClient = mock(AiClient.class);
-		persister = mock(AiScanPersister.class);
+		persister = mock(AiScanPersistUseCase.class);
 
 		lockGuard = mock(ScanLockGuard.class);
 		unlocker = mock(ScanUnlocker.class);
@@ -194,7 +194,7 @@ class AiScanWorkerTest {
 			AiFailureDecider failureDecider,
 			AiScanValidator validator,
 			AiCurriculumPromptBuilder promptBuilder,
-			AiScanPersister persister
+			AiScanPersistUseCase persister
 		) {
 			super(
 				clock,

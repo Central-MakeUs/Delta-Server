@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
+import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
@@ -20,7 +21,7 @@ class UserServiceImplTest {
 	@BeforeEach
 	void setUp() {
 		userRepositoryPort = FakeUserRepositoryPort.create();
-		userService = new UserServiceImpl(userRepositoryPort);
+		userService = new UserServiceImpl(userRepositoryPort, new UserValidator());
 	}
 
 	@Test

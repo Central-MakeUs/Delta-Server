@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
+import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
@@ -11,9 +12,11 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.P
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.storage.port.out.StoragePort;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.*;
 import org.springframework.data.domain.*;
@@ -23,6 +26,7 @@ class ProblemQueryServiceImplTest {
 
 	private ProblemListRequestValidator requestValidator;
 	private ProblemQueryPort problemQueryPort;
+	private ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private StoragePort storagePort;
 	private ProblemListMapper listMapper;
 	private ProblemDetailMapper detailMapper;
@@ -33,6 +37,7 @@ class ProblemQueryServiceImplTest {
 	void setUp() {
 		requestValidator = mock(ProblemListRequestValidator.class);
 		problemQueryPort = mock(ProblemQueryPort.class);
+		problemTypeTagQueryPort = mock(ProblemTypeTagQueryPort.class);
 		storagePort = mock(StoragePort.class);
 		listMapper = mock(ProblemListMapper.class);
 		detailMapper = mock(ProblemDetailMapper.class);
@@ -40,6 +45,7 @@ class ProblemQueryServiceImplTest {
 		sut = new ProblemQueryServiceImpl(
 			requestValidator,
 			problemQueryPort,
+			problemTypeTagQueryPort,
 			storagePort,
 			listMapper,
 			detailMapper
@@ -54,20 +60,32 @@ class ProblemQueryServiceImplTest {
 		Pageable pageable = PageRequest.of(0, 10);
 
 		ProblemListRow row = mock(ProblemListRow.class);
+		when(row.problemId()).thenReturn(1L);
 		when(row.storageKey()).thenReturn("s3/k.png");
 		when(storagePort.issueReadUrl("s3/k.png")).thenReturn("https://read/s3/k.png");
 
 		when(problemQueryPort.findMyProblemList(eq(10L), eq(cond), eq(pageable)))
 			.thenReturn(new PageImpl<>(List.of(row), pageable, 1));
 
-		ProblemListItemResponse item = mock(ProblemListItemResponse.class);
-		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(item);
+		when(problemTypeTagQueryPort.findTypeTagsByProblemIds(List.of(1L))).thenReturn(List.of());
+
+		ProblemListItemResponse base = new ProblemListItemResponse(
+			1L,
+			new CurriculumItemResponse("S1", "subject"),
+			new CurriculumItemResponse("U1", "unit"),
+			List.of(),
+			new ProblemListItemResponse.PreviewImageResponse(1L, "https://read/s3/k.png"),
+			LocalDateTime.now()
+		);
+		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(base);
 
 		// when
 		PagedResponse<ProblemListItemResponse> res = sut.getMyProblemCardList(10L, cond, pageable);
 
 		// then
 		assertThat(res).isNotNull();
+		assertThat(res.content()).hasSize(1);
+		assertThat(res.content().get(0).types()).isEmpty();
 		verify(storagePort).issueReadUrl("s3/k.png");
 	}
 
@@ -80,14 +98,28 @@ class ProblemQueryServiceImplTest {
 		when(problemQueryPort.findMyProblemDetail(10L, 1L)).thenReturn(java.util.Optional.of(row));
 
 		when(storagePort.issueReadUrl("s3/d.png")).thenReturn("https://read/s3/d.png");
+		when(problemTypeTagQueryPort.findTypeTagsByProblemId(1L)).thenReturn(List.of());
 
-		ProblemDetailResponse expected = mock(ProblemDetailResponse.class);
-		when(detailMapper.toResponse(row, "https://read/s3/d.png")).thenReturn(expected);
+		ProblemDetailResponse base = new ProblemDetailResponse(
+			1L,
+			new CurriculumItemResponse("S1", "subject"),
+			new CurriculumItemResponse("U1", "unit"),
+			List.of(new CurriculumItemResponse("T0", "old")),
+			new ProblemDetailResponse.OriginalImageResponse(1L, "https://read/s3/d.png"),
+			cmc.delta.domain.problem.model.enums.AnswerFormat.TEXT,
+			null,
+			"ans",
+			"sol",
+			false,
+			null,
+			LocalDateTime.now()
+		);
+		when(detailMapper.toResponse(row, "https://read/s3/d.png")).thenReturn(base);
 
 		// when
 		ProblemDetailResponse res = sut.getMyProblemDetail(10L, 1L);
 
 		// then
-		assertThat(res).isSameAs(expected);
+		assertThat(res.types()).isEmpty();
 	}
 }

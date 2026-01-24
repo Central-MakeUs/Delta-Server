@@ -8,16 +8,19 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListR
 import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
 import cmc.delta.domain.problem.application.mapper.scan.*;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
+import cmc.delta.domain.problem.application.port.out.prediction.ScanTypePredictionReader;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.validation.query.*;
 import cmc.delta.global.storage.port.out.StoragePort;
+import java.util.List;
 import org.junit.jupiter.api.*;
 
 class ProblemScanQueryServiceImplTest {
 
 	private ScanQueryPort scanQueryPort;
 	private StoragePort storagePort;
+	private ScanTypePredictionReader scanTypePredictionReader;
 
 	private ProblemScanDetailValidator detailValidator;
 	private UnitSubjectResolver subjectResolver;
@@ -32,6 +35,7 @@ class ProblemScanQueryServiceImplTest {
 	void setUp() {
 		scanQueryPort = mock(ScanQueryPort.class);
 		storagePort = mock(StoragePort.class);
+		scanTypePredictionReader = mock(ScanTypePredictionReader.class);
 
 		detailValidator = mock(ProblemScanDetailValidator.class);
 		subjectResolver = mock(UnitSubjectResolver.class);
@@ -43,6 +47,7 @@ class ProblemScanQueryServiceImplTest {
 		sut = new ProblemScanQueryServiceImpl(
 			scanQueryPort,
 			storagePort,
+			scanTypePredictionReader,
 			detailValidator,
 			subjectResolver,
 			detailMapper,
@@ -64,9 +69,11 @@ class ProblemScanQueryServiceImplTest {
 
 		SubjectInfo subject = mock(SubjectInfo.class);
 		when(subjectResolver.resolveByUnitId("U1")).thenReturn(subject);
+		when(scanTypePredictionReader.findByScanId(1L)).thenReturn(List.of());
 
 		ProblemScanSummaryResponse expected = mock(ProblemScanSummaryResponse.class);
-		when(summaryMapper.toSummaryResponse(row, "https://read/s3/a.png", subject)).thenReturn(expected);
+		when(summaryMapper.toSummaryResponse(eq(row), eq("https://read/s3/a.png"), eq(subject), anyList()))
+			.thenReturn(expected);
 
 		// when
 		ProblemScanSummaryResponse res = sut.getSummary(10L, 1L);
@@ -88,9 +95,10 @@ class ProblemScanQueryServiceImplTest {
 
 		SubjectInfo subject = mock(SubjectInfo.class);
 		when(subjectResolver.resolveByUnitId("U1")).thenReturn(subject);
+		when(scanTypePredictionReader.findByScanId(1L)).thenReturn(List.of());
 
 		ProblemScanDetailResponse.AiClassification ai = mock(ProblemScanDetailResponse.AiClassification.class);
-		when(detailMapper.toAiClassification(p, subject)).thenReturn(ai);
+		when(detailMapper.toAiClassification(eq(p), eq(subject), anyList())).thenReturn(ai);
 
 		ProblemScanDetailResponse expected = mock(ProblemScanDetailResponse.class);
 		when(detailMapper.toDetailResponse(p, "https://read/s3/d.png", ai)).thenReturn(expected);
