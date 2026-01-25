@@ -2,11 +2,11 @@ package cmc.delta.domain.problem.application.service.query;
 
 import java.util.List;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.scan.ProblemScanDetailMapper;
 import cmc.delta.domain.problem.application.mapper.scan.ProblemScanSummaryMapper;

@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.mapper.problem;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import java.util.List;
 import org.mapstruct.Mapper;

@@ -1,29 +1,28 @@
 package cmc.delta.domain.problem.application.service.query;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,45 +39,26 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	private final ProblemListMapper problemListMapper;
 	private final ProblemDetailMapper problemDetailMapper;
 
-	/**
-	 * TODO: 코드 정리와 수정 필요
-	 */
+	/** 반환 타입은 use case result로 두고, web adapter는 단순 위임만 담당한다. */
 	@Override
 	public PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,
 		ProblemListCondition condition,
-		Pageable pageable
+		PageQuery pageQuery
 	) {
-		requestValidator.validatePagination(pageable);
+		validatePagination(pageQuery);
 
-		Page<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageable);
+		PageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageQuery);
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData);
+		List<ProblemListItemResponse> items = mapListItems(pageData, typeItemsByProblemId);
 
-		List<Long> problemIds = pageData.getContent().stream()
-			.map(ProblemListRow::problemId) // record accessor
-			.toList();
-
-		Map<Long, List<CurriculumItemResponse>> typesMap = loadTypesMap(problemIds);
-
-		List<ProblemListItemResponse> items = pageData.getContent().stream()
-			.map(row -> {
-				String previewUrl = storagePort.issueReadUrl(row.storageKey());
-				ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
-
-				List<CurriculumItemResponse> types =
-					typesMap.getOrDefault(base.problemId(), List.of());
-
-				return new ProblemListItemResponse(
-					base.problemId(),
-					base.subject(),
-					base.unit(),
-					types,
-					base.previewImage(),
-					base.createdAt()
-				);
-			})
-			.toList();
-
-		return PagedResponse.of(pageData, items);
+		return PagedResponse.of(
+			items,
+			pageData.page(),
+			pageData.size(),
+			pageData.totalElements(),
+			pageData.totalPages()
+		);
 	}
 
 	@Override
@@ -89,10 +69,71 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		String viewUrl = storagePort.issueReadUrl(row.storageKey());
 		ProblemDetailResponse base = problemDetailMapper.toResponse(row, viewUrl);
 
-		List<CurriculumItemResponse> types = problemTypeTagQueryPort.findTypeTagsByProblemId(problemId).stream()
-			.map(r -> new CurriculumItemResponse(r.typeId(), r.typeName()))
-			.toList();
+		List<CurriculumItemResponse> types = loadTypeItems(problemId);
+		return withTypes(base, types);
+	}
 
+	private void validatePagination(PageQuery pageQuery) {
+		requestValidator.validatePagination(pageQuery);
+	}
+
+	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(PageResult<ProblemListRow> pageData) {
+		List<Long> problemIds = pageData.content().stream().map(ProblemListRow::problemId).toList();
+		if (problemIds.isEmpty()) {
+			return Map.of();
+		}
+		return groupTypeItemsByProblemId(problemIds);
+	}
+
+	private Map<Long, List<CurriculumItemResponse>> groupTypeItemsByProblemId(List<Long> problemIds) {
+		List<ProblemTypeTagRow> rows = problemTypeTagQueryPort.findTypeTagsByProblemIds(problemIds);
+		return rows.stream()
+			.collect(
+				Collectors.groupingBy(
+					ProblemTypeTagRow::problemId,
+					Collectors.mapping(this::toTypeItem, Collectors.toList())
+				)
+			);
+	}
+
+	private List<ProblemListItemResponse> mapListItems(
+		PageResult<ProblemListRow> pageData,
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId
+	) {
+		return pageData.content().stream()
+			.map(row -> toListItem(row, typeItemsByProblemId))
+			.toList();
+	}
+
+	private ProblemListItemResponse toListItem(
+		ProblemListRow row,
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId
+	) {
+		String previewUrl = storagePort.issueReadUrl(row.storageKey());
+		ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
+
+		List<CurriculumItemResponse> types = typeItemsByProblemId.getOrDefault(base.problemId(), List.of());
+		return new ProblemListItemResponse(
+			base.problemId(),
+			base.subject(),
+			base.unit(),
+			types,
+			base.previewImage(),
+			base.createdAt()
+		);
+	}
+
+	private List<CurriculumItemResponse> loadTypeItems(Long problemId) {
+		return problemTypeTagQueryPort.findTypeTagsByProblemId(problemId).stream()
+			.map(this::toTypeItem)
+			.toList();
+	}
+
+	private CurriculumItemResponse toTypeItem(ProblemTypeTagRow r) {
+		return new CurriculumItemResponse(r.typeId(), r.typeName());
+	}
+
+	private ProblemDetailResponse withTypes(ProblemDetailResponse base, List<CurriculumItemResponse> types) {
 		return new ProblemDetailResponse(
 			base.problemId(),
 			base.subject(),
@@ -107,20 +148,5 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.completedAt(),
 			base.createdAt()
 		);
-	}
-
-	private Map<Long, List<CurriculumItemResponse>> loadTypesMap(List<Long> problemIds) {
-		if (problemIds == null || problemIds.isEmpty()) return Collections.emptyMap();
-
-		List<ProblemTypeTagRow> rows = problemTypeTagQueryPort.findTypeTagsByProblemIds(problemIds);
-
-		return rows.stream()
-			.collect(Collectors.groupingBy(
-				ProblemTypeTagRow::problemId,
-				Collectors.mapping(
-					r -> new CurriculumItemResponse(r.typeId(), r.typeName()),
-					Collectors.toList()
-				)
-			));
 	}
 }

@@ -2,9 +2,9 @@ package cmc.delta.domain.problem.application.mapper.scan;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.util.List;

@@ -1,5 +1,6 @@
 package cmc.delta.domain.problem.adapter.in.web.problem.dto.request;
 
+import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 
 public record MyProblemListRequest(

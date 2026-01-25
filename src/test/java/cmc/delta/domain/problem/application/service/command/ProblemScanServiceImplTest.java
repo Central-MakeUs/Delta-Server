@@ -6,7 +6,7 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
-import cmc.delta.domain.problem.application.support.FakeStoragePort;
+import cmc.delta.domain.problem.application.support.FakeScanImageUploadPort;
 import cmc.delta.domain.problem.application.support.InMemoryAssetRepositoryPort;
 import cmc.delta.domain.problem.application.support.InMemoryProblemScanRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemScanStoragePaths;
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 class ProblemScanServiceImplTest {
 
-	private FakeStoragePort storagePort;
+	private FakeScanImageUploadPort scanImageUploadPort;
 	private FakeUserRepositoryPort userRepositoryPort;
 	private InMemoryProblemScanRepositoryPort scanRepositoryPort;
 	private InMemoryAssetRepositoryPort assetRepositoryPort;
@@ -38,7 +38,7 @@ class ProblemScanServiceImplTest {
 
 	@BeforeEach
 	void setUp() {
-		storagePort = new FakeStoragePort();
+		scanImageUploadPort = new FakeScanImageUploadPort();
 		scanRepositoryPort = new InMemoryProblemScanRepositoryPort();
 		assetRepositoryPort = new InMemoryAssetRepositoryPort();
 		userRepositoryPort = FakeUserRepositoryPort.create();
@@ -49,7 +49,7 @@ class ProblemScanServiceImplTest {
 		Clock fixedClock = Clock.fixed(Instant.parse("2026-01-21T00:00:00Z"), ZoneId.of("UTC"));
 
 		sut = new ProblemScanServiceImpl(
-			storagePort,
+			scanImageUploadPort,
 			userRepositoryPort,
 			scanRepositoryPort,
 			assetRepositoryPort,
@@ -85,7 +85,7 @@ class ProblemScanServiceImplTest {
 
 	private void thenCreatedAsUploaded(ScanCreateResult r, String key, int w, int h) {
 		assertThat(r.status()).isEqualTo("UPLOADED");
-		assertThat(storagePort.lastUploadDirectory).isEqualTo(ProblemScanStoragePaths.ORIGINAL_DIR);
+		assertThat(scanImageUploadPort.lastUploadDirectory).isEqualTo(ProblemScanStoragePaths.ORIGINAL_DIR);
 
 		assertThat(scanRepositoryPort.count()).isEqualTo(1);
 		assertThat(assetRepositoryPort.count()).isEqualTo(1);

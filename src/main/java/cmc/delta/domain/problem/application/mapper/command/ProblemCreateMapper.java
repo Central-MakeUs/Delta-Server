@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.mapper.command;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.model.problem.Problem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

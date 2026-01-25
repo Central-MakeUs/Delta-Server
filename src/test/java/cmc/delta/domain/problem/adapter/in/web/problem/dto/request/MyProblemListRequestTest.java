@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.adapter.in.web.problem.dto.request;
 
 import static org.assertj.core.api.Assertions.*;
 
+import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

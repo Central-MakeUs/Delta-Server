@@ -1,15 +1,14 @@
 package cmc.delta.domain.problem.application.support;
 
 import cmc.delta.domain.user.model.User;
-import org.springframework.web.multipart.MultipartFile;
-import static org.mockito.Mockito.*;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 
 public final class ProblemTestFixtures {
 
 	private ProblemTestFixtures() {}
 
-	public static MultipartFile file() {
-		return mock(MultipartFile.class);
+	public static UploadFile file() {
+		return new UploadFile("x".getBytes(), "image/png", "a.png");
 	}
 
 	public static User user() {

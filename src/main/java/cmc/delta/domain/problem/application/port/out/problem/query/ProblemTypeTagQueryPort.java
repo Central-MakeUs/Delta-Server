@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.port.out.problem.query;
 
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import java.util.List;
 
 public interface ProblemTypeTagQueryPort {

@@ -2,7 +2,7 @@ package cmc.delta.domain.problem.application.validation.query;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.global.error.ErrorCode;

@@ -11,6 +11,7 @@ import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
@@ -59,7 +60,10 @@ class ProblemScanControllerWebMvcTest {
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
 		verify(scanCommandUseCase).createScan(eq(10L), captor.capture());
-		Assertions.assertSame(file, captor.getValue().file());
+		UploadFile uploaded = captor.getValue().file();
+		Assertions.assertEquals("a.png", uploaded.originalFilename());
+		Assertions.assertEquals("image/png", uploaded.contentType());
+		Assertions.assertArrayEquals("x".getBytes(), uploaded.bytes());
 	}
 
 	@Test
@@ -113,4 +117,3 @@ class ProblemScanControllerWebMvcTest {
 		return p;
 	}
 }
-

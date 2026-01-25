@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.adapter.out.persistence.scan.query;
 
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;

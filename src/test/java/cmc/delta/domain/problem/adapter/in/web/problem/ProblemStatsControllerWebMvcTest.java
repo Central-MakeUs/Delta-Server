@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
-import cmc.delta.domain.problem.application.support.query.ProblemStatsConditionFactory;
+import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsConditionFactory;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.*;

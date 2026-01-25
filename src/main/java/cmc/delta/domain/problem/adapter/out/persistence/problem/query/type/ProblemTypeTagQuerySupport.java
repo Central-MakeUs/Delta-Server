@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.adapter.out.persistence.problem.query.type;
 import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.model.problem.QProblemTypeTag;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Collections;

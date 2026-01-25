@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;

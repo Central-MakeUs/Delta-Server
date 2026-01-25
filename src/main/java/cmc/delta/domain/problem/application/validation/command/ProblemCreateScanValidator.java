@@ -2,26 +2,25 @@ package cmc.delta.domain.problem.application.validation.command;
 
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
+import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
+import cmc.delta.domain.problem.application.port.out.scan.ProblemScanRepositoryPort;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Component
 @RequiredArgsConstructor
 public class ProblemCreateScanValidator {
 
-	private final ScanRepository scanRepository;
-	private final ProblemJpaRepository problemRepository;
+	private final ProblemScanRepositoryPort scanRepositoryPort;
+	private final ProblemRepositoryPort problemRepositoryPort;
 
 	public ProblemScan getOwnedScan(Long userId, Long scanId) {
-		return scanRepository.findByIdAndUserId(scanId, userId)
+		return scanRepositoryPort.findOwnedById(scanId, userId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND));
 	}
 
@@ -32,17 +31,13 @@ public class ProblemCreateScanValidator {
 	}
 
 	public void validateProblemNotAlreadyCreated(Long scanId) {
-		boolean alreadyCreated = problemRepository.existsByScan_Id(scanId);
+		boolean alreadyCreated = problemRepositoryPort.existsByScanId(scanId);
 		if (alreadyCreated) {
 			throw new ProblemStateException(ErrorCode.PROBLEM_ALREADY_CREATED);
 		}
 	}
 
-	public ProblemStateException toProblemAlreadyCreatedException(DataIntegrityViolationException e) {
-		return new ProblemStateException(ErrorCode.PROBLEM_ALREADY_CREATED);
-	}
-
-	public void validateFileNotEmpty(MultipartFile file) {
+	public void validateFileNotEmpty(UploadFile file) {
 		if (file == null || file.isEmpty()) {
 			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일이 비어있습니다.");
 		}

@@ -3,24 +3,24 @@ package cmc.delta.domain.problem.application.service.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.*;
-import org.springframework.data.domain.*;
-import org.springframework.data.domain.PageImpl;
 
 class ProblemQueryServiceImplTest {
 
@@ -57,15 +57,15 @@ class ProblemQueryServiceImplTest {
 	void list_success() {
 		// given
 		ProblemListCondition cond = mock(ProblemListCondition.class);
-		Pageable pageable = PageRequest.of(0, 10);
+		PageQuery pageQuery = new PageQuery(0, 10);
 
 		ProblemListRow row = mock(ProblemListRow.class);
 		when(row.problemId()).thenReturn(1L);
 		when(row.storageKey()).thenReturn("s3/k.png");
 		when(storagePort.issueReadUrl("s3/k.png")).thenReturn("https://read/s3/k.png");
 
-		when(problemQueryPort.findMyProblemList(eq(10L), eq(cond), eq(pageable)))
-			.thenReturn(new PageImpl<>(List.of(row), pageable, 1));
+		when(problemQueryPort.findMyProblemList(eq(10L), eq(cond), eq(pageQuery)))
+			.thenReturn(new PageResult<>(List.of(row), 0, 10, 1, 1));
 
 		when(problemTypeTagQueryPort.findTypeTagsByProblemIds(List.of(1L))).thenReturn(List.of());
 
@@ -80,7 +80,7 @@ class ProblemQueryServiceImplTest {
 		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(base);
 
 		// when
-		PagedResponse<ProblemListItemResponse> res = sut.getMyProblemCardList(10L, cond, pageable);
+		PagedResponse<ProblemListItemResponse> res = sut.getMyProblemCardList(10L, cond, pageQuery);
 
 		// then
 		assertThat(res).isNotNull();
