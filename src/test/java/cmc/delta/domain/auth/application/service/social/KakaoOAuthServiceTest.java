@@ -38,8 +38,7 @@ class KakaoOAuthServiceTest {
 
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.fetchUserInfoByCode("code"),
-			BusinessException.class
-		);
+			BusinessException.class);
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
 	}
 }

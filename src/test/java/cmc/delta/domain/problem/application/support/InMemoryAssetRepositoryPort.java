@@ -26,7 +26,8 @@ public final class InMemoryAssetRepositoryPort implements AssetRepositoryPort {
 
 	public Asset get(Long id) {
 		Asset a = store.get(id);
-		if (a == null) throw new IllegalStateException("asset not found id=" + id);
+		if (a == null)
+			throw new IllegalStateException("asset not found id=" + id);
 		return a;
 	}
 }

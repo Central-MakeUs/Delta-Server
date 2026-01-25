@@ -24,8 +24,7 @@ public final class WorkerTestTx {
 			});
 
 		doAnswer(inv -> {
-			@SuppressWarnings("unchecked")
-			Consumer<TransactionStatus> c = inv.getArgument(0, Consumer.class);
+			@SuppressWarnings("unchecked") Consumer<TransactionStatus> c = inv.getArgument(0, Consumer.class);
 			c.accept(null);
 			return null;
 		}).when(tx).executeWithoutResult(any());

@@ -2,8 +2,7 @@ package cmc.delta.global.config.swagger;
 
 public final class AuthApiDocs {
 
-	private AuthApiDocs() {
-	}
+	private AuthApiDocs() {}
 
 	public static final String KAKAO_LOGIN = """
 		카카오 인가코드로 로그인합니다.

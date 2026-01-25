@@ -34,7 +34,8 @@ class AuthTokenControllerWebMvcTest {
 		httpTokenExtractor = mock(HttpTokenExtractor.class);
 		tokenHeaderWriter = mock(TokenHeaderWriter.class);
 
-		AuthTokenController controller = new AuthTokenController(tokenCommandUseCase, httpTokenExtractor, tokenHeaderWriter);
+		AuthTokenController controller = new AuthTokenController(tokenCommandUseCase, httpTokenExtractor,
+			tokenHeaderWriter);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setCustomArgumentResolvers(new TestCurrentUserArgumentResolver())

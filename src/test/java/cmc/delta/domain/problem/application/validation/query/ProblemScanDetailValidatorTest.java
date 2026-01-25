@@ -24,8 +24,7 @@ class ProblemScanDetailValidatorTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> validator.validateOriginalAsset(p),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_ASSET_NOT_FOUND);

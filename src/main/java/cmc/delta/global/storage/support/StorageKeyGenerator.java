@@ -1,7 +1,7 @@
 package cmc.delta.global.storage.support;
 
-import cmc.delta.global.storage.exception.StorageException;
 import cmc.delta.global.storage.adapter.out.s3.S3Properties;
+import cmc.delta.global.storage.exception.StorageException;
 import jakarta.annotation.PostConstruct;
 import java.util.Locale;
 import java.util.UUID;
@@ -45,8 +45,10 @@ public class StorageKeyGenerator {
 		}
 		String d = directory.trim();
 
-		while (d.startsWith(PATH_SEPARATOR)) d = d.substring(1);
-		while (d.endsWith(PATH_SEPARATOR)) d = d.substring(0, d.length() - 1);
+		while (d.startsWith(PATH_SEPARATOR))
+			d = d.substring(1);
+		while (d.endsWith(PATH_SEPARATOR))
+			d = d.substring(0, d.length() - 1);
 
 		if (!StringUtils.hasText(d)) {
 			throw StorageException.invalidRequest(fieldName + "가 비어있습니다.");

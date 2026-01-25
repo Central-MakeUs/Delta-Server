@@ -22,7 +22,6 @@ public class AiWorkerScheduler {
 		aiScanWorker.runBatch(
 			lockOwnerProvider.get(),
 			props.batchSize(),
-			props.lockLeaseSeconds()
-		);
+			props.lockLeaseSeconds());
 	}
 }

@@ -5,6 +5,5 @@ public record ProblemTypeStatsRow(
 	String typeName,
 	long solvedCount,
 	long unsolvedCount,
-	long totalCount
-) {
+	long totalCount) {
 }

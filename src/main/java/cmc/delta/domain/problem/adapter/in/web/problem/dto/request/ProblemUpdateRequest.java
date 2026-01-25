@@ -5,8 +5,7 @@ import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongA
 public record ProblemUpdateRequest(
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText
-) {
+	String solutionText) {
 	public UpdateWrongAnswerCardCommand toCommand() {
 		return new UpdateWrongAnswerCardCommand(answerChoiceNo, answerValue, solutionText);
 	}

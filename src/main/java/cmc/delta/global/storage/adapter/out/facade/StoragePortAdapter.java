@@ -29,8 +29,7 @@ public class StoragePortAdapter implements StoragePort {
 			data.contentType(),
 			data.sizeBytes(),
 			data.width(),
-			data.height()
-		);
+			data.height());
 	}
 
 	@Override

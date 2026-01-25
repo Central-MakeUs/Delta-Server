@@ -1,7 +1,6 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.lock;
 
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
-
 import org.springframework.stereotype.Component;
 
 @Component

@@ -1,9 +1,5 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
-import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
-import cmc.delta.domain.problem.application.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanNotFoundException;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.AbstractExternalCallScanWorker;
@@ -17,9 +13,13 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolic
 import cmc.delta.domain.problem.adapter.in.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator.AiValidatedInput;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,8 +34,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class AiScanWorker extends AbstractExternalCallScanWorker {
 
-	private static final WorkerIdentity IDENTITY =
-		new WorkerIdentity("ai", "AI", "worker:ai:backlog");
+	private static final WorkerIdentity IDENTITY = new WorkerIdentity("ai", "AI", "worker:ai:backlog");
 
 	private final ScanRepository scanRepository;
 	private final ScanWorkRepository scanWorkRepository;
@@ -52,7 +51,8 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 	public AiScanWorker(
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
-		@Qualifier("aiExecutor") Executor aiExecutor,
+		@Qualifier("aiExecutor")
+		Executor aiExecutor,
 		ScanRepository scanRepository,
 		ScanWorkRepository scanWorkRepository,
 		AiClient aiClient,
@@ -64,8 +64,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		AiFailureDecider failureDecider,
 		AiScanValidator validator,
 		AiCurriculumPromptBuilder promptBuilder,
-		AiScanPersistUseCase persistUseCase
-	) {
+		AiScanPersistUseCase persistUseCase) {
 		super(clock, workerTxTemplate, aiExecutor, IDENTITY, lockGuard, unlocker, backlogLogger, logPolicy);
 		this.scanRepository = scanRepository;
 		this.scanWorkRepository = scanWorkRepository;
@@ -78,7 +77,8 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 	}
 
 	@Override
-	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
+	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken,
+		LocalDateTime lockedAt, int limit) {
 		return scanWorkRepository.claimAiCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
@@ -105,7 +105,8 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
 		AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
 
-		if (!isOwned(scanId, lockOwner, lockToken)) return;
+		if (!isOwned(scanId, lockOwner, lockToken))
+			return;
 
 		persistUseCase.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
 
@@ -118,13 +119,15 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 	}
 
 	@Override
-	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision, LocalDateTime batchNow) {
+	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision,
+		LocalDateTime batchNow) {
 		persistUseCase.persistAiFailed(scanId, lockOwner, lockToken, decision, batchNow);
 	}
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
 		Optional<ProblemScan> optional = scanRepository.findById(scanId);
-		if (optional.isEmpty()) throw new ProblemScanNotFoundException(scanId);
+		if (optional.isEmpty())
+			throw new ProblemScanNotFoundException(scanId);
 		return optional.get();
 	}
 }

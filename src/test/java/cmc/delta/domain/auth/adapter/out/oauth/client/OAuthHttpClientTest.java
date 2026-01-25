@@ -51,14 +51,14 @@ class OAuthHttpClientTest {
 			"unauth",
 			HttpHeaders.EMPTY,
 			new byte[0],
-			StandardCharsets.UTF_8
-		);
+			StandardCharsets.UTF_8);
 		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(), eq(String.class)))
 			.thenThrow(httpEx);
 		RuntimeException mapped = new RuntimeException("mapped");
 		when(exceptionMapper.mapHttpStatus("kakao", "token", httpEx)).thenReturn(mapped);
 
-		Throwable thrown = catchThrowable(() -> client.postForm("kakao", "token", "http://example", form, String.class));
+		Throwable thrown = catchThrowable(
+			() -> client.postForm("kakao", "token", "http://example", form, String.class));
 		assertThat(thrown).isSameAs(mapped);
 	}
 
@@ -77,7 +77,8 @@ class OAuthHttpClientTest {
 		RuntimeException mapped = new RuntimeException("mapped");
 		when(exceptionMapper.mapTimeout("kakao", "profile", timeout)).thenReturn(mapped);
 
-		Throwable thrown = catchThrowable(() -> client.get("kakao", "profile", "http://example", headers, String.class));
+		Throwable thrown = catchThrowable(
+			() -> client.get("kakao", "profile", "http://example", headers, String.class));
 		assertThat(thrown).isSameAs(mapped);
 	}
 }

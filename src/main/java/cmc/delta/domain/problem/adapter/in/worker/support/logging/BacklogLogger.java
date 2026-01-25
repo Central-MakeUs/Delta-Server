@@ -3,8 +3,8 @@ package cmc.delta.domain.problem.adapter.in.worker.support.logging;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.LongSupplier;
 import java.util.function.LongConsumer;
+import java.util.function.LongSupplier;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,8 +21,7 @@ public class BacklogLogger {
 		LocalDateTime now,
 		long intervalMinutes,
 		LongSupplier backlogSupplier,
-		LongConsumer logAction
-	) {
+		LongConsumer logAction) {
 		LocalDateTime lastLoggedAt = lastLoggedAtByKey.get(key);
 		Duration interval = Duration.ofMinutes(Math.max(1, intervalMinutes));
 

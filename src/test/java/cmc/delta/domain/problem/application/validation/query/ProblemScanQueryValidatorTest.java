@@ -2,8 +2,8 @@ package cmc.delta.domain.problem.application.validation.query;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.global.error.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -27,14 +27,12 @@ class ProblemScanQueryValidatorTest {
 			null,
 			null,
 			null,
-			null
-		);
+			null);
 
 		// when
 		ProblemException ex = catchThrowableOfType(
 			() -> validator.validateHasOriginalAsset(row),
-			ProblemException.class
-		);
+			ProblemException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_ASSET_NOT_FOUND);

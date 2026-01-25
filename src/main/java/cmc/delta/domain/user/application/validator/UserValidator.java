@@ -1,10 +1,9 @@
 package cmc.delta.domain.user.application.validator;
 
-import java.time.LocalDate;
-
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.application.exception.UserException;
+import java.time.LocalDate;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 

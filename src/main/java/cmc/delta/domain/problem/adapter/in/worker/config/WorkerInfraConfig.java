@@ -1,14 +1,13 @@
 package cmc.delta.domain.problem.adapter.in.worker.config;
 
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
-import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 
 @Configuration
 public class WorkerInfraConfig {

@@ -38,8 +38,7 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 			command.bytes(),
 			command.contentType(),
 			command.originalFilename(),
-			PROFILE_DIR
-		);
+			PROFILE_DIR);
 
 		String newKey = uploaded.storageKey();
 
@@ -52,8 +51,7 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 		return new UserProfileImageResult(
 			newKey,
 			presigned.url(),
-			presigned.expiresInSeconds()
-		);
+			presigned.expiresInSeconds());
 	}
 
 	@Override
@@ -62,15 +60,15 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 		User user = findActiveUser(userId);
 
 		String key = user.getProfileImageStorageKey();
-		if (key == null) return UserProfileImageResult.empty();
+		if (key == null)
+			return UserProfileImageResult.empty();
 
 		StoragePresignedGetData presigned = storagePort.issueReadUrl(key, null);
 
 		return new UserProfileImageResult(
 			key,
 			presigned.url(),
-			presigned.expiresInSeconds()
-		);
+			presigned.expiresInSeconds());
 	}
 
 	@Override
@@ -94,8 +92,10 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 	}
 
 	private void deleteOldBestEffort(String oldKey, String newKey) {
-		if (oldKey == null) return;
-		if (newKey != null && oldKey.equals(newKey)) return;
+		if (oldKey == null)
+			return;
+		if (newKey != null && oldKey.equals(newKey))
+			return;
 
 		try {
 			storagePort.deleteImage(oldKey);
@@ -105,7 +105,8 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 	}
 
 	private void afterCommit(Runnable runnable) {
-		if (!TransactionSynchronizationManager.isSynchronizationActive()) return;
+		if (!TransactionSynchronizationManager.isSynchronizationActive())
+			return;
 
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 			@Override

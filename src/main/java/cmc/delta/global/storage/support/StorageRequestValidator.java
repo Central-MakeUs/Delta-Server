@@ -17,8 +17,7 @@ public class StorageRequestValidator {
 		if (maxUploadBytes <= 0) {
 			throw StorageException.internalError(
 				"maxUploadBytes 설정이 올바르지 않습니다.",
-				new IllegalStateException("maxUploadBytes=" + maxUploadBytes)
-			);
+				new IllegalStateException("maxUploadBytes=" + maxUploadBytes));
 		}
 		if (file.getSize() > maxUploadBytes) {
 			throw StorageException.invalidRequest("파일 용량이 너무 큽니다.");

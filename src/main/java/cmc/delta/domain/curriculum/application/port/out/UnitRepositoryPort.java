@@ -5,5 +5,6 @@ import java.util.List;
 
 public interface UnitRepositoryPort {
 	List<Unit> findAllRootUnitsActive();
+
 	List<Unit> findAllChildUnitsActive();
 }

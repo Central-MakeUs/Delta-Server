@@ -36,7 +36,7 @@ class HttpAccessLogFilterTest {
 	@DisplayName("doFilter: query string은 로그 path에 포함하지 않고, 5xx면 ERROR 레벨로 기록")
 	void doFilter_whenQueryStringAndServerError_thenLogsWithoutQueryAtErrorLevel() throws Exception {
 		// given
-		Logger logger = (Logger) LoggerFactory.getLogger(HttpAccessLogFilter.class);
+		Logger logger = (Logger)LoggerFactory.getLogger(HttpAccessLogFilter.class);
 		ListAppender<ILoggingEvent> appender = new ListAppender<>();
 		appender.start();
 		logger.addAppender(appender);
@@ -50,7 +50,7 @@ class HttpAccessLogFilterTest {
 		FilterChain chain = new FilterChain() {
 			@Override
 			public void doFilter(ServletRequest request, ServletResponse response) {
-				((MockHttpServletResponse) response).setStatus(500);
+				((MockHttpServletResponse)response).setStatus(500);
 			}
 		};
 

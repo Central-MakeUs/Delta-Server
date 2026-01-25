@@ -3,18 +3,18 @@ package cmc.delta.domain.problem.application.service.command;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
+import cmc.delta.domain.curriculum.model.ProblemType;
+import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.validation.command.*;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import java.time.*;
@@ -63,8 +63,7 @@ class ProblemServiceImplTest {
 			assembler,
 			mapper,
 			updateRequestValidator,
-			fixedClock
-		);
+			fixedClock);
 	}
 
 	@Test
@@ -120,7 +119,8 @@ class ProblemServiceImplTest {
 
 		when(scanValidator.getOwnedScan(userId, cmd.scanId())).thenReturn(scan);
 		when(curriculumValidator.getFinalUnit(cmd.finalUnitId())).thenReturn(unit);
-		when(curriculumValidator.getFinalTypes(java.util.List.of("T1"))).thenReturn(java.util.List.of(type));
+		when(curriculumValidator.getFinalTypes(eq(10L), eq(java.util.List.of("T1"))))
+			.thenReturn(java.util.List.of(type));
 
 		User userRef = mock(User.class);
 		when(userRepositoryPort.getReferenceById(userId)).thenReturn(userRef);

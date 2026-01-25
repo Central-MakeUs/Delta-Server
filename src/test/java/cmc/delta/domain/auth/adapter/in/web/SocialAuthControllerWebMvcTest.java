@@ -41,11 +41,12 @@ class SocialAuthControllerWebMvcTest {
 	void kakao_ok_bindsBody() throws Exception {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(socialLoginCommandUseCase.loginKakao("code"))
-			.thenReturn(new SocialLoginCommandUseCase.LoginResult(new SocialLoginData("e@e.com", "nick", true), tokens));
+			.thenReturn(
+				new SocialLoginCommandUseCase.LoginResult(new SocialLoginData("e@e.com", "nick", true), tokens));
 
 		mvc.perform(post("/api/v1/auth/kakao")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"code\":\"code\"}"))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"code\":\"code\"}"))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -58,12 +59,13 @@ class SocialAuthControllerWebMvcTest {
 	void apple_ok_bindsParams() throws Exception {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(socialLoginCommandUseCase.loginApple("code", "user"))
-			.thenReturn(new SocialLoginCommandUseCase.LoginResult(new SocialLoginData("e@e.com", "nick", false), tokens));
+			.thenReturn(
+				new SocialLoginCommandUseCase.LoginResult(new SocialLoginData("e@e.com", "nick", false), tokens));
 
 		mvc.perform(post("/api/v1/auth/apple")
-				.contentType(MediaType.APPLICATION_FORM_URLENCODED)
-				.param("code", "code")
-				.param("user", "user"))
+			.contentType(MediaType.APPLICATION_FORM_URLENCODED)
+			.param("code", "code")
+			.param("user", "user"))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 

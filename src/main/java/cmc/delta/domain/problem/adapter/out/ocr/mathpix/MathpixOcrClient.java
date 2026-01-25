@@ -67,7 +67,10 @@ public class MathpixOcrClient implements OcrClient {
 	private MultiValueMap<String, Object> buildForm(byte[] imageBytes, String filename) {
 		MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
 		form.add(FORM_FILE, new ByteArrayResource(imageBytes) {
-			@Override public String getFilename() { return filename; }
+			@Override
+			public String getFilename() {
+				return filename;
+			}
 		});
 		form.add(FORM_OPTIONS_JSON, optionsJson);
 		return form;

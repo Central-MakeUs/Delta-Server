@@ -28,8 +28,7 @@ class GlobalExceptionHandlerTest {
 			400,
 			ErrorCode.INVALID_REQUEST.code(),
 			data,
-			"custom"
-		);
+			"custom");
 		when(factory.create(ErrorCode.INVALID_REQUEST, "custom", data)).thenReturn(expectedBody);
 
 		MockHttpServletRequest req = new MockHttpServletRequest("POST", "/api/v1/test");
@@ -58,8 +57,7 @@ class GlobalExceptionHandlerTest {
 			500,
 			ErrorCode.INTERNAL_ERROR.code(),
 			null,
-			ErrorCode.INTERNAL_ERROR.defaultMessage()
-		);
+			ErrorCode.INTERNAL_ERROR.defaultMessage());
 		when(factory.create(ErrorCode.INTERNAL_ERROR, ErrorCode.INTERNAL_ERROR.defaultMessage(), null))
 			.thenReturn(expectedBody);
 

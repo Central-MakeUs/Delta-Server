@@ -20,8 +20,7 @@ class ProblemCreateRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(null),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -38,14 +37,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -62,14 +59,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -86,14 +81,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when
 		ProblemException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemException.class
-		);
+			ProblemException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -110,14 +103,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when
 		ProblemException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemException.class
-		);
+			ProblemException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -134,14 +125,12 @@ class ProblemCreateRequestValidatorTest {
 			null,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -158,14 +147,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.CHOICE,
 			null,
 			null,
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -182,14 +169,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.CHOICE,
 			0,
 			null,
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -206,14 +191,12 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"  ",
-			null
-		);
+			null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validate(cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -230,8 +213,7 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.CHOICE,
 			1,
 			null,
-			null
-		);
+			null);
 
 		CreateWrongAnswerCardCommand text = new CreateWrongAnswerCardCommand(
 			1L,
@@ -240,8 +222,7 @@ class ProblemCreateRequestValidatorTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			null
-		);
+			null);
 
 		// when/then
 		assertThatCode(() -> validator.validate(choice)).doesNotThrowAnyException();

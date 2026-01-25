@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.port.in.problem;
 
-import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 
 public interface ProblemCommandUseCase {
 

@@ -8,8 +8,7 @@ public record OcrWorkerProperties(
 	int batchSize,
 	long lockLeaseSeconds,
 	int concurrency,
-	int backlogLogMinutes
-) {
+	int backlogLogMinutes) {
 	public OcrWorkerProperties {
 		if (backlogLogMinutes <= 0) {
 			backlogLogMinutes = 5;

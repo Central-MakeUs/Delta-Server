@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.port.in.problem.result;
 
-import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,8 +20,7 @@ public record ProblemDetailResponse(
 	boolean completed,
 	LocalDateTime completedAt,
 
-	LocalDateTime createdAt
-) {
+	LocalDateTime createdAt) {
 	public record OriginalImageResponse(Long assetId, String viewUrl) {
 	}
 }

@@ -8,8 +8,7 @@ public record AiWorkerProperties(
 	int batchSize,
 	long lockLeaseSeconds,
 	int concurrency,
-	int backlogLogMinutes
-) {
+	int backlogLogMinutes) {
 	public AiWorkerProperties {
 		if (backlogLogMinutes <= 0) {
 			backlogLogMinutes = 5;

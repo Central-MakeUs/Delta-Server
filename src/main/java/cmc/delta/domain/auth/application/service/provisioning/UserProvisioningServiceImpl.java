@@ -1,9 +1,5 @@
 package cmc.delta.domain.auth.application.service.provisioning;
 
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
@@ -14,6 +10,9 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -58,8 +57,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 
 	private ProvisioningResult syncExistingAfterDuplicate(
 		SocialUserProvisionCommand command,
-		DataIntegrityViolationException originalException
-	) {
+		DataIntegrityViolationException originalException) {
 		SocialAccount existing = socialAccountRepositoryPort
 			.findByProviderAndProviderUserId(command.provider(), command.providerUserId())
 			.orElseThrow(() -> originalException);

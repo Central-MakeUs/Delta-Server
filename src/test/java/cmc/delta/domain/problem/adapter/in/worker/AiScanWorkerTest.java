@@ -4,9 +4,6 @@ import static cmc.delta.domain.problem.adapter.in.worker.support.WorkerFixtures.
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerTestTx;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.AiFailureDecider;
@@ -15,12 +12,15 @@ import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
 import cmc.delta.domain.problem.adapter.in.worker.support.prompt.AiCurriculumPromptBuilder;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.AiScanValidator.AiValidatedInput;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
+import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -80,8 +80,7 @@ class AiScanWorkerTest {
 			failureDecider,
 			validator,
 			promptBuilder,
-			persister
-		);
+			persister);
 	}
 
 	@Test
@@ -118,7 +117,8 @@ class AiScanWorkerTest {
 		inOrder.verify(persister).persistAiSucceeded(scanId, OWNER, TOKEN, ai, batchNow);
 		inOrder.verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 
-		verify(persister, never()).persistAiFailed(anyLong(), anyString(), anyString(), any(FailureDecision.class), any());
+		verify(persister, never()).persistAiFailed(anyLong(), anyString(), anyString(), any(FailureDecision.class),
+			any());
 	}
 
 	@Test
@@ -150,7 +150,6 @@ class AiScanWorkerTest {
 		verify(persister, never()).persistAiFailed(anyLong(), anyString(), anyString(), any(), any());
 		verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
-
 
 	@Test
 	@DisplayName("scan이 없으면 실패로 저장(persistAiFailed)하고 unlock을 보장한다")
@@ -194,8 +193,7 @@ class AiScanWorkerTest {
 			AiFailureDecider failureDecider,
 			AiScanValidator validator,
 			AiCurriculumPromptBuilder promptBuilder,
-			AiScanPersistUseCase persister
-		) {
+			AiScanPersistUseCase persister) {
 			super(
 				clock,
 				workerTxTemplate,
@@ -211,8 +209,7 @@ class AiScanWorkerTest {
 				failureDecider,
 				validator,
 				promptBuilder,
-				persister
-			);
+				persister);
 		}
 
 		void processOnePublic(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {

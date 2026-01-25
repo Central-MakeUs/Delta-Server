@@ -6,5 +6,5 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record MathpixProperties(
 	String baseUrl,
 	String appId,
-	String appKey
-) {}
+	String appKey) {
+}

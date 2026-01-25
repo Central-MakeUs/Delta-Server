@@ -1,8 +1,5 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
-import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
-import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
-import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.AbstractExternalCallScanWorker;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
@@ -14,8 +11,11 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
-import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
+import cmc.delta.domain.problem.model.asset.Asset;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,8 +29,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class OcrScanWorker extends AbstractExternalCallScanWorker {
 
-	private static final WorkerIdentity IDENTITY =
-		new WorkerIdentity("ocr", "OCR", "worker:ocr:backlog");
+	private static final WorkerIdentity IDENTITY = new WorkerIdentity("ocr", "OCR", "worker:ocr:backlog");
 
 	private static final String OCR_FILENAME_PREFIX = "scan-";
 	private static final String OCR_FILENAME_SUFFIX = ".jpg";
@@ -47,7 +46,8 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 	public OcrScanWorker(
 		Clock clock,
 		TransactionTemplate workerTxTemplate,
-		@Qualifier("ocrExecutor") Executor ocrExecutor,
+		@Qualifier("ocrExecutor")
+		Executor ocrExecutor,
 		ScanWorkRepository scanWorkRepository,
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
@@ -58,8 +58,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		WorkerLogPolicy logPolicy,
 		OcrFailureDecider failureDecider,
 		OcrScanValidator validator,
-		OcrScanPersister persister
-	) {
+		OcrScanPersister persister) {
 		super(clock, workerTxTemplate, ocrExecutor, IDENTITY, lockGuard, unlocker, backlogLogger, logPolicy);
 		this.scanWorkRepository = scanWorkRepository;
 		this.storageReader = storageReader;
@@ -71,7 +70,8 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 	}
 
 	@Override
-	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken, LocalDateTime lockedAt, int limit) {
+	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken,
+		LocalDateTime lockedAt, int limit) {
 		return scanWorkRepository.claimOcrCandidates(now, staleBefore, lockOwner, lockToken, lockedAt, limit);
 	}
 
@@ -97,7 +97,8 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
 		OcrResult ocrResult = ocrClient.recognize(originalBytes, buildFilename(scanId));
 
-		if (!isOwned(scanId, lockOwner, lockToken)) return;
+		if (!isOwned(scanId, lockOwner, lockToken))
+			return;
 
 		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, batchNow);
 		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
@@ -109,7 +110,8 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 	}
 
 	@Override
-	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision, LocalDateTime batchNow) {
+	protected void persistFailed(Long scanId, String lockOwner, String lockToken, FailureDecision decision,
+		LocalDateTime batchNow) {
 		persister.persistOcrFailed(scanId, lockOwner, lockToken, decision, batchNow);
 	}
 

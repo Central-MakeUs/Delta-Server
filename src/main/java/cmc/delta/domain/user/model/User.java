@@ -3,7 +3,6 @@ package cmc.delta.domain.user.model;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -13,12 +12,9 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-	name = "users",
-	indexes = {
-		@Index(name = "idx_users_status", columnList = "status")
-	}
-)
+@Table(name = "users", indexes = {
+	@Index(name = "idx_users_status", columnList = "status")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseTimeEntity {
 
@@ -44,7 +40,6 @@ public class User extends BaseTimeEntity {
 
 	@Column(name = "terms_agreed_at")
 	private Instant termsAgreedAt;
-
 
 	@Column(name = "profile_image_storage_key", length = 512)
 	private String profileImageStorageKey;

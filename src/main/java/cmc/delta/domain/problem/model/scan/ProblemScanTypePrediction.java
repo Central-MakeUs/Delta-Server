@@ -8,15 +8,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "problem_scan_type_prediction",
-	indexes = {
-		@Index(name = "idx_scan_rank", columnList = "scan_id, rank_no")
-	},
-	uniqueConstraints = {
-		@UniqueConstraint(name = "uk_scan_rank", columnNames = {"scan_id", "rank_no"})
-	}
-)
+@Table(name = "problem_scan_type_prediction", indexes = {
+	@Index(name = "idx_scan_rank", columnList = "scan_id, rank_no")
+}, uniqueConstraints = {
+	@UniqueConstraint(name = "uk_scan_rank", columnNames = {"scan_id", "rank_no"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemScanTypePrediction {

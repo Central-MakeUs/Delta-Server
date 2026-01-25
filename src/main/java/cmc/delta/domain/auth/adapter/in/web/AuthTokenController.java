@@ -47,7 +47,8 @@ public class AuthTokenController {
 		ErrorCode.ACCESS_DENIED
 	})
 	@PostMapping("/logout")
-	public ApiResponse<Void> logout(@CurrentUser UserPrincipal principal, HttpServletRequest request) {
+	public ApiResponse<Void> logout(@CurrentUser
+	UserPrincipal principal, HttpServletRequest request) {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
 		tokenCommandUseCase.invalidateAll(principal.userId(), accessToken);
 

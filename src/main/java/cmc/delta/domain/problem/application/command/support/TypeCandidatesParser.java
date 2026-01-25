@@ -60,8 +60,7 @@ public class TypeCandidatesParser {
 		if (v.isTextual()) {
 			try {
 				return new BigDecimal(v.asText());
-			} catch (Exception ignored) {
-			}
+			} catch (Exception ignored) {}
 		}
 		return null;
 	}

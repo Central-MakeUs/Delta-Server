@@ -31,8 +31,7 @@ class ProblemUpdateRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validateAndNormalize(p, cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_UPDATE_EMPTY);
@@ -48,8 +47,7 @@ class ProblemUpdateRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validateAndNormalize(p, cmd),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_UPDATE_INVALID_ANSWER);

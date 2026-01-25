@@ -30,5 +30,6 @@ public class ScanTypePredictionCommandService {
 		predictionWriter.replacePredictions(scanId, rows);
 	}
 
-	public record PredictedType(String typeId, BigDecimal confidence) {}
+	public record PredictedType(String typeId, BigDecimal confidence) {
+	}
 }

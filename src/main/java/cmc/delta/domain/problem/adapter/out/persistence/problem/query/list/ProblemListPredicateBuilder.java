@@ -14,8 +14,7 @@ public class ProblemListPredicateBuilder {
 	public BooleanBuilder buildMainWhere(
 		Long userId,
 		ProblemListCondition condition,
-		ProblemListQuerySupport.Paths p
-	) {
+		ProblemListQuerySupport.Paths p) {
 		BooleanBuilder where = new BooleanBuilder();
 		where.and(p.problem.user.id.eq(userId));
 
@@ -52,7 +51,8 @@ public class ProblemListPredicateBuilder {
 	}
 
 	private void applyStatusFilter(BooleanBuilder where, ProblemStatusFilter status, QProblem problem) {
-		if (status == null || status == ProblemStatusFilter.ALL) return;
+		if (status == null || status == ProblemStatusFilter.ALL)
+			return;
 
 		if (status == ProblemStatusFilter.SOLVED) {
 			where.and(problem.completedAt.isNotNull());

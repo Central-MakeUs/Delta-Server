@@ -18,7 +18,8 @@ public class ProblemTypeTagQuerySupport {
 	private final JPAQueryFactory queryFactory;
 
 	public List<ProblemTypeTagRow> findTypeTagsByProblemIds(List<Long> problemIds) {
-		if (problemIds == null || problemIds.isEmpty()) return Collections.emptyList();
+		if (problemIds == null || problemIds.isEmpty())
+			return Collections.emptyList();
 
 		QProblemTypeTag tag = QProblemTypeTag.problemTypeTag;
 		QProblemType type = QProblemType.problemType;
@@ -28,8 +29,7 @@ public class ProblemTypeTagQuerySupport {
 				ProblemTypeTagRow.class,
 				tag.problem.id,
 				type.id,
-				type.name
-			))
+				type.name))
 			.from(tag)
 			.join(tag.type, type)
 			.where(tag.problem.id.in(problemIds))
@@ -46,8 +46,7 @@ public class ProblemTypeTagQuerySupport {
 				ProblemTypeTagRow.class,
 				tag.problem.id,
 				type.id,
-				type.name
-			))
+				type.name))
 			.from(tag)
 			.join(tag.type, type)
 			.where(tag.problem.id.eq(problemId))

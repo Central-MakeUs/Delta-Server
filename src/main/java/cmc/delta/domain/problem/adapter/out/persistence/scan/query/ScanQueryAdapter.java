@@ -42,19 +42,16 @@ public class ScanQueryAdapter implements ScanQueryPort {
 				unit.name,
 				type.id,
 				type.name,
-				scan.needsReview
-			))
+				scan.needsReview))
 			.from(scan)
 			.join(asset).on(
 				asset.scan.id.eq(scan.id)
-					.and(asset.assetType.eq(AssetType.ORIGINAL))
-			)
+					.and(asset.assetType.eq(AssetType.ORIGINAL)))
 			.leftJoin(scan.predictedUnit, unit)
 			.leftJoin(scan.predictedType, type)
 			.where(
 				scan.id.eq(scanId),
-				scan.user.id.eq(userId)
-			)
+				scan.user.id.eq(userId))
 			.fetchOne();
 
 		return Optional.ofNullable(row);

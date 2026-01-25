@@ -1,4 +1,3 @@
 package cmc.delta.domain.curriculum.adapter.in.web.dto;
 
-public class UnitResponse {
-}
+public class UnitResponse {}

@@ -24,12 +24,12 @@ class ScanTypePredictionPersistenceAdapterTest {
 		// given
 		ScanRepository scanRepository = mock(ScanRepository.class);
 		ProblemTypeLoadPort typeReader = mock(ProblemTypeLoadPort.class);
-		ProblemScanTypePredictionJpaRepository predictionRepository = mock(ProblemScanTypePredictionJpaRepository.class);
+		ProblemScanTypePredictionJpaRepository predictionRepository = mock(
+			ProblemScanTypePredictionJpaRepository.class);
 		ScanTypePredictionPersistenceAdapter sut = new ScanTypePredictionPersistenceAdapter(
 			scanRepository,
 			typeReader,
-			predictionRepository
-		);
+			predictionRepository);
 
 		when(scanRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -47,12 +47,12 @@ class ScanTypePredictionPersistenceAdapterTest {
 		// given
 		ScanRepository scanRepository = mock(ScanRepository.class);
 		ProblemTypeLoadPort typeReader = mock(ProblemTypeLoadPort.class);
-		ProblemScanTypePredictionJpaRepository predictionRepository = mock(ProblemScanTypePredictionJpaRepository.class);
+		ProblemScanTypePredictionJpaRepository predictionRepository = mock(
+			ProblemScanTypePredictionJpaRepository.class);
 		ScanTypePredictionPersistenceAdapter sut = new ScanTypePredictionPersistenceAdapter(
 			scanRepository,
 			typeReader,
-			predictionRepository
-		);
+			predictionRepository);
 
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scanRepository.findById(1L)).thenReturn(Optional.of(scan));
@@ -71,12 +71,12 @@ class ScanTypePredictionPersistenceAdapterTest {
 		// given
 		ScanRepository scanRepository = mock(ScanRepository.class);
 		ProblemTypeLoadPort typeReader = mock(ProblemTypeLoadPort.class);
-		ProblemScanTypePredictionJpaRepository predictionRepository = mock(ProblemScanTypePredictionJpaRepository.class);
+		ProblemScanTypePredictionJpaRepository predictionRepository = mock(
+			ProblemScanTypePredictionJpaRepository.class);
 		ScanTypePredictionPersistenceAdapter sut = new ScanTypePredictionPersistenceAdapter(
 			scanRepository,
 			typeReader,
-			predictionRepository
-		);
+			predictionRepository);
 
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getId()).thenReturn(1L);
@@ -89,8 +89,7 @@ class ScanTypePredictionPersistenceAdapterTest {
 			new TypePrediction("T3", 3, new BigDecimal("0.7")),
 			new TypePrediction("T4", 4, new BigDecimal("0.6")),
 			new TypePrediction("T5", 5, new BigDecimal("0.5")),
-			new TypePrediction("T6", 6, new BigDecimal("0.4"))
-		);
+			new TypePrediction("T6", 6, new BigDecimal("0.4")));
 
 		ProblemType t1 = mockType("T1");
 		ProblemType t2 = mockType("T2");
@@ -105,8 +104,8 @@ class ScanTypePredictionPersistenceAdapterTest {
 		when(typeReader.findById("T5")).thenReturn(Optional.of(t5));
 		// T6는 호출되면 안 됨(상위 5개 제한)
 
-		@SuppressWarnings("unchecked")
-		org.mockito.ArgumentCaptor<List<ProblemScanTypePrediction>> captor = org.mockito.ArgumentCaptor.forClass(List.class);
+		@SuppressWarnings("unchecked") org.mockito.ArgumentCaptor<List<ProblemScanTypePrediction>> captor = org.mockito.ArgumentCaptor
+			.forClass(List.class);
 
 		// when
 		sut.replacePredictions(1L, preds);
@@ -130,12 +129,12 @@ class ScanTypePredictionPersistenceAdapterTest {
 		// given
 		ScanRepository scanRepository = mock(ScanRepository.class);
 		ProblemTypeLoadPort typeReader = mock(ProblemTypeLoadPort.class);
-		ProblemScanTypePredictionJpaRepository predictionRepository = mock(ProblemScanTypePredictionJpaRepository.class);
+		ProblemScanTypePredictionJpaRepository predictionRepository = mock(
+			ProblemScanTypePredictionJpaRepository.class);
 		ScanTypePredictionPersistenceAdapter sut = new ScanTypePredictionPersistenceAdapter(
 			scanRepository,
 			typeReader,
-			predictionRepository
-		);
+			predictionRepository);
 
 		ProblemType type = mock(ProblemType.class);
 		when(type.getId()).thenReturn("T1");

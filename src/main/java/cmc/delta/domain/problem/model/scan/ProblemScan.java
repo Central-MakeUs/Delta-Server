@@ -18,17 +18,15 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(
-	name = "problem_scan",
-	indexes = {
-		@Index(name = "idx_problem_scan_user_created", columnList = "user_id, created_at"),
-		@Index(name = "idx_problem_scan_status_retry", columnList = "status, next_retry_at"),
-		@Index(name = "idx_problem_scan_status_locked", columnList = "status, locked_at"),
-		@Index(name = "idx_problem_scan_pred_unit", columnList = "predicted_unit_id"),
-		@Index(name = "idx_problem_scan_pred_type", columnList = "predicted_type_id"),
-		@Index(name = "idx_problem_scan_render_created", columnList = "render_mode, created_at"),
-		@Index(name = "idx_problem_scan_figure_created", columnList = "has_figure, created_at")
-	})
+@Table(name = "problem_scan", indexes = {
+	@Index(name = "idx_problem_scan_user_created", columnList = "user_id, created_at"),
+	@Index(name = "idx_problem_scan_status_retry", columnList = "status, next_retry_at"),
+	@Index(name = "idx_problem_scan_status_locked", columnList = "status, locked_at"),
+	@Index(name = "idx_problem_scan_pred_unit", columnList = "predicted_unit_id"),
+	@Index(name = "idx_problem_scan_pred_type", columnList = "predicted_type_id"),
+	@Index(name = "idx_problem_scan_render_created", columnList = "render_mode, created_at"),
+	@Index(name = "idx_problem_scan_figure_created", columnList = "has_figure, created_at")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemScan extends BaseTimeEntity {
@@ -187,8 +185,7 @@ public class ProblemScan extends BaseTimeEntity {
 		String aiUnitCandidatesJson,
 		String aiTypeCandidatesJson,
 		String aiDraftJson,
-		LocalDateTime completedAt
-	) {
+		LocalDateTime completedAt) {
 		this.predictedUnit = predictedUnit;
 		this.predictedType = predictedType;
 		this.confidence = confidence;
@@ -237,7 +234,6 @@ public class ProblemScan extends BaseTimeEntity {
 		long delaySeconds = AI_BACKOFF_SECONDS * this.aiAttemptCount;
 		scheduleRetry(now, delaySeconds, ScanStatus.OCR_DONE);
 	}
-
 
 	public void retryFailed(LocalDateTime now) {
 		this.failReason = null;

@@ -1,9 +1,8 @@
 package cmc.delta.domain.auth.adapter.out.oauth.kakao;
 
-import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
+import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthClientException;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
+import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -18,8 +17,8 @@ import org.springframework.util.StringUtils;
 public class KakaoOAuthClient implements SocialOAuthClient {
 
 	private static final String PROVIDER_NAME = "kakao";
-	private static final String OP_TOKEN = "토큰 교환";
-	private static final String OP_USER = "유저 조회";
+	private static final String OP_TOKEN = OAuthClientException.OP_TOKEN_EXCHANGE;
+	private static final String OP_USER = OAuthClientException.OP_PROFILE_FETCH;
 
 	private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
 	private static final String USER_URL = "https://kapi.kakao.com/v2/user/me";
@@ -47,11 +46,10 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			OP_TOKEN,
 			TOKEN_URL,
 			form,
-			KakaoTokenResponse.class
-		);
+			KakaoTokenResponse.class);
 
 		if (body == null || !StringUtils.hasText(body.accessToken())) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "카카오 토큰 응답이 비어있습니다.");
+			throw OAuthClientException.tokenExchangeInvalidResponse(PROVIDER_NAME);
 		}
 
 		return new OAuthToken(body.accessToken());
@@ -67,11 +65,10 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			OP_USER,
 			USER_URL,
 			headers,
-			KakaoUserResponse.class
-		);
+			KakaoUserResponse.class);
 
 		if (body == null || body.id() <= 0) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "카카오 유저 응답이 비어있습니다.");
+			throw OAuthClientException.profileFetchInvalidResponse(PROVIDER_NAME);
 		}
 
 		String email = (body.kakaoAccount() == null) ? null : body.kakaoAccount().email();

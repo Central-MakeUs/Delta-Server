@@ -1,11 +1,5 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
@@ -21,6 +15,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "인증")
 @RestController
@@ -31,38 +30,33 @@ public class SocialAuthController {
 	private final SocialLoginCommandUseCase socialLoginCommandUseCase;
 	private final TokenHeaderWriter tokenHeaderWriter;
 
-	@Operation(
-		summary = "카카오 인가코드로 로그인",
-		description = AuthApiDocs.KAKAO_LOGIN
-	)
+	@Operation(summary = "카카오 인가코드로 로그인", description = AuthApiDocs.KAKAO_LOGIN)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
 	})
 	@PostMapping("/kakao")
 	public ApiResponse<SocialLoginData> kakao(
-		@Valid @RequestBody KakaoLoginRequest request,
-		HttpServletResponse response
-	) {
+		@Valid @RequestBody
+		KakaoLoginRequest request,
+		HttpServletResponse response) {
 		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginKakao(request.code());
 		tokenHeaderWriter.write(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
 
-	@Operation(
-		summary = "애플 콜백(form_post) 처리 후 로그인 서버용",
-		description = AuthApiDocs.APPLE_FORM_POST_CALLBACK
-	)
+	@Operation(summary = "애플 콜백(form_post) 처리 후 로그인 서버용", description = AuthApiDocs.APPLE_FORM_POST_CALLBACK)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
 	})
 	@PostMapping(value = "/apple", consumes = "application/x-www-form-urlencoded")
 	public ApiResponse<SocialLoginData> callback(
-		@RequestParam("code") String code,
-		@RequestParam(value = "user", required = false) String userJson,
-		HttpServletResponse response
-	) {
+		@RequestParam("code")
+		String code,
+		@RequestParam(value = "user", required = false)
+		String userJson,
+		HttpServletResponse response) {
 		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginApple(code, userJson);
 		tokenHeaderWriter.write(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());

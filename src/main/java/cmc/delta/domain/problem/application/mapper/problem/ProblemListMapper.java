@@ -1,9 +1,8 @@
 package cmc.delta.domain.problem.application.mapper.problem;
 
+import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
-import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
-
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -15,9 +14,6 @@ public interface ProblemListMapper extends ProblemCurriculumItemSupport {
 	@Mapping(target = "subject", expression = "java(toItem(row.subjectId(), row.subjectName()))")
 	@Mapping(target = "unit", expression = "java(toItem(row.unitId(), row.unitName()))")
 	@Mapping(target = "types", expression = "java(List.of())")
-	@Mapping(
-		target = "previewImage",
-		expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.assetId(), viewUrl))"
-	)
+	@Mapping(target = "previewImage", expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.assetId(), viewUrl))")
 	ProblemListItemResponse toResponse(ProblemListRow row, String viewUrl);
 }

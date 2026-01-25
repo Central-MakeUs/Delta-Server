@@ -6,6 +6,5 @@ public record ProblemTypeStatsItemResponse(
 	CurriculumItemResponse type,
 	long solvedCount,
 	long unsolvedCount,
-	long totalCount
-) {
+	long totalCount) {
 }

@@ -21,14 +21,12 @@ public record ProblemScanDetailResponse(
 	LocalDateTime ocrCompletedAt,
 	LocalDateTime aiCompletedAt,
 
-	String failReason
-) {
+	String failReason) {
 	public record OriginalImage(
 		Long assetId,
 		String viewUrl,
 		Integer width,
-		Integer height
-	) {
+		Integer height) {
 	}
 
 	public record AiClassification(
@@ -43,14 +41,13 @@ public record ProblemScanDetailResponse(
 		List<PredictedTypeResponse> predictedTypes,
 		String unitCandidatesJson,
 		String typeCandidatesJson,
-		String aiDraftJson
-	) {
+		String aiDraftJson) {
 	}
 
 	public record PredictedTypeResponse(
 		String typeId,
 		String typeName,
 		Integer rankNo,
-		java.math.BigDecimal confidence
-	) {}
+		java.math.BigDecimal confidence) {
+	}
 }

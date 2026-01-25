@@ -55,7 +55,8 @@ public abstract class AbstractClaimingScanWorker {
 
 			List<Long> ids = tx.execute(status -> {
 				int claimed = claim(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
-				if (claimed <= 0) return List.of();
+				if (claimed <= 0)
+					return List.of();
 				return findClaimedIds(lockOwner, lockToken, batchSize);
 			});
 
@@ -92,6 +93,7 @@ public abstract class AbstractClaimingScanWorker {
 	}
 
 	protected void onNoCandidate(LocalDateTime now) {}
+
 	protected void onClaimed(LocalDateTime now, int count) {}
 
 	protected abstract int claim(
@@ -100,8 +102,7 @@ public abstract class AbstractClaimingScanWorker {
 		String lockOwner,
 		String lockToken,
 		LocalDateTime lockedAt,
-		int limit
-	);
+		int limit);
 
 	protected abstract List<Long> findClaimedIds(String lockOwner, String lockToken, int limit);
 

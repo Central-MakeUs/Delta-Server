@@ -57,9 +57,9 @@ class UserControllerWebMvcTest {
 		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		mvc.perform(post("/api/v1/users/me/onboarding")
-				.requestAttr(ATTR, principal(10L))
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsBytes(req)))
+			.requestAttr(ATTR, principal(10L))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsBytes(req)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -70,7 +70,7 @@ class UserControllerWebMvcTest {
 	@DisplayName("POST /users/withdrawal: usecase 호출")
 	void withdraw_ok_callsUseCase() throws Exception {
 		mvc.perform(post("/api/v1/users/withdrawal")
-				.requestAttr(ATTR, principal(10L)))
+			.requestAttr(ATTR, principal(10L)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 

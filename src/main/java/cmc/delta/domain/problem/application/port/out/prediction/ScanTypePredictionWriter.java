@@ -7,5 +7,6 @@ public interface ScanTypePredictionWriter {
 
 	void replacePredictions(Long scanId, List<TypePrediction> predictions);
 
-	record TypePrediction(String typeId, int rankNo, BigDecimal confidence) {}
+	record TypePrediction(String typeId, int rankNo, BigDecimal confidence) {
+	}
 }

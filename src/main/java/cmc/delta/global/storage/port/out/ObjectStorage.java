@@ -9,5 +9,6 @@ public interface ObjectStorage {
 	String createPresignedGetUrl(String storageKey, Duration ttl);
 
 	void delete(String storageKey);
+
 	byte[] readBytes(String storageKey);
 }

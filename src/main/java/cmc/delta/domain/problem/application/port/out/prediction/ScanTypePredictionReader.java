@@ -7,5 +7,6 @@ public interface ScanTypePredictionReader {
 
 	List<TypePredictionView> findByScanId(Long scanId);
 
-	record TypePredictionView(String typeId, String typeName, int rankNo, BigDecimal confidence) {}
+	record TypePredictionView(String typeId, String typeName, int rankNo, BigDecimal confidence) {
+	}
 }

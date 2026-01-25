@@ -21,8 +21,7 @@ class ProblemListRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validatePagination(pageQuery),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -37,8 +36,7 @@ class ProblemListRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validatePagination(pageQuery),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_LIST_INVALID_PAGINATION);
@@ -53,8 +51,7 @@ class ProblemListRequestValidatorTest {
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
 			() -> validator.validatePagination(pageQuery),
-			ProblemValidationException.class
-		);
+			ProblemValidationException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_LIST_INVALID_PAGINATION);

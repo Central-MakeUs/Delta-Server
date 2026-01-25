@@ -69,13 +69,11 @@ public class GeminiAiClient implements AiClient {
 	private Map<String, Object> buildRequestBody(String promptText) {
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("contents", List.of(
-			Map.of("parts", List.of(Map.of("text", promptText)))
-		));
+			Map.of("parts", List.of(Map.of("text", promptText)))));
 		body.put("generationConfig", Map.of(
 			"temperature", 0,
 			"responseMimeType", "application/json",
-			"responseSchema", RESPONSE_SCHEMA
-		));
+			"responseSchema", RESPONSE_SCHEMA));
 		return body;
 	}
 
@@ -101,8 +99,7 @@ public class GeminiAiClient implements AiClient {
 				subjectCandidatesJson,
 				unitCandidatesJson,
 				typeCandidatesJson,
-				modelJsonText
-			);
+				modelJsonText);
 		} catch (GeminiAiException e) {
 			throw e;
 		} catch (Exception e) {
@@ -135,7 +132,8 @@ public class GeminiAiClient implements AiClient {
 
 	private String readTextOrNull(JsonNode node, String fieldName) {
 		JsonNode v = node.get(fieldName);
-		if (v == null || v.isNull()) return null;
+		if (v == null || v.isNull())
+			return null;
 		String text = v.asText(null);
 		return (text == null || text.isBlank()) ? null : text;
 	}

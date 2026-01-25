@@ -29,8 +29,7 @@ public class ScanListRow {
 		String unitName,
 		String typeId,
 		String typeName,
-		Boolean needsReview
-	) {
+		Boolean needsReview) {
 		this.scanId = scanId;
 		this.userId = userId;
 		this.status = status;
@@ -43,18 +42,43 @@ public class ScanListRow {
 		this.needsReview = needsReview;
 	}
 
-	public Long getScanId() { return scanId; }
-	public Long getUserId() { return userId; }
-	public ScanStatus getStatus() { return status; }
+	public Long getScanId() {
+		return scanId;
+	}
 
-	public Long getAssetId() { return assetId; }
-	public String getStorageKey() { return storageKey; }
+	public Long getUserId() {
+		return userId;
+	}
 
-	public String getUnitId() { return unitId; }
-	public String getUnitName() { return unitName; }
+	public ScanStatus getStatus() {
+		return status;
+	}
 
-	public String getTypeId() { return typeId; }
-	public String getTypeName() { return typeName; }
+	public Long getAssetId() {
+		return assetId;
+	}
 
-	public Boolean getNeedsReview() { return needsReview; }
+	public String getStorageKey() {
+		return storageKey;
+	}
+
+	public String getUnitId() {
+		return unitId;
+	}
+
+	public String getUnitName() {
+		return unitName;
+	}
+
+	public String getTypeId() {
+		return typeId;
+	}
+
+	public String getTypeName() {
+		return typeName;
+	}
+
+	public Boolean getNeedsReview() {
+		return needsReview;
+	}
 }

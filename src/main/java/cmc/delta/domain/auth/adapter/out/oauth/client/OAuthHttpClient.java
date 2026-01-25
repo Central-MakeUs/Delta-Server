@@ -30,8 +30,7 @@ public class OAuthHttpClient {
 		String operation,
 		String url,
 		MultiValueMap<String, String> form,
-		Class<T> responseType
-	) {
+		Class<T> responseType) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 		headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
@@ -59,8 +58,7 @@ public class OAuthHttpClient {
 		String operation,
 		String url,
 		HttpHeaders headers,
-		Class<T> responseType
-	) {
+		Class<T> responseType) {
 		headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
 
 		HttpEntity<Void> request = new HttpEntity<>(headers);

@@ -1,12 +1,13 @@
 package cmc.delta.domain.problem.application.service.command;
 
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.scan.ProblemScanRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.storage.ScanImageUploadPort;
-import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.domain.problem.application.support.command.ProblemScanStoragePaths;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemScanStatusValidator;
@@ -14,8 +15,6 @@ import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +40,8 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 		UploadFile file = command.file();
 		uploadValidator.validateFileNotEmpty(file);
 
-		ScanImageUploadPort.UploadResult uploaded =
-			scanImageUploadPort.uploadImage(file, ProblemScanStoragePaths.ORIGINAL_DIR);
+		ScanImageUploadPort.UploadResult uploaded = scanImageUploadPort.uploadImage(file,
+			ProblemScanStoragePaths.ORIGINAL_DIR);
 
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScan scan = scanRepositoryPort.save(ProblemScan.uploaded(userRef));
@@ -51,21 +50,19 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 			scan,
 			uploaded.storageKey(),
 			uploaded.width(),
-			uploaded.height()
-		));
+			uploaded.height()));
 
 		return new ScanCreateResult(
 			scan.getId(),
 			original.getId(),
-			scan.getStatus().name()
-		);
+			scan.getStatus().name());
 	}
 
 	@Transactional
 	@Override
 	public void retryFailed(Long userId, Long scanId) {
 		ProblemScan scan = scanRepositoryPort.findOwnedByForUpdate(scanId, userId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_SCAN_NOT_FOUND, "스캔을 찾을 수 없습니다."));
+			.orElseThrow(ProblemException::scanNotFound);
 
 		statusValidator.requireFailed(scan);
 		scan.retryFailed(LocalDateTime.now(clock));

@@ -6,6 +6,5 @@ public record ProblemStatsCondition(
 	String subjectId,
 	String unitId,
 	String typeId,
-	ProblemStatsSort sort
-) {
+	ProblemStatsSort sort) {
 }

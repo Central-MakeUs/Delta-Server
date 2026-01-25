@@ -10,5 +10,5 @@ public record WorkerMetricsSnapshot(
 	long aiDoneCount,
 	long failedCount,
 	long ocrBacklog,
-	long aiBacklog
-) {}
+	long aiBacklog) {
+}

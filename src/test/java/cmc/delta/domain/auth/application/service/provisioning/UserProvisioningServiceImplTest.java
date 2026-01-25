@@ -26,7 +26,8 @@ class UserProvisioningServiceImplTest {
 	void setUp() {
 		userRepositoryPort = FakeUserRepositoryPort.create();
 		socialAccountRepositoryPort = FakeSocialAccountRepositoryPort.create();
-		sut = new UserProvisioningServiceImpl(userRepositoryPort, socialAccountRepositoryPort, new SocialUserProvisionValidator());
+		sut = new UserProvisioningServiceImpl(userRepositoryPort, socialAccountRepositoryPort,
+			new SocialUserProvisionValidator());
 	}
 
 	@Test
@@ -37,8 +38,7 @@ class UserProvisioningServiceImplTest {
 		socialAccountRepositoryPort.put(account);
 
 		UserProvisioningUseCase.ProvisioningResult out = sut.provisionSocialUser(
-			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", null, null)
-		);
+			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", null, null));
 
 		assertThat(out.userId()).isEqualTo(user.getId());
 		assertThat(out.email()).isEqualTo(user.getEmail());
@@ -50,14 +50,14 @@ class UserProvisioningServiceImplTest {
 	@DisplayName("프로비저닝: 계정이 없으면 유저를 생성하고 계정을 링크하고 isNewUser=true")
 	void provisionSocialUser_whenMissing_thenCreatesUser() {
 		UserProvisioningUseCase.ProvisioningResult out = sut.provisionSocialUser(
-			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "e@e.com", "nick")
-		);
+			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "e@e.com", "nick"));
 
 		assertThat(out.userId()).isPositive();
 		assertThat(out.email()).isEqualTo("e@e.com");
 		assertThat(out.nickname()).isEqualTo("nick");
 		assertThat(out.isNewUser()).isTrue();
-		assertThat(socialAccountRepositoryPort.findByProviderAndProviderUserId(SocialProvider.KAKAO, "pid")).isPresent();
+		assertThat(socialAccountRepositoryPort.findByProviderAndProviderUserId(SocialProvider.KAKAO, "pid"))
+			.isPresent();
 	}
 
 	@Test
@@ -65,8 +65,7 @@ class UserProvisioningServiceImplTest {
 	void provisionSocialUser_whenCreateMissingEmail_thenInvalidRequest() {
 		UserException ex = catchThrowableOfType(
 			() -> sut.provisionSocialUser(new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", " ", "nick")),
-			UserException.class
-		);
+			UserException.class);
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
 	}
 
@@ -80,8 +79,7 @@ class UserProvisioningServiceImplTest {
 
 		UserException ex = catchThrowableOfType(
 			() -> sut.provisionSocialUser(new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", null, null)),
-			UserException.class
-		);
+			UserException.class);
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_WITHDRAWN);
 	}
 
@@ -93,8 +91,7 @@ class UserProvisioningServiceImplTest {
 		socialAccountRepositoryPort.triggerDuplicateOnNextSave(existingAccount);
 
 		UserProvisioningUseCase.ProvisioningResult out = sut.provisionSocialUser(
-			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "new@e.com", "new")
-		);
+			new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "new@e.com", "new"));
 
 		assertThat(out.userId()).isEqualTo(existingUser.getId());
 		assertThat(out.isNewUser()).isFalse();

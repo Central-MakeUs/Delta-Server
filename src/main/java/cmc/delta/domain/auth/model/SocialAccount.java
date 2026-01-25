@@ -9,22 +9,12 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-	name = "social_accounts",
-	uniqueConstraints = {
-		@UniqueConstraint(
-			name = "uk_social_accounts_provider_user",
-			columnNames = {"provider", "provider_user_id"}
-		),
-		@UniqueConstraint(
-			name = "uk_social_accounts_provider_user_id",
-			columnNames = {"provider", "user_id"}
-		)
-	},
-	indexes = {
-		@Index(name = "idx_social_accounts_user_id", columnList = "user_id")
-	}
-)
+@Table(name = "social_accounts", uniqueConstraints = {
+	@UniqueConstraint(name = "uk_social_accounts_provider_user", columnNames = {"provider", "provider_user_id"}),
+	@UniqueConstraint(name = "uk_social_accounts_provider_user_id", columnNames = {"provider", "user_id"})
+}, indexes = {
+	@Index(name = "idx_social_accounts_user_id", columnList = "user_id")
+})
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class SocialAccount extends BaseTimeEntity {
 

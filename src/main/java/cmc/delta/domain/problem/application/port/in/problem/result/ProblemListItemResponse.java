@@ -1,9 +1,8 @@
 package cmc.delta.domain.problem.application.port.in.problem.result;
 
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import java.time.LocalDateTime;
 import java.util.List;
-
-import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 
 public record ProblemListItemResponse(
 	Long problemId,
@@ -11,10 +10,9 @@ public record ProblemListItemResponse(
 	CurriculumItemResponse unit,
 	List<CurriculumItemResponse> types,
 	PreviewImageResponse previewImage,
-	LocalDateTime createdAt
-) {
+	LocalDateTime createdAt) {
 	public record PreviewImageResponse(
 		Long assetId,
-		String viewUrl
-	) { }
+		String viewUrl) {
+	}
 }

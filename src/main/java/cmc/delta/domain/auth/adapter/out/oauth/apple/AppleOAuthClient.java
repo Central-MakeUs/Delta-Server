@@ -1,12 +1,18 @@
 package cmc.delta.domain.auth.adapter.out.oauth.apple;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,24 +22,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 
 @Component
 public class AppleOAuthClient {
 
 	private static final String TOKEN_URL = "https://appleid.apple.com/auth/token";
 	private static final String GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code";
+	private static final long CLIENT_SECRET_TTL_SECONDS = 300L;
 
 	private final AppleOAuthProperties props;
 	private final RestTemplate appleRestTemplate;
@@ -45,45 +43,42 @@ public class AppleOAuthClient {
 
 	public AppleTokenResponse exchangeCode(String code) {
 		if (!StringUtils.hasText(code)) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "애플 authorization code가 비어있습니다.");
+			throw AppleOAuthException.authorizationCodeEmpty();
 		}
-
 		String clientSecretJwt = generateClientSecret();
-
 		MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
 		form.add("client_id", props.clientId());
 		form.add("client_secret", clientSecretJwt);
 		form.add("code", code);
 		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
 		form.add("redirect_uri", props.redirectUri());
-
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
-		HttpEntity<MultiValueMap<String, String>> entity =
-			new HttpEntity<MultiValueMap<String, String>>(form, headers);
-
-		ResponseEntity<AppleTokenResponse> resp =
-			appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity, AppleTokenResponse.class);
-
-		AppleTokenResponse body = resp.getBody();
-		if (body == null || !StringUtils.hasText(body.idToken())) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "애플 토큰 교환 응답이 비어있습니다.");
+		HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<MultiValueMap<String, String>>(form, headers);
+		try {
+			ResponseEntity<AppleTokenResponse> resp = appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity,
+				AppleTokenResponse.class);
+			AppleTokenResponse body = resp.getBody();
+			if (body == null || !StringUtils.hasText(body.idToken())) {
+				throw AppleOAuthException.tokenExchangeInvalidResponse();
+			}
+			return body;
+		} catch (HttpStatusCodeException e) {
+			int status = e.getStatusCode().value();
+			throw AppleOAuthException.tokenExchangeFailed(status, e);
+		} catch (ResourceAccessException e) {
+			throw AppleOAuthException.tokenExchangeTimeout(e);
 		}
-		return body;
 	}
 
-	/**
-	 * client_secret = ES256로 서명한 JWT
-	 * iss = team_id
-	 * sub = client_id (Services ID)
-	 * aud = https://appleid.apple.com
-	 */
-
+	// client_secret = ES256로 서명한 JWT
+	// iss = team_id
+	// sub = client_id (Services ID)
+	// aud = https://appleid.apple.com
 	private String generateClientSecret() {
 		try {
 			Instant now = Instant.now();
-			Instant exp = now.plusSeconds(300);
+			Instant exp = now.plusSeconds(CLIENT_SECRET_TTL_SECONDS);
 
 			JWTClaimsSet claims = new JWTClaimsSet.Builder()
 				.issuer(props.teamId())
@@ -100,17 +95,14 @@ public class AppleOAuthClient {
 
 			SignedJWT jwt = new SignedJWT(header, claims);
 
-			ECPrivateKey privateKey = (ECPrivateKey) loadPrivateKeyFromPem(props.privateKey());
+			ECPrivateKey privateKey = (ECPrivateKey)loadPrivateKeyFromPem(props.privateKey());
 			JWSSigner signer = new ECDSASigner(privateKey);
 
 			jwt.sign(signer);
 			return jwt.serialize();
 
 		} catch (Exception e) {
-			throw new BusinessException(
-				ErrorCode.INTERNAL_ERROR,
-				"애플 client_secret 생성 실패: " + e.getClass().getSimpleName()
-			);
+			throw AppleOAuthException.clientSecretGenerateFailed(e);
 		}
 	}
 
@@ -142,19 +134,25 @@ public class AppleOAuthClient {
 		KeyFactory kf = KeyFactory.getInstance("EC");
 		return kf.generatePrivate(spec);
 	}
-	/**
-	 * 애플 토큰 응답(JSON)
-	 * id_token은 OpenID Connect ID Token(JWT)
-	 */
+
+	// 애플 토큰 응답(JSON)
+	// id_token은 OpenID Connect ID Token(JWT)
 	public static record AppleTokenResponse(
 		String access_token,
 		String token_type,
 		Long expires_in,
 		String refresh_token,
-		String id_token
-	) {
-		public String idToken() { return id_token; }
-		public String accessToken() { return access_token; }
-		public String refreshToken() { return refresh_token; }
+		String id_token) {
+		public String idToken() {
+			return id_token;
+		}
+
+		public String accessToken() {
+			return access_token;
+		}
+
+		public String refreshToken() {
+			return refresh_token;
+		}
 	}
 }

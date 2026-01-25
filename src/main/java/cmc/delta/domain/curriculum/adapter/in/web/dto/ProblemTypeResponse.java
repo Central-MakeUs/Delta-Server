@@ -1,4 +1,3 @@
 package cmc.delta.domain.curriculum.adapter.in.web.dto;
 
-public class ProblemTypeResponse {
-}
+public class ProblemTypeResponse {}

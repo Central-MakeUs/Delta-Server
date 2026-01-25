@@ -18,15 +18,21 @@ class OAuthClientExceptionMapperTest {
 	@Test
 	@DisplayName("4xx면 UnauthorizedException으로 매핑")
 	void mapHttpStatus_when4xx_thenUnauthorized() {
-		RuntimeException ex = mapper.mapHttpStatus("kakao", "token", new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+		RuntimeException ex = mapper.mapHttpStatus(
+			"kakao",
+			OAuthClientException.OP_TOKEN_EXCHANGE,
+			new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 		assertThat(ex).isInstanceOf(UnauthorizedException.class);
 	}
 
 	@Test
-	@DisplayName("5xx면 INTERNAL_ERROR BusinessException으로 매핑")
+	@DisplayName("5xx면 OAUTH_TOKEN_EXCHANGE_FAILED로 매핑")
 	void mapHttpStatus_when5xx_thenInternalError() {
-		RuntimeException ex = mapper.mapHttpStatus("kakao", "token", new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
-		assertThat(ex).isInstanceOf(BusinessException.class);
-		assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.INTERNAL_ERROR);
+		RuntimeException ex = mapper.mapHttpStatus(
+			"kakao",
+			OAuthClientException.OP_TOKEN_EXCHANGE,
+			new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
+		assertThat(ex).isInstanceOf(OAuthClientException.class);
+		assertThat(((BusinessException)ex).getErrorCode()).isEqualTo(ErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED);
 	}
 }

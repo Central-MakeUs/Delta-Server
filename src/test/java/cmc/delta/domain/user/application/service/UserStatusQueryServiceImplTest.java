@@ -43,8 +43,7 @@ class UserStatusQueryServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.getStatus(999L),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);

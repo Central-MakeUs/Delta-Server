@@ -8,12 +8,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "unit",
-	indexes = {
-		@Index(name = "idx_unit_parent", columnList = "parent_id"),
-		@Index(name = "idx_unit_active_sort", columnList = "is_active, sort_order")
-	})
+@Table(name = "unit", indexes = {
+	@Index(name = "idx_unit_parent", columnList = "parent_id"),
+	@Index(name = "idx_unit_active_sort", columnList = "is_active, sort_order")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Unit {

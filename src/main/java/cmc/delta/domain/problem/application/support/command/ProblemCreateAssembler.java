@@ -26,8 +26,7 @@ public class ProblemCreateAssembler {
 		ProblemScan scan,
 		Unit finalUnit,
 		ProblemType finalType,
-		CreateWrongAnswerCardCommand command
-	) {
+		CreateWrongAnswerCardCommand command) {
 		RenderMode renderMode = extractRenderMode(scan);
 		String problemMarkdown = extractProblemMarkdown(scan);
 
@@ -41,8 +40,7 @@ public class ProblemCreateAssembler {
 			command.answerFormat(),
 			command.answerValue(),
 			command.answerChoiceNo(),
-			command.solutionText()
-		);
+			command.solutionText());
 	}
 
 	private RenderMode extractRenderMode(ProblemScan scan) {

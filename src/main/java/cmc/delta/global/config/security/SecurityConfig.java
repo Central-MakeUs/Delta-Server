@@ -1,7 +1,13 @@
 package cmc.delta.global.config.security;
 
+import cmc.delta.domain.user.application.port.in.UserStatusQuery;
+import cmc.delta.global.config.security.handler.RestAccessDeniedHandler;
+import cmc.delta.global.config.security.handler.RestAuthenticationEntryPoint;
+import cmc.delta.global.config.security.jwt.JwtAuthenticationFilter;
+import cmc.delta.global.config.security.jwt.JwtProperties;
+import cmc.delta.global.config.security.jwt.OnboardingBlockFilter;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -16,14 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import cmc.delta.domain.user.application.port.in.UserStatusQuery;
-import cmc.delta.global.config.security.handler.RestAccessDeniedHandler;
-import cmc.delta.global.config.security.handler.RestAuthenticationEntryPoint;
-import cmc.delta.global.config.security.jwt.JwtAuthenticationFilter;
-import cmc.delta.global.config.security.jwt.JwtProperties;
-import cmc.delta.global.config.security.jwt.OnboardingBlockFilter;
-import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
@@ -43,14 +41,16 @@ public class SecurityConfig {
 	private final RestAccessDeniedHandler restAccessDeniedHandler;
 
 	@Bean
-	public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(JwtAuthenticationFilter filter) {
+	public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(
+		JwtAuthenticationFilter filter) {
 		FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(filter);
 		registration.setEnabled(false);
 		return registration;
 	}
 
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http, UserStatusQuery userStatusQuery) throws Exception {
+	public SecurityFilterChain securityFilterChain(HttpSecurity http, UserStatusQuery userStatusQuery)
+		throws Exception {
 		OnboardingBlockFilter onboardingBlockFilter = new OnboardingBlockFilter(userStatusQuery);
 
 		http.csrf(AbstractHttpConfigurer::disable)
@@ -62,14 +62,12 @@ public class SecurityConfig {
 			.addFilterAfter(onboardingBlockFilter, JwtAuthenticationFilter.class)
 			.exceptionHandling(e -> e
 				.authenticationEntryPoint(restAuthenticationEntryPoint)
-				.accessDeniedHandler(restAccessDeniedHandler)
-			)
+				.accessDeniedHandler(restAccessDeniedHandler))
 			.authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
 				.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
-				.anyRequest().authenticated()
-			);
+				.anyRequest().authenticated());
 
 		return http.build();
 	}
@@ -91,8 +89,7 @@ public class SecurityConfig {
 		api.setAllowCredentials(true);
 		api.setAllowedOriginPatterns(List.of(
 			"https://deltasemo.cloud",
-			"http://localhost:*"
-		));
+			"http://localhost:*"));
 		api.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
 		api.setExposedHeaders(List.of("Authorization", "X-Refresh-Token", "X-Trace-Id"));

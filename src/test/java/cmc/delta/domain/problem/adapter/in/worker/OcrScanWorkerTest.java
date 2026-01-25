@@ -4,9 +4,6 @@ import static cmc.delta.domain.problem.adapter.in.worker.support.WorkerFixtures.
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
-import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
-import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerTestTx;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
@@ -17,6 +14,9 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
+import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.model.asset.Asset;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -73,8 +73,7 @@ class OcrScanWorkerTest {
 			mock(WorkerLogPolicy.class),
 			failureDecider,
 			validator,
-			persister
-		);
+			persister);
 	}
 
 	@Test
@@ -105,7 +104,8 @@ class OcrScanWorkerTest {
 		inOrder.verify(persister).persistOcrSucceeded(scanId, OWNER, TOKEN, result, batchNow);
 		inOrder.verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 
-		verify(persister, never()).persistOcrFailed(anyLong(), anyString(), anyString(), any(FailureDecision.class), any());
+		verify(persister, never()).persistOcrFailed(anyLong(), anyString(), anyString(), any(FailureDecision.class),
+			any());
 	}
 
 	@Test
@@ -136,7 +136,6 @@ class OcrScanWorkerTest {
 		verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
-
 	/**
 	 * 테스트에서만 protected processOne을 호출하기 위한 래퍼.
 	 */
@@ -155,8 +154,7 @@ class OcrScanWorkerTest {
 			WorkerLogPolicy logPolicy,
 			OcrFailureDecider failureDecider,
 			OcrScanValidator validator,
-			OcrScanPersister persister
-		) {
+			OcrScanPersister persister) {
 			super(
 				clock,
 				workerTxTemplate,
@@ -171,8 +169,7 @@ class OcrScanWorkerTest {
 				logPolicy,
 				failureDecider,
 				validator,
-				persister
-			);
+				persister);
 		}
 
 		void processOnePublic(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {

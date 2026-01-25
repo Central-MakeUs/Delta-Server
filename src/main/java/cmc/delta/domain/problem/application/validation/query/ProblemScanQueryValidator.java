@@ -1,9 +1,8 @@
 package cmc.delta.domain.problem.application.validation.query;
 
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.global.error.ErrorCode;
-
 import org.springframework.stereotype.Component;
 
 @Component

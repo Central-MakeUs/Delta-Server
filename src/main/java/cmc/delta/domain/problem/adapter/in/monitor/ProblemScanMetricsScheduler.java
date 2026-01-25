@@ -1,10 +1,10 @@
 package cmc.delta.domain.problem.adapter.in.monitor;
 
-import java.util.UUID;
-import cmc.delta.domain.problem.application.monitor.ProblemScanMetricsService;
-import cmc.delta.domain.problem.application.monitor.WorkerMetricsSnapshot;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
+import cmc.delta.domain.problem.application.monitor.ProblemScanMetricsService;
+import cmc.delta.domain.problem.application.monitor.WorkerMetricsSnapshot;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -38,8 +38,7 @@ public class ProblemScanMetricsScheduler {
 		return metricsService.lastMinutes(
 			windowMinutes,
 			ocrProps.lockLeaseSeconds(),
-			aiProps.lockLeaseSeconds()
-		);
+			aiProps.lockLeaseSeconds());
 	}
 
 	private void logSnapshot(WorkerMetricsSnapshot s) {
@@ -48,8 +47,7 @@ public class ProblemScanMetricsScheduler {
 			s.windowMinutes(), s.from(), s.to(),
 			s.ocrDoneCount(), s.aiDoneCount(),
 			s.failedCount(),
-			s.ocrBacklog(), s.aiBacklog()
-		);
+			s.ocrBacklog(), s.aiBacklog());
 	}
 
 	private void withTraceId(Runnable action) {

@@ -14,7 +14,8 @@ public final class ImageMetadataExtractor {
 		}
 		try {
 			BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
-			if (image == null) return ImageSize.empty();
+			if (image == null)
+				return ImageSize.empty();
 			return new ImageSize(image.getWidth(), image.getHeight());
 		} catch (Exception ignored) {
 			return ImageSize.empty();

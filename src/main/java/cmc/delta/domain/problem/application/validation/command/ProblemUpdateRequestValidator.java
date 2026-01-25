@@ -6,7 +6,6 @@ import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongA
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.global.error.ErrorCode;
-
 import org.springframework.stereotype.Component;
 
 @Component
@@ -47,12 +46,12 @@ public class ProblemUpdateRequestValidator {
 			answerValue,
 			normalizedSolutionText,
 			hasAnswerChange,
-			hasSolutionChange
-		);
+			hasSolutionChange);
 	}
 
 	private String trimToNull(String v) {
-		if (v == null) return null;
+		if (v == null)
+			return null;
 		String t = v.trim();
 		return t.isEmpty() ? null : t;
 	}

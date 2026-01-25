@@ -26,8 +26,7 @@ class BacklogLoggerTest {
 			b -> {
 				logs.incrementAndGet();
 				lastBacklog.set(b);
-			}
-		);
+			});
 
 		logger.logIfDue(
 			"key",
@@ -37,8 +36,7 @@ class BacklogLoggerTest {
 			b -> {
 				logs.incrementAndGet();
 				lastBacklog.set(b);
-			}
-		);
+			});
 
 		// then
 		assertThat(logs.get()).isEqualTo(1);
@@ -58,24 +56,21 @@ class BacklogLoggerTest {
 			LocalDateTime.of(2026, 1, 1, 0, 0, 0),
 			0,
 			() -> 1,
-			b -> logs.incrementAndGet()
-		);
+			b -> logs.incrementAndGet());
 
 		logger.logIfDue(
 			"key",
 			LocalDateTime.of(2026, 1, 1, 0, 0, 30),
 			0,
 			() -> 1,
-			b -> logs.incrementAndGet()
-		);
+			b -> logs.incrementAndGet());
 
 		logger.logIfDue(
 			"key",
 			LocalDateTime.of(2026, 1, 1, 0, 1, 0),
 			0,
 			() -> 1,
-			b -> logs.incrementAndGet()
-		);
+			b -> logs.incrementAndGet());
 
 		// then
 		assertThat(logs.get()).isEqualTo(2);

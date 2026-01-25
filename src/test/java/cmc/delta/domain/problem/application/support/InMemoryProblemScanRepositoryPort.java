@@ -46,7 +46,8 @@ public final class InMemoryProblemScanRepositoryPort implements ProblemScanRepos
 
 	public ProblemScan get(Long id) {
 		ProblemScan s = store.get(id);
-		if (s == null) throw new IllegalStateException("scan not found id=" + id);
+		if (s == null)
+			throw new IllegalStateException("scan not found id=" + id);
 		return s;
 	}
 }

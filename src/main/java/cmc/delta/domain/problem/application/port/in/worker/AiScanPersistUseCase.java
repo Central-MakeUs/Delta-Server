@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.port.in.worker;
 
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import java.time.LocalDateTime;
 
 public interface AiScanPersistUseCase {

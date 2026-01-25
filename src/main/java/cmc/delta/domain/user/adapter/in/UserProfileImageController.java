@@ -38,14 +38,14 @@ public class UserProfileImageController {
 	})
 	@PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ApiResponse<UserProfileImageResult> upload(
-		@CurrentUser UserPrincipal principal,
-		@RequestPart("file") MultipartFile file
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestPart("file")
+		MultipartFile file) {
 		ProfileImageUploadCommand command = new ProfileImageUploadCommand(
 			readBytes(file),
 			file.getContentType(),
-			file.getOriginalFilename()
-		);
+			file.getOriginalFilename());
 
 		UserProfileImageResult result = useCase.uploadMyProfileImage(principal.userId(), command);
 		return ApiResponses.success(SuccessCode.OK, result);
@@ -59,7 +59,8 @@ public class UserProfileImageController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@GetMapping("/profile-image")
-	public ApiResponse<UserProfileImageResult> get(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<UserProfileImageResult> get(@CurrentUser
+	UserPrincipal principal) {
 		UserProfileImageResult result = useCase.getMyProfileImage(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, result);
 	}
@@ -72,7 +73,8 @@ public class UserProfileImageController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@DeleteMapping("/profile-image")
-	public ApiResponse<Void> delete(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<Void> delete(@CurrentUser
+	UserPrincipal principal) {
 		useCase.deleteMyProfileImage(principal.userId());
 		return ApiResponses.success(SuccessCode.OK);
 	}

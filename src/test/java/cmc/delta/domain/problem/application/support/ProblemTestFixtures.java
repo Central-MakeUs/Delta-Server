@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.support;
 
-import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.problem.application.port.in.support.UploadFile;
+import cmc.delta.domain.user.model.User;
 
 public final class ProblemTestFixtures {
 

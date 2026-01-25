@@ -3,11 +3,11 @@ package cmc.delta.domain.auth.application.service.social;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import cmc.delta.domain.auth.adapter.out.oauth.apple.AppleIdTokenVerifier;
 import cmc.delta.domain.auth.adapter.out.oauth.apple.AppleOAuthClient;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +20,8 @@ class AppleOAuthServiceTest {
 		AppleIdTokenVerifier verifier = mock(AppleIdTokenVerifier.class);
 		ObjectMapper objectMapper = new ObjectMapper();
 
-		when(client.exchangeCode("code")).thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
+		when(client.exchangeCode("code"))
+			.thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
 		when(verifier.verifyAndExtract("id")).thenReturn(new AppleIdTokenVerifier.AppleIdClaims("sub", "v@e.com"));
 
 		AppleOAuthService sut = new AppleOAuthService(client, verifier, objectMapper);
@@ -40,15 +41,15 @@ class AppleOAuthServiceTest {
 		AppleIdTokenVerifier verifier = mock(AppleIdTokenVerifier.class);
 		ObjectMapper objectMapper = new ObjectMapper();
 
-		when(client.exchangeCode("code")).thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
+		when(client.exchangeCode("code"))
+			.thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
 		when(verifier.verifyAndExtract("id")).thenReturn(new AppleIdTokenVerifier.AppleIdClaims("sub", "v@e.com"));
 
 		AppleOAuthService sut = new AppleOAuthService(client, verifier, objectMapper);
 
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.fetchUserInfoByCode("code", "not-json"),
-			BusinessException.class
-		);
+			BusinessException.class);
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
 	}
 
@@ -59,15 +60,15 @@ class AppleOAuthServiceTest {
 		AppleIdTokenVerifier verifier = mock(AppleIdTokenVerifier.class);
 		ObjectMapper objectMapper = new ObjectMapper();
 
-		when(client.exchangeCode("code")).thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
+		when(client.exchangeCode("code"))
+			.thenReturn(new AppleOAuthClient.AppleTokenResponse(null, null, null, null, "id"));
 		when(verifier.verifyAndExtract("id")).thenReturn(new AppleIdTokenVerifier.AppleIdClaims(" ", "v@e.com"));
 
 		AppleOAuthService sut = new AppleOAuthService(client, verifier, objectMapper);
 
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.fetchUserInfoByCode("code", null),
-			BusinessException.class
-		);
+			BusinessException.class);
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.AUTHENTICATION_FAILED);
 	}
 }

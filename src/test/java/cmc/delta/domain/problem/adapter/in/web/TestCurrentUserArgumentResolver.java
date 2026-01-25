@@ -24,8 +24,7 @@ public final class TestCurrentUserArgumentResolver implements HandlerMethodArgum
 		MethodParameter parameter,
 		ModelAndViewContainer mavContainer,
 		NativeWebRequest webRequest,
-		WebDataBinderFactory binderFactory
-	) {
+		WebDataBinderFactory binderFactory) {
 		HttpServletRequest req = webRequest.getNativeRequest(HttpServletRequest.class);
 		return req.getAttribute(ATTR);
 	}
