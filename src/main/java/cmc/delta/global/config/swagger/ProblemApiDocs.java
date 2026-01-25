@@ -157,4 +157,119 @@ public final class ProblemApiDocs {
 		- 필터 미적용은 파라미터를 생략하거나 빈값으로 보내면 됩니다.
 		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
 		""";
+
+	public static final String LIST_MY_PROBLEM_TYPES = """
+		내 문제 유형(ProblemType) 목록을 조회합니다.
+
+		구성:
+		- 기본 유형: 모든 사용자에게 공통으로 제공되는 고정 유형(custom=false)
+		- 커스텀 유형: 사용자가 직접 추가한 유형(custom=true)
+
+		요청:
+		- GET /api/v1/problem-types
+		- Query
+		  - includeInactive: boolean (기본 false)
+		    - false: active=true만 반환
+		    - true: active=false(비활성)도 함께 반환
+
+		응답:
+		- types: 유형 리스트 (sortOrder 오름차순)
+		  - id: 유형 ID
+		    - 기본 유형 예: T_CASE_SPLIT
+		    - 커스텀 유형 예: T_C_7f2c0e3d9c5a4b2f9a6d1d3d8b1a2c3d
+		  - name: 화면 표시명
+		  - sortOrder: 정렬 순서 (오름차순)
+		  - active: 선택 가능 여부
+		  - custom: 커스텀 여부
+
+		예시:
+		- 요청: GET /api/v1/problem-types?includeInactive=false
+		- 응답 바디 예시:
+		  {
+		    "success": true,
+		    "code": "OK",
+		    "data": {
+		      "types": [
+		        {"id":"T_CASE_SPLIT","name":"조건별 상황나누기","custom":false,"active":true,"sortOrder":1},
+		        {"id":"T_C_7f2c...","name":"서술형","custom":true,"active":true,"sortOrder":7}
+		      ]
+		    }
+		  }
+		""";
+
+	public static final String CREATE_CUSTOM_PROBLEM_TYPE = """
+		커스텀 유형을 추가합니다.
+
+		입력:
+		- Body
+		  - name: 유형명 (필수)
+
+		동작:
+		- id는 서버에서 자동 생성됩니다.
+		- 생성된 커스텀 유형은 active=true로 시작합니다.
+		- 같은 사용자가 같은 name의 커스텀 유형을 중복 생성할 수 없습니다.
+
+		예시:
+		- 요청: POST /api/v1/problem-types
+		- 요청 바디:
+		  {"name":"서술형"}
+		- 응답 바디 예시:
+		  {
+		    "success": true,
+		    "code": "OK",
+		    "data": {"id":"T_C_7f2c...","name":"서술형","custom":true,"active":true,"sortOrder":7}
+		  }
+		""";
+
+	public static final String UPDATE_CUSTOM_PROBLEM_TYPE = """
+		커스텀 유형을 수정합니다. (이름/정렬 순서)
+
+		입력:
+		- PATCH /api/v1/problem-types/{typeId}
+		- Path
+		  - typeId: 수정할 커스텀 유형 ID
+		- Body (둘 중 하나 이상 필요)
+		  - name: 새 유형명 (선택)
+		  - sortOrder: 정렬 순서 (선택, 1 이상)
+
+		주의:
+		- 기본 유형(custom=false)은 수정할 수 없습니다.
+		- 본인이 만든 커스텀 유형(custom=true)만 수정할 수 있습니다.
+
+		예시1) 이름만 변경
+		- 요청: PATCH /api/v1/problem-types/T_C_7f2c...
+		- 요청 바디:
+		  {"name":"서술형(개념)"}
+
+		예시2) 순서만 변경
+		- 요청 바디:
+		  {"sortOrder":3}
+
+		예시3) 둘 다 변경
+		- 요청 바디:
+		  {"name":"서술형(개념)","sortOrder":3}
+		""";
+
+	public static final String SET_CUSTOM_PROBLEM_TYPE_ACTIVE = """
+		커스텀 유형을 활성/비활성 처리합니다.
+
+		입력:
+		- PATCH /api/v1/problem-types/{typeId}/activation
+		- Path
+		  - typeId: 대상 커스텀 유형 ID
+		- Body
+		  - active: true/false
+
+		설명:
+		- 비활성(active=false)은 사실상 '삭제'에 해당합니다. (소프트 삭제)
+		- 과거에 해당 유형으로 등록된 오답카드/통계는 유지됩니다.
+
+		예시(삭제):
+		- 요청 바디:
+		  {"active":false}
+
+		예시(복구):
+		- 요청 바디:
+		  {"active":true}
+		""";
 }

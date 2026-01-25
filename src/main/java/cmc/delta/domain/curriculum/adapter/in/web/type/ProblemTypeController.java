@@ -12,6 +12,7 @@ import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
+import cmc.delta.global.config.swagger.ProblemApiDocs;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,7 +27,7 @@ public class ProblemTypeController {
 
 	private final ProblemTypeUseCase problemTypeUseCase;
 
-	@Operation(summary = "내 유형 목록 조회 (기본 + 커스텀)")
+	@Operation(summary = "내 유형 목록 조회 (기본 + 커스텀)", description = ProblemApiDocs.LIST_MY_PROBLEM_TYPES)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -43,7 +44,7 @@ public class ProblemTypeController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "커스텀 유형 추가")
+	@Operation(summary = "커스텀 유형 추가", description = ProblemApiDocs.CREATE_CUSTOM_PROBLEM_TYPE)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -62,7 +63,7 @@ public class ProblemTypeController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "커스텀 유형 수정 (이름/순서)")
+	@Operation(summary = "커스텀 유형 수정 (이름/순서)", description = ProblemApiDocs.UPDATE_CUSTOM_PROBLEM_TYPE)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -83,7 +84,7 @@ public class ProblemTypeController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "커스텀 유형 활성/비활성")
+	@Operation(summary = "커스텀 유형 활성/비활성", description = ProblemApiDocs.SET_CUSTOM_PROBLEM_TYPE_ACTIVE)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
