@@ -17,6 +17,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -46,30 +48,31 @@ public class AppleOAuthClient {
 		if (!StringUtils.hasText(code)) {
 			throw AppleOAuthException.authorizationCodeEmpty();
 		}
-
 		String clientSecretJwt = generateClientSecret();
-
 		MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
 		form.add("client_id", props.clientId());
 		form.add("client_secret", clientSecretJwt);
 		form.add("code", code);
 		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
 		form.add("redirect_uri", props.redirectUri());
-
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
 		HttpEntity<MultiValueMap<String, String>> entity =
 			new HttpEntity<MultiValueMap<String, String>>(form, headers);
-
-		ResponseEntity<AppleTokenResponse> resp =
-			appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity, AppleTokenResponse.class);
-
-		AppleTokenResponse body = resp.getBody();
-		if (body == null || !StringUtils.hasText(body.idToken())) {
-			throw AppleOAuthException.tokenExchangeInvalidResponse();
+		try {
+			ResponseEntity<AppleTokenResponse> resp =
+				appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity, AppleTokenResponse.class);
+			AppleTokenResponse body = resp.getBody();
+			if (body == null || !StringUtils.hasText(body.idToken())) {
+				throw AppleOAuthException.tokenExchangeInvalidResponse();
+			}
+			return body;
+		} catch (HttpStatusCodeException e) {
+			int status = e.getStatusCode().value();
+			throw AppleOAuthException.tokenExchangeFailed(status, e);
+		} catch (ResourceAccessException e) {
+			throw AppleOAuthException.tokenExchangeTimeout(e);
 		}
-		return body;
 	}
 
 	// client_secret = ES256로 서명한 JWT

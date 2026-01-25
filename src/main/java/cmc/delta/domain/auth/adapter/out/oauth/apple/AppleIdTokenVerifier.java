@@ -2,6 +2,7 @@ package cmc.delta.domain.auth.adapter.out.oauth.apple;
 
 import java.net.URL;
 import java.text.ParseException;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
 
@@ -26,12 +27,20 @@ public class AppleIdTokenVerifier {
 	private static final long JWK_CACHE_TTL_SECONDS = 600L;
 
 	private final AppleOAuthProperties props;
+	private final Clock clock;
+	private final JwkSetLoader jwkSetLoader;
 
 	private volatile JWKSet cachedJwkSet;
 	private volatile long cachedAtEpochSec;
 
 	public AppleIdTokenVerifier(AppleOAuthProperties props) {
+		this(props, Clock.systemUTC(), url -> JWKSet.load(new URL(url)));
+	}
+
+	AppleIdTokenVerifier(AppleOAuthProperties props, Clock clock, JwkSetLoader jwkSetLoader) {
 		this.props = props;
+		this.clock = clock;
+		this.jwkSetLoader = jwkSetLoader;
 	}
 
 	public AppleIdClaims verifyAndExtract(String idToken) {
@@ -75,7 +84,7 @@ public class AppleIdTokenVerifier {
 			}
 
 			Date exp = jwt.getJWTClaimsSet().getExpirationTime();
-			if (exp == null || exp.toInstant().isBefore(Instant.now())) {
+			if (exp == null || exp.toInstant().isBefore(Instant.now(clock))) {
 				throw AppleOAuthException.tokenExpired();
 			}
 
@@ -133,18 +142,23 @@ public class AppleIdTokenVerifier {
 	}
 
 	private JWKSet loadJwkSet() {
-		long now = Instant.now().getEpochSecond();
+		long now = Instant.now(clock).getEpochSecond();
 		if (cachedJwkSet != null && (now - cachedAtEpochSec) < JWK_CACHE_TTL_SECONDS) {
 			return cachedJwkSet;
 		}
 		try {
-			JWKSet jwkSet = JWKSet.load(new URL(JWK_URL));
+			JWKSet jwkSet = jwkSetLoader.load(JWK_URL);
 			cachedJwkSet = jwkSet;
 			cachedAtEpochSec = now;
 			return jwkSet;
 		} catch (Exception e) {
 			throw AppleOAuthException.jwkLoadFailed(e);
 		}
+	}
+
+	@FunctionalInterface
+	interface JwkSetLoader {
+		JWKSet load(String url) throws Exception;
 	}
 
 	private void invalidateCache() {

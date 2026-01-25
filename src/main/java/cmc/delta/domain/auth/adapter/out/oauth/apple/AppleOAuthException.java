@@ -92,11 +92,22 @@ public class AppleOAuthException extends BusinessException {
 	}
 
 	public static AppleOAuthException jwkLoadFailed(Throwable cause) {
-		return new AppleOAuthException(ErrorCode.OAUTH_PROVIDER_ERROR, "애플 공개키(JWK) 로딩에 실패했습니다.", cause);
+		return new AppleOAuthException(ErrorCode.OAUTH_JWK_LOAD_FAILED, "애플 공개키(JWK) 로딩에 실패했습니다.", cause);
 	}
 
 	public static AppleOAuthException tokenExchangeInvalidResponse() {
-		return new AppleOAuthException(ErrorCode.OAUTH_INVALID_RESPONSE, "애플 토큰 교환 응답이 비어있습니다.", null);
+		return new AppleOAuthException(ErrorCode.OAUTH_TOKEN_EXCHANGE_INVALID_RESPONSE, "애플 토큰 교환 응답이 비어있습니다.", null);
+	}
+
+	public static AppleOAuthException tokenExchangeFailed(int status, Throwable cause) {
+		return new AppleOAuthException(
+			ErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED,
+			"애플 토큰 교환 실패 (status=" + status + ")",
+			cause);
+	}
+
+	public static AppleOAuthException tokenExchangeTimeout(Throwable cause) {
+		return new AppleOAuthException(ErrorCode.OAUTH_TOKEN_EXCHANGE_TIMEOUT, "애플 토큰 교환 타임아웃", cause);
 	}
 
 	public static AppleOAuthException clientSecretGenerateFailed(Throwable cause) {

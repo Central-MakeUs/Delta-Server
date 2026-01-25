@@ -17,8 +17,8 @@ import org.springframework.util.StringUtils;
 public class KakaoOAuthClient implements SocialOAuthClient {
 
 	private static final String PROVIDER_NAME = "kakao";
-	private static final String OP_TOKEN = "토큰 교환";
-	private static final String OP_USER = "유저 조회";
+	private static final String OP_TOKEN = OAuthClientException.OP_TOKEN_EXCHANGE;
+	private static final String OP_USER = OAuthClientException.OP_PROFILE_FETCH;
 
 	private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
 	private static final String USER_URL = "https://kapi.kakao.com/v2/user/me";
@@ -50,7 +50,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 		);
 
 		if (body == null || !StringUtils.hasText(body.accessToken())) {
-			throw OAuthClientException.invalidResponse(PROVIDER_NAME, OP_TOKEN);
+			throw OAuthClientException.tokenExchangeInvalidResponse(PROVIDER_NAME);
 		}
 
 		return new OAuthToken(body.accessToken());
@@ -70,7 +70,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 		);
 
 		if (body == null || body.id() <= 0) {
-			throw OAuthClientException.invalidResponse(PROVIDER_NAME, OP_USER);
+			throw OAuthClientException.profileFetchInvalidResponse(PROVIDER_NAME);
 		}
 
 		String email = (body.kakaoAccount() == null) ? null : body.kakaoAccount().email();
