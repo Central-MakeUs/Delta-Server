@@ -1,4 +1,4 @@
-package cmc.delta.global.storage.service;
+package cmc.delta.global.storage.application;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -6,7 +6,6 @@ import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import cmc.delta.global.storage.application.StorageService;
 import cmc.delta.global.storage.adapter.out.s3.S3Properties;
 import cmc.delta.global.storage.support.FakeObjectStorage;
 import cmc.delta.global.storage.support.StorageFixtures;

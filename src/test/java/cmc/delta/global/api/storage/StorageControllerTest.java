@@ -1,9 +1,8 @@
-package cmc.delta.global.storage.controller;
+package cmc.delta.global.api.storage;
 
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.global.api.response.ApiResponse;
-import cmc.delta.global.api.storage.StorageController;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.storage.application.StorageService;
