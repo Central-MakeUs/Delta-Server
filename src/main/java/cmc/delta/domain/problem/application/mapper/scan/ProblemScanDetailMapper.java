@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.mapper.scan;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse.PredictedTypeResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse.PredictedTypeResponse;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import java.util.List;
 import org.springframework.stereotype.Component;

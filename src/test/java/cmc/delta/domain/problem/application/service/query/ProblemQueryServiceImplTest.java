@@ -3,12 +3,12 @@ package cmc.delta.domain.problem.application.service.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;

@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.port.in.problem;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemListItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.global.api.response.PagedResponse;
 import org.springframework.data.domain.Pageable;
 

@@ -2,7 +2,7 @@ package cmc.delta.domain.problem.application.service.command;
 
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;

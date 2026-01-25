@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemListSort;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.model.enums.ProblemListSort;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.NumberExpression;
 import java.util.ArrayList;

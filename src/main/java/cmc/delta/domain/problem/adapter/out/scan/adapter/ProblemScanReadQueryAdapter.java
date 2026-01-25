@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.adapter.out.scan.adapter;
 
 import cmc.delta.domain.problem.application.port.out.persistence.ProblemScanSummaryQueryPort;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import java.util.Optional;
 
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
@@ -19,4 +19,3 @@ public class ProblemScanReadQueryAdapter implements ProblemScanSummaryQueryPort 
 		return scanQueryPort.findListRow(userId, scanId);
 	}
 }
-

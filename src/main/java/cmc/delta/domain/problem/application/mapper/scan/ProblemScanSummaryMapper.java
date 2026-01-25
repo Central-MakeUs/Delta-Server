@@ -2,10 +2,10 @@ package cmc.delta.domain.problem.application.mapper.scan;
 
 import java.util.List;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryClassificationResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.dto.ScanListRow;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryClassificationResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import org.springframework.stereotype.Component;
 

@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.mapper.support;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 
 public interface ProblemCurriculumItemSupport {
 

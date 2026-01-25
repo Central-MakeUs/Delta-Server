@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
-import cmc.delta.domain.problem.application.support.query.ProblemListConditionFactory;
+import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;

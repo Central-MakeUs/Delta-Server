@@ -1,12 +1,12 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query;
 
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.ProblemDetailQuerySupport;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.ProblemListQuerySupport;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.ProblemTypeTagQuerySupport;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 
 import java.util.List;

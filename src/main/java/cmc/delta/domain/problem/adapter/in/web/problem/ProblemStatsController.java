@@ -1,12 +1,12 @@
 package cmc.delta.domain.problem.adapter.in.web.problem;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsRequest;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemTypeStatsItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemUnitStatsItemResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemTypeStatsItemResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemUnitStatsItemResponse;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
-import cmc.delta.domain.problem.application.support.query.ProblemStatsConditionFactory;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemStatsCondition;
+import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;

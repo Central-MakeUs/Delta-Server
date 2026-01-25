@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.adapter.in.web.scan;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanCreateResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanCreateResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;

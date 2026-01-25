@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.application.service.command;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
 import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;

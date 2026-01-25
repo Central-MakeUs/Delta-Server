@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.support.query;
 
-import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
+import cmc.delta.domain.curriculum.application.port.out.UnitLoadPort;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import java.util.Optional;
@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UnitSubjectResolver {
 
-	private final UnitJpaRepository unitRepository;
+	private final UnitLoadPort unitLoadPort;
 
 	@Transactional(readOnly = true)
 	public SubjectInfo resolveByUnitId(String unitId) {
@@ -20,7 +20,7 @@ public class UnitSubjectResolver {
 			return SubjectInfo.empty();
 		}
 
-		Optional<Unit> unitOpt = unitRepository.findById(unitId);
+		Optional<Unit> unitOpt = unitLoadPort.findById(unitId);
 		if (unitOpt.isEmpty()) {
 			return SubjectInfo.empty();
 		}

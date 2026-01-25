@@ -1,12 +1,12 @@
 package cmc.delta.domain.problem.application.service.query;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.CurriculumItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemStatsResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemTypeStatsItemResponse;
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.response.ProblemUnitStatsItemResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemStatsCondition;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemTypeStatsRow;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.stats.dto.ProblemUnitStatsRow;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemTypeStatsItemResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemUnitStatsItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import java.util.ArrayList;

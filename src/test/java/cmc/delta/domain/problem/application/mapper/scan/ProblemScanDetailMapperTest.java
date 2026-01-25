@@ -3,9 +3,9 @@ package cmc.delta.domain.problem.application.mapper.scan;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.adapter.in.web.scan.dto.response.ProblemScanDetailResponse.PredictedTypeResponse;
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse.PredictedTypeResponse;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.enums.ScanStatus;

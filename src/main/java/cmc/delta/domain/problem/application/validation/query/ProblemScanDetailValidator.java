@@ -1,6 +1,6 @@
 package cmc.delta.domain.problem.application.validation.query;
 
-import cmc.delta.domain.problem.adapter.out.persistence.scan.query.projection.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import org.springframework.stereotype.Component;

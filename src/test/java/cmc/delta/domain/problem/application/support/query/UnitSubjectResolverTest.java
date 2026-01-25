@@ -3,7 +3,7 @@ package cmc.delta.domain.problem.application.support.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
+import cmc.delta.domain.curriculum.application.port.out.UnitLoadPort;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import java.util.Optional;
@@ -16,7 +16,7 @@ class UnitSubjectResolverTest {
 	@DisplayName("과목 resolve: unitId가 blank면 empty")
 	void resolveByUnitId_whenBlank_thenEmpty() {
 		// given
-		UnitSubjectResolver sut = new UnitSubjectResolver(mock(UnitJpaRepository.class));
+		UnitSubjectResolver sut = new UnitSubjectResolver(mock(UnitLoadPort.class));
 
 		// when
 		SubjectInfo out = sut.resolveByUnitId("  ");
@@ -29,9 +29,9 @@ class UnitSubjectResolverTest {
 	@DisplayName("과목 resolve: unit이 없으면 empty")
 	void resolveByUnitId_whenMissing_thenEmpty() {
 		// given
-		UnitJpaRepository repo = mock(UnitJpaRepository.class);
-		UnitSubjectResolver sut = new UnitSubjectResolver(repo);
-		when(repo.findById("U1")).thenReturn(Optional.empty());
+		UnitLoadPort port = mock(UnitLoadPort.class);
+		UnitSubjectResolver sut = new UnitSubjectResolver(port);
+		when(port.findById("U1")).thenReturn(Optional.empty());
 
 		// when
 		SubjectInfo out = sut.resolveByUnitId("U1");
@@ -44,12 +44,12 @@ class UnitSubjectResolverTest {
 	@DisplayName("과목 resolve: parent를 따라가 root unit을 과목으로 반환")
 	void resolveByUnitId_whenChildUnit_thenReturnsRootSubject() {
 		// given
-		UnitJpaRepository repo = mock(UnitJpaRepository.class);
-		UnitSubjectResolver sut = new UnitSubjectResolver(repo);
+		UnitLoadPort port = mock(UnitLoadPort.class);
+		UnitSubjectResolver sut = new UnitSubjectResolver(port);
 
 		Unit root = new Unit("S1", "대단원", null, 1, true);
 		Unit child = new Unit("U1", "소단원", root, 1, true);
-		when(repo.findById("U1")).thenReturn(Optional.of(child));
+		when(port.findById("U1")).thenReturn(Optional.of(child));
 
 		// when
 		SubjectInfo out = sut.resolveByUnitId("U1");

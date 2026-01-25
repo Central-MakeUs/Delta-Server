@@ -3,8 +3,8 @@ package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemListSort;
-import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.dto.ProblemListCondition;
+import cmc.delta.domain.problem.model.enums.ProblemListSort;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
