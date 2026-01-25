@@ -20,7 +20,7 @@ class ErrorLogWriterTest {
 	@DisplayName("write: 예외 메시지는 개행 제거/trim 후 maxLen(300)으로 잘라서 기록")
 	void write_whenMessageHasNewlineAndTooLong_thenSanitizesAndTruncates() {
 		// given
-		Logger logger = (Logger) LoggerFactory.getLogger(ErrorLogWriter.class);
+		Logger logger = (Logger)LoggerFactory.getLogger(ErrorLogWriter.class);
 		ListAppender<ILoggingEvent> appender = new ListAppender<>();
 		appender.start();
 		logger.addAppender(appender);
@@ -49,12 +49,12 @@ class ErrorLogWriterTest {
 	@DisplayName("write: 예외 메시지가 null이면 exMsg는 UNKNOWN(-)로 기록")
 	void write_whenMessageNull_thenUsesUnknown() {
 		// given
-		Logger logger = (Logger) LoggerFactory.getLogger(ErrorLogWriter.class);
+		Logger logger = (Logger)LoggerFactory.getLogger(ErrorLogWriter.class);
 		ListAppender<ILoggingEvent> appender = new ListAppender<>();
 		appender.start();
 		logger.addAppender(appender);
 
-		RuntimeException ex = new RuntimeException((String) null);
+		RuntimeException ex = new RuntimeException((String)null);
 		MockHttpServletRequest req = new MockHttpServletRequest("GET", "/api/v1/test");
 
 		// when

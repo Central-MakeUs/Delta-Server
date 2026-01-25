@@ -6,10 +6,9 @@ public record ProblemScanSummaryResponse(
 	Long scanId,
 	ScanStatus status,
 	OriginalImage originalImage,
-	ProblemScanSummaryClassificationResponse classification
-) {
+	ProblemScanSummaryClassificationResponse classification) {
 	public record OriginalImage(
 		Long assetId,
-		String viewUrl
-	) { }
+		String viewUrl) {
+	}
 }

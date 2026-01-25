@@ -44,8 +44,7 @@ class OcrScanValidatorTest {
 		// when
 		OriginalAssetNotFoundException ex = catchThrowableOfType(
 			() -> sut.requireOriginalAsset(scanId),
-			OriginalAssetNotFoundException.class
-		);
+			OriginalAssetNotFoundException.class);
 
 		// then
 		assertThat(ex).isNotNull();

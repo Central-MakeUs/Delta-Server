@@ -7,6 +7,5 @@ public record PageResult<T>(
 	int page,
 	int size,
 	long totalElements,
-	int totalPages
-) {
+	int totalPages) {
 }

@@ -14,13 +14,19 @@ public enum ErrorCode {
 	OAUTH_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_102", "외부 OAuth 응답이 올바르지 않습니다.", LogLevel.ERROR),
 	OAUTH_JWK_LOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_103", "외부 OAuth 공개키 로딩에 실패했습니다.", LogLevel.ERROR),
 
-	OAUTH_TOKEN_EXCHANGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_110", "외부 OAuth 토큰 교환에 실패했습니다.", LogLevel.ERROR),
-	OAUTH_TOKEN_EXCHANGE_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_111", "외부 OAuth 토큰 교환이 지연되고 있습니다.", LogLevel.ERROR),
-	OAUTH_TOKEN_EXCHANGE_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_112", "외부 OAuth 토큰 응답이 올바르지 않습니다.", LogLevel.ERROR),
+	OAUTH_TOKEN_EXCHANGE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_110", "외부 OAuth 토큰 교환에 실패했습니다.",
+		LogLevel.ERROR),
+	OAUTH_TOKEN_EXCHANGE_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_111", "외부 OAuth 토큰 교환이 지연되고 있습니다.",
+		LogLevel.ERROR),
+	OAUTH_TOKEN_EXCHANGE_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_112", "외부 OAuth 토큰 응답이 올바르지 않습니다.",
+		LogLevel.ERROR),
 
-	OAUTH_PROFILE_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_120", "외부 OAuth 프로필 조회에 실패했습니다.", LogLevel.ERROR),
-	OAUTH_PROFILE_FETCH_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_121", "외부 OAuth 프로필 조회가 지연되고 있습니다.", LogLevel.ERROR),
-	OAUTH_PROFILE_FETCH_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_122", "외부 OAuth 프로필 응답이 올바르지 않습니다.", LogLevel.ERROR),
+	OAUTH_PROFILE_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_120", "외부 OAuth 프로필 조회에 실패했습니다.",
+		LogLevel.ERROR),
+	OAUTH_PROFILE_FETCH_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_121", "외부 OAuth 프로필 조회가 지연되고 있습니다.",
+		LogLevel.ERROR),
+	OAUTH_PROFILE_FETCH_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_122", "외부 OAuth 프로필 응답이 올바르지 않습니다.",
+		LogLevel.ERROR),
 
 	// JWT (Access)
 	TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_010", "토큰이 필요합니다.", LogLevel.WARN), // access 누락

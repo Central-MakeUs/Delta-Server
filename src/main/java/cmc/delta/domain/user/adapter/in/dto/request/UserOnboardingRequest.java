@@ -5,6 +5,5 @@ import java.time.LocalDate;
 public record UserOnboardingRequest(
 	String name,
 	LocalDate birthDate,
-	boolean termsAgreed
-) {
+	boolean termsAgreed) {
 }

@@ -53,9 +53,9 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(multipart("/api/v1/problem-scans")
-				.file(file)
-				.requestAttr(ATTR, principal)
-				.contentType(MediaType.MULTIPART_FORM_DATA))
+			.file(file)
+			.requestAttr(ATTR, principal)
+			.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -74,8 +74,8 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(multipart("/api/v1/problem-scans")
-				.requestAttr(ATTR, principal)
-				.contentType(MediaType.MULTIPART_FORM_DATA))
+			.requestAttr(ATTR, principal)
+			.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isBadRequest());
 
 		verifyNoInteractions(scanCommandUseCase);
@@ -90,7 +90,7 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problem-scans/{scanId}", 7L)
-				.requestAttr(ATTR, principal))
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(problemScanQueryUseCase).getDetail(10L, 7L);
@@ -105,7 +105,7 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problem-scans/{scanId}/summary", 7L)
-				.requestAttr(ATTR, principal))
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(problemScanQueryUseCase).getSummary(10L, 7L);

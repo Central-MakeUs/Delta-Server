@@ -1,13 +1,11 @@
 package cmc.delta.domain.problem.application.validation.command;
 
-import java.util.List;
-
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.global.error.ErrorCode;
-
+import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -82,13 +80,13 @@ public class ProblemCreateRequestValidator {
 	private void validateValueAnswer(String answerValue, AnswerFormat answerFormat) {
 		if (isBlank(answerValue)) {
 			throw new ProblemValidationException(
-				"정답 값(answerValue)은 필수입니다. (answerFormat=" + answerFormat.name() + ")"
-			);
+				"정답 값(answerValue)은 필수입니다. (answerFormat=" + answerFormat.name() + ")");
 		}
 	}
 
 	private boolean isBlank(String value) {
-		if (value == null) return true;
+		if (value == null)
+			return true;
 		return value.trim().isEmpty();
 	}
 }

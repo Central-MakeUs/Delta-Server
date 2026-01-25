@@ -12,10 +12,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
@@ -73,12 +73,11 @@ class ApiResponseAdviceTest {
 			MediaType.APPLICATION_JSON,
 			null,
 			request,
-			response
-		);
+			response);
 
 		// then
 		assertThat(out).isInstanceOf(ApiResponse.class);
-		ApiResponse<?> wrapped = (ApiResponse<?>) out;
+		ApiResponse<?> wrapped = (ApiResponse<?>)out;
 		assertThat(wrapped.status()).isEqualTo(201);
 		assertThat(wrapped.code()).isEqualTo("S_201");
 		assertThat(wrapped.data()).isEqualTo(body);
@@ -104,14 +103,13 @@ class ApiResponseAdviceTest {
 			MediaType.TEXT_PLAIN,
 			null,
 			request,
-			response
-		);
+			response);
 
 		// then
 		assertThat(out).isInstanceOf(String.class);
 		assertThat(response.getHeaders().getContentType()).isEqualTo(MediaType.APPLICATION_JSON);
 
-		JsonNode node = objectMapper.readTree((String) out);
+		JsonNode node = objectMapper.readTree((String)out);
 		assertThat(node.get("status").asInt()).isEqualTo(200);
 		assertThat(node.get("code").asText()).isEqualTo("S_200");
 		assertThat(node.get("data").asText()).isEqualTo("ok");
@@ -134,8 +132,7 @@ class ApiResponseAdviceTest {
 			MediaType.APPLICATION_JSON,
 			null,
 			request,
-			response
-		);
+			response);
 
 		// then
 		assertThat(out).isSameAs(body);

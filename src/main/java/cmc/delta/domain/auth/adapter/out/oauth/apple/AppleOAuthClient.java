@@ -1,12 +1,18 @@
 package cmc.delta.domain.auth.adapter.out.oauth.apple;
 
+import com.nimbusds.jose.JOSEObjectType;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.JWSSigner;
+import com.nimbusds.jose.crypto.ECDSASigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.interfaces.ECPrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
 import java.util.Base64;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,18 +22,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
-
-import com.nimbusds.jose.JOSEObjectType;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.JWSHeader;
-import com.nimbusds.jose.JWSSigner;
-import com.nimbusds.jose.crypto.ECDSASigner;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-
+import org.springframework.web.client.RestTemplate;
 
 @Component
 public class AppleOAuthClient {
@@ -57,11 +54,10 @@ public class AppleOAuthClient {
 		form.add("redirect_uri", props.redirectUri());
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		HttpEntity<MultiValueMap<String, String>> entity =
-			new HttpEntity<MultiValueMap<String, String>>(form, headers);
+		HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<MultiValueMap<String, String>>(form, headers);
 		try {
-			ResponseEntity<AppleTokenResponse> resp =
-				appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity, AppleTokenResponse.class);
+			ResponseEntity<AppleTokenResponse> resp = appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity,
+				AppleTokenResponse.class);
 			AppleTokenResponse body = resp.getBody();
 			if (body == null || !StringUtils.hasText(body.idToken())) {
 				throw AppleOAuthException.tokenExchangeInvalidResponse();
@@ -99,7 +95,7 @@ public class AppleOAuthClient {
 
 			SignedJWT jwt = new SignedJWT(header, claims);
 
-			ECPrivateKey privateKey = (ECPrivateKey) loadPrivateKeyFromPem(props.privateKey());
+			ECPrivateKey privateKey = (ECPrivateKey)loadPrivateKeyFromPem(props.privateKey());
 			JWSSigner signer = new ECDSASigner(privateKey);
 
 			jwt.sign(signer);
@@ -138,6 +134,7 @@ public class AppleOAuthClient {
 		KeyFactory kf = KeyFactory.getInstance("EC");
 		return kf.generatePrivate(spec);
 	}
+
 	// 애플 토큰 응답(JSON)
 	// id_token은 OpenID Connect ID Token(JWT)
 	public static record AppleTokenResponse(
@@ -145,10 +142,17 @@ public class AppleOAuthClient {
 		String token_type,
 		Long expires_in,
 		String refresh_token,
-		String id_token
-	) {
-		public String idToken() { return id_token; }
-		public String accessToken() { return access_token; }
-		public String refreshToken() { return refresh_token; }
+		String id_token) {
+		public String idToken() {
+			return id_token;
+		}
+
+		public String accessToken() {
+			return access_token;
+		}
+
+		public String refreshToken() {
+			return refresh_token;
+		}
 	}
 }

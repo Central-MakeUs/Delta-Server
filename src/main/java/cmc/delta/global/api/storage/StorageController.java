@@ -36,9 +36,10 @@ public class StorageController {
 	})
 	@PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ApiResponse<StorageUploadData> uploadImage(
-		@RequestPart("file") MultipartFile file,
-		@RequestParam(value = "directory", required = false) String directory
-	) {
+		@RequestPart("file")
+		MultipartFile file,
+		@RequestParam(value = "directory", required = false)
+		String directory) {
 		StorageUploadData data = storageService.uploadImage(file, directory);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -50,9 +51,10 @@ public class StorageController {
 	})
 	@GetMapping("/images/presigned-get")
 	public ApiResponse<StoragePresignedGetData> presignGet(
-		@RequestParam("key") String storageKey,
-		@RequestParam(value = "ttlSeconds", required = false) Integer ttlSeconds
-	) {
+		@RequestParam("key")
+		String storageKey,
+		@RequestParam(value = "ttlSeconds", required = false)
+		Integer ttlSeconds) {
 		StoragePresignedGetData data = storageService.issueReadUrl(storageKey, ttlSeconds);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -63,7 +65,8 @@ public class StorageController {
 		ErrorCode.INTERNAL_ERROR
 	})
 	@DeleteMapping("/images")
-	public ApiResponse<Void> deleteImage(@RequestParam("key") String storageKey) {
+	public ApiResponse<Void> deleteImage(@RequestParam("key")
+	String storageKey) {
 		storageService.deleteImage(storageKey);
 		return ApiResponses.success(SuccessCode.OK);
 	}

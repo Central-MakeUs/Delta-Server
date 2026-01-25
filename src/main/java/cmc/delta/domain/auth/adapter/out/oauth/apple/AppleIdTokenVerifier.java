@@ -1,23 +1,19 @@
 package cmc.delta.domain.auth.adapter.out.oauth.apple;
 
-import java.net.URL;
-import java.text.ParseException;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.Date;
-
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-
+import cmc.delta.global.error.exception.BusinessException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.crypto.RSASSAVerifier;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
-
-
-import cmc.delta.global.error.exception.BusinessException;
+import java.net.URL;
+import java.text.ParseException;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.Date;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 @Component
 public class AppleIdTokenVerifier {
@@ -119,7 +115,7 @@ public class AppleIdTokenVerifier {
 				throw AppleOAuthException.algorithmNotRs256();
 			}
 
-			RSAKey rsaKey = (RSAKey) jwk;
+			RSAKey rsaKey = (RSAKey)jwk;
 			boolean ok = jwt.verify(new RSASSAVerifier(rsaKey.toRSAPublicKey()));
 			if (!ok) {
 				throw AppleOAuthException.signatureVerifyFailed();
@@ -166,5 +162,6 @@ public class AppleIdTokenVerifier {
 		cachedAtEpochSec = 0L;
 	}
 
-	public static record AppleIdClaims(String sub, String email) {}
+	public static record AppleIdClaims(String sub, String email) {
+	}
 }

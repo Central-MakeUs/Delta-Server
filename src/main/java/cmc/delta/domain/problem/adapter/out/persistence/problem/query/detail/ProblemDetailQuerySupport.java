@@ -49,20 +49,17 @@ public class ProblemDetailQuerySupport {
 				problem.solutionText,
 
 				problem.completedAt,
-				problem.createdAt
-			))
+				problem.createdAt))
 			.from(problem)
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
 			.join(problem.finalType, type)
 			.join(asset).on(
 				asset.scan.id.eq(problem.scan.id)
-					.and(asset.assetType.eq(AssetType.ORIGINAL))
-			)
+					.and(asset.assetType.eq(AssetType.ORIGINAL)))
 			.where(
 				problem.user.id.eq(userId),
-				problem.id.eq(problemId)
-			)
+				problem.id.eq(problemId))
 			.fetchOne();
 
 		return Optional.ofNullable(row);

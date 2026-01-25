@@ -42,9 +42,9 @@ class ErrorResponseFactoryTest {
 		assertThat(resp.message()).isEqualTo(ErrorCode.INVALID_REQUEST.defaultMessage());
 
 		assertThat(resp.data()).isInstanceOf(Map.class);
-		Map<?, ?> data = (Map<?, ?>) resp.data();
+		Map<?, ?> data = (Map<?, ?>)resp.data();
 		assertThat(data.get("fieldErrors")).isInstanceOf(Map.class);
-		Map<?, ?> fieldErrors = (Map<?, ?>) data.get("fieldErrors");
+		Map<?, ?> fieldErrors = (Map<?, ?>)data.get("fieldErrors");
 		assertThat(fieldErrors.get("name")).isEqualTo("invalid");
 	}
 
@@ -66,9 +66,9 @@ class ErrorResponseFactoryTest {
 
 		// then
 		assertThat(resp.data()).isInstanceOf(Map.class);
-		Map<?, ?> data = (Map<?, ?>) resp.data();
+		Map<?, ?> data = (Map<?, ?>)resp.data();
 		assertThat(data.get("violations")).isInstanceOf(Map.class);
-		Map<?, ?> mapped = (Map<?, ?>) data.get("violations");
+		Map<?, ?> mapped = (Map<?, ?>)data.get("violations");
 		assertThat(mapped.get("name")).isEqualTo("must not be blank");
 	}
 
@@ -86,7 +86,6 @@ class ErrorResponseFactoryTest {
 
 	private static class DummyController {
 		@SuppressWarnings("unused")
-		public void call(DummyRequest req) {
-		}
+		public void call(DummyRequest req) {}
 	}
 }

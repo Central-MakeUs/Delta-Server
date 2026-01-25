@@ -39,7 +39,8 @@ public class ProblemTypeCommandValidator {
 	}
 
 	public void validateSortOrder(Integer sortOrder) {
-		if (sortOrder == null) return;
+		if (sortOrder == null)
+			return;
 		if (sortOrder.intValue() < 1) {
 			throw ProblemTypeException.invalid("sortOrder는 1 이상이어야 합니다.");
 		}
@@ -52,7 +53,8 @@ public class ProblemTypeCommandValidator {
 	}
 
 	private String trimToNull(String v) {
-		if (v == null) return null;
+		if (v == null)
+			return null;
 		String t = v.trim();
 		return t.isEmpty() ? null : t;
 	}

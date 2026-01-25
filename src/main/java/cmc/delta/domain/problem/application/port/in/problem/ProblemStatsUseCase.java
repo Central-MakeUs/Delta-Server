@@ -1,9 +1,9 @@
 package cmc.delta.domain.problem.application.port.in.problem;
 
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemUnitStatsItemResponse;
-import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
 
 public interface ProblemStatsUseCase {
 

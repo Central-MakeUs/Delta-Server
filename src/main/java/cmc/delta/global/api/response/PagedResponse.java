@@ -9,15 +9,13 @@ public record PagedResponse<T>(
 	int page,
 	int size,
 	long totalElements,
-	int totalPages
-) {
+	int totalPages) {
 	public static <T> PagedResponse<T> of(
 		List<T> content,
 		int page,
 		int size,
 		long totalElements,
-		int totalPages
-	) {
+		int totalPages) {
 		return new PagedResponse<>(content, page, size, totalElements, totalPages);
 	}
 
@@ -27,8 +25,7 @@ public record PagedResponse<T>(
 			pageData.getNumber(),
 			pageData.getSize(),
 			pageData.getTotalElements(),
-			pageData.getTotalPages()
-		);
+			pageData.getTotalPages());
 	}
 
 	public static <E, R> PagedResponse<R> of(Page<E> pageData, Function<E, R> converter) {
@@ -41,8 +38,7 @@ public record PagedResponse<T>(
 			pageData.getNumber(),
 			pageData.getSize(),
 			pageData.getTotalElements(),
-			pageData.getTotalPages()
-		);
+			pageData.getTotalPages());
 	}
 
 	public static <E, R> PagedResponse<R> of(Page<E> pageData, List<R> content) {
@@ -51,7 +47,6 @@ public record PagedResponse<T>(
 			pageData.getNumber(),
 			pageData.getSize(),
 			pageData.getTotalElements(),
-			pageData.getTotalPages()
-		);
+			pageData.getTotalPages());
 	}
 }

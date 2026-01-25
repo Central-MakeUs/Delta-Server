@@ -7,6 +7,5 @@ public record ProblemUnitStatsItemResponse(
 	CurriculumItemResponse unit,
 	long solvedCount,
 	long unsolvedCount,
-	long totalCount
-) {
+	long totalCount) {
 }

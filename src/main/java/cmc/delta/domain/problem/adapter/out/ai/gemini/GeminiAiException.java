@@ -22,7 +22,8 @@ public class GeminiAiException extends BusinessException {
 	}
 
 	public static GeminiAiException externalCallFailed(RestClientResponseException cause) {
-		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_EXTERNAL_CALL_FAILED, cause.getRawStatusCode());
+		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_EXTERNAL_CALL_FAILED,
+			cause.getRawStatusCode());
 		return new GeminiAiException(ErrorCode.AI_PROCESSING_FAILED, REASON_EXTERNAL_CALL_FAILED, data, cause);
 	}
 

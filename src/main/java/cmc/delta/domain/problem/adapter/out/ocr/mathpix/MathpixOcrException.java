@@ -22,7 +22,8 @@ public class MathpixOcrException extends BusinessException {
 	}
 
 	public static MathpixOcrException externalCallFailed(RestClientResponseException cause) {
-		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_EXTERNAL_CALL_FAILED, cause.getRawStatusCode());
+		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_EXTERNAL_CALL_FAILED,
+			cause.getRawStatusCode());
 		return new MathpixOcrException(ErrorCode.OCR_PROCESSING_FAILED, REASON_EXTERNAL_CALL_FAILED, data, cause);
 	}
 

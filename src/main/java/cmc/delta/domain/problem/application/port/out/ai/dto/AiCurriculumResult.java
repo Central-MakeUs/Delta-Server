@@ -8,5 +8,5 @@ public record AiCurriculumResult(
 	String subjectCandidatesJson,
 	String unitCandidatesJson,
 	String typeCandidatesJson,
-	String aiDraftJson
-) {}
+	String aiDraftJson) {
+}

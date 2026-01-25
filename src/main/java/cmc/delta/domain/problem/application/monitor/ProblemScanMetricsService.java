@@ -18,8 +18,7 @@ public class ProblemScanMetricsService {
 	public WorkerMetricsSnapshot lastMinutes(
 		long windowMinutes,
 		long ocrLockLeaseSeconds,
-		long aiLockLeaseSeconds
-	) {
+		long aiLockLeaseSeconds) {
 		Window window = Window.lastMinutes(clock, windowMinutes);
 		StaleBefore stale = StaleBefore.from(window.now(), ocrLockLeaseSeconds, aiLockLeaseSeconds);
 
@@ -33,8 +32,7 @@ public class ProblemScanMetricsService {
 			counts.aiDone(),
 			counts.failed(),
 			counts.ocrBacklog(),
-			counts.aiBacklog()
-		);
+			counts.aiBacklog());
 	}
 
 	private Counts loadCounts(Window window, StaleBefore stale) {
@@ -59,8 +57,7 @@ public class ProblemScanMetricsService {
 		static StaleBefore from(LocalDateTime now, long ocrLockLeaseSeconds, long aiLockLeaseSeconds) {
 			return new StaleBefore(
 				now.minusSeconds(ocrLockLeaseSeconds),
-				now.minusSeconds(aiLockLeaseSeconds)
-			);
+				now.minusSeconds(aiLockLeaseSeconds));
 		}
 	}
 
@@ -69,6 +66,6 @@ public class ProblemScanMetricsService {
 		long aiDone,
 		long failed,
 		long ocrBacklog,
-		long aiBacklog
-	) {}
+		long aiBacklog) {
+	}
 }

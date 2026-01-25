@@ -29,7 +29,6 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
 
 		objectMapper.writeValue(
 			response.getOutputStream(),
-			ApiResponses.fail(ec.status().value(), ec.code(), null, ec.defaultMessage())
-		);
+			ApiResponses.fail(ec.status().value(), ec.code(), null, ec.defaultMessage()));
 	}
 }

@@ -20,8 +20,7 @@ class UserValidatorTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> validator.validateProvision(null),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -36,8 +35,7 @@ class UserValidatorTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> validator.validateProvision(cmd),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -52,8 +50,7 @@ class UserValidatorTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> validator.validateProvision(cmd),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -64,9 +61,8 @@ class UserValidatorTest {
 	void validateOnboarding_whenRequestNull_thenThrowsInvalidRequest() {
 		// when
 		BusinessException ex = catchThrowableOfType(
-			() -> validator.validate((UserOnboardingRequest) null),
-			BusinessException.class
-		);
+			() -> validator.validate((UserOnboardingRequest)null),
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);

@@ -1,8 +1,8 @@
 package cmc.delta.domain.auth.adapter.out.oauth.kakao;
 
-import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
-import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthClientException;
+import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
+import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -46,8 +46,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			OP_TOKEN,
 			TOKEN_URL,
 			form,
-			KakaoTokenResponse.class
-		);
+			KakaoTokenResponse.class);
 
 		if (body == null || !StringUtils.hasText(body.accessToken())) {
 			throw OAuthClientException.tokenExchangeInvalidResponse(PROVIDER_NAME);
@@ -66,8 +65,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			OP_USER,
 			USER_URL,
 			headers,
-			KakaoUserResponse.class
-		);
+			KakaoUserResponse.class);
 
 		if (body == null || body.id() <= 0) {
 			throw OAuthClientException.profileFetchInvalidResponse(PROVIDER_NAME);

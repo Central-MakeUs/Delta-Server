@@ -31,7 +31,7 @@ class AppleIdTokenVerifierTest {
 		Instant now = Instant.parse("2026-01-01T00:00:00Z");
 		Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 		KeyPair kp = generateRsa();
-		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) kp.getPublic())
+		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey)kp.getPublic())
 			.keyID("kid1")
 			.build();
 		JWKSet jwkSet = new JWKSet(jwk);
@@ -83,7 +83,7 @@ class AppleIdTokenVerifierTest {
 		Instant now = Instant.parse("2026-01-01T00:00:00Z");
 		Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 		KeyPair kp = generateRsa();
-		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) kp.getPublic())
+		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey)kp.getPublic())
 			.keyID("kid1")
 			.build();
 		JWKSet jwkSet = new JWKSet(jwk);
@@ -111,7 +111,7 @@ class AppleIdTokenVerifierTest {
 		Instant now = Instant.parse("2026-01-01T00:00:00Z");
 		Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 		KeyPair kp = generateRsa();
-		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) kp.getPublic())
+		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey)kp.getPublic())
 			.keyID("kid1")
 			.build();
 		JWKSet jwkSet = new JWKSet(jwk);
@@ -140,7 +140,7 @@ class AppleIdTokenVerifierTest {
 		Clock clock = Clock.fixed(now, ZoneOffset.UTC);
 		KeyPair signer = generateRsa();
 		KeyPair jwkKey = generateRsa();
-		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey) jwkKey.getPublic())
+		RSAKey jwk = new RSAKey.Builder((java.security.interfaces.RSAPublicKey)jwkKey.getPublic())
 			.keyID("kid1")
 			.build();
 		JWKSet jwkSet = new JWKSet(jwk);
@@ -181,7 +181,7 @@ class AppleIdTokenVerifierTest {
 
 	private String signJwt(KeyPair kp, JWSHeader header, JWTClaimsSet claims) throws Exception {
 		SignedJWT jwt = new SignedJWT(header, claims);
-		jwt.sign(new RSASSASigner((java.security.interfaces.RSAPrivateKey) kp.getPrivate()));
+		jwt.sign(new RSASSASigner((java.security.interfaces.RSAPrivateKey)kp.getPrivate()));
 		return jwt.serialize();
 	}
 }

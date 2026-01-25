@@ -3,13 +3,13 @@ package cmc.delta.domain.problem.application.service.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.in.scan.result.*;
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.mapper.scan.*;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
+import cmc.delta.domain.problem.application.port.in.scan.result.*;
 import cmc.delta.domain.problem.application.port.out.prediction.ScanTypePredictionReader;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.validation.query.*;
 import cmc.delta.global.storage.port.out.StoragePort;
@@ -52,8 +52,7 @@ class ProblemScanQueryServiceImplTest {
 			subjectResolver,
 			detailMapper,
 			summaryValidator,
-			summaryMapper
-		);
+			summaryMapper);
 	}
 
 	@Test

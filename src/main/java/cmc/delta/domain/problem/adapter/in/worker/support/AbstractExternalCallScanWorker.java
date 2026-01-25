@@ -30,8 +30,7 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 		ScanLockGuard lockGuard,
 		ScanUnlocker unlocker,
 		BacklogLogger backlogLogger,
-		WorkerLogPolicy logPolicy
-	) {
+		WorkerLogPolicy logPolicy) {
 		super(clock, workerTxTemplate, executor, identity.name());
 		this.identity = identity;
 		this.lockGuard = lockGuard;
@@ -50,8 +49,7 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 			now,
 			backlogLogMinutes(),
 			() -> countBacklog(now, staleBefore),
-			(backlog) -> log.info("{} 워커 - 처리 대상 없음 (backlog={})", identity.label(), backlog)
-		);
+			(backlog) -> log.info("{} 워커 - 처리 대상 없음 (backlog={})", identity.label(), backlog));
 	}
 
 	@Override
@@ -87,8 +85,7 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 				identity.label(),
 				scanId,
 				logPolicy.reasonCode(decision),
-				rest.getRawStatusCode()
-			);
+				rest.getRawStatusCode());
 			return;
 		}
 		log.error("{} 처리 실패 scanId={} reason={}", identity.label(), scanId, logPolicy.reasonCode(decision), exception);

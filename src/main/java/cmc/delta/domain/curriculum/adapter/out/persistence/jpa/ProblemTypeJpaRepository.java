@@ -9,16 +9,17 @@ import org.springframework.data.repository.query.Param;
 public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, String> {
 
 	@Query("""
-        select t
-        from ProblemType t
-        where t.active = true
-          and (
-                t.custom = false
-                or (t.custom = true and t.createdByUser.id = :userId)
+		      select t
+		      from ProblemType t
+		      where t.active = true
+		        and (
+		              t.custom = false
+		              or (t.custom = true and t.createdByUser.id = :userId)
 		  )
 		order by t.sortOrder asc, t.id asc
 		""")
-	List<ProblemType> findAllActiveForUser(@Param("userId") Long userId);
+	List<ProblemType> findAllActiveForUser(@Param("userId")
+	Long userId);
 
 	@Query("""
 		select t
@@ -29,7 +30,8 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		)
 		order by t.sortOrder asc, t.id asc
 		""")
-	List<ProblemType> findAllForUser(@Param("userId") Long userId);
+	List<ProblemType> findAllForUser(@Param("userId")
+	Long userId);
 
 	@Query("""
 		select t
@@ -38,7 +40,9 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		  and t.createdByUser.id = :userId
 		  and t.id = :typeId
 		""")
-	Optional<ProblemType> findOwnedCustomById(@Param("userId") Long userId, @Param("typeId") String typeId);
+	Optional<ProblemType> findOwnedCustomById(@Param("userId")
+	Long userId, @Param("typeId")
+	String typeId);
 
 	boolean existsByCreatedByUserIdAndCustomTrueAndName(Long userId, String name);
 
@@ -50,7 +54,8 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		      or (t.custom = true and t.createdByUser.id = :userId)
 		)
 		""")
-	int findMaxSortOrderVisibleForUser(@Param("userId") Long userId);
+	int findMaxSortOrderVisibleForUser(@Param("userId")
+	Long userId);
 
 	@Query("""
 		select t
@@ -62,7 +67,9 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		        or (t.custom = true and t.createdByUser.id = :userId)
 		  )
 		""")
-	Optional<ProblemType> findActiveVisibleById(@Param("userId") Long userId, @Param("typeId") String typeId);
+	Optional<ProblemType> findActiveVisibleById(@Param("userId")
+	Long userId, @Param("typeId")
+	String typeId);
 
 	@Query("""
 		select t
@@ -75,7 +82,8 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		  )
 		""")
 	List<ProblemType> findActiveVisibleByIds(
-		@Param("userId") Long userId,
-		@Param("typeIds") List<String> typeIds
-	);
+		@Param("userId")
+		Long userId,
+		@Param("typeIds")
+		List<String> typeIds);
 }

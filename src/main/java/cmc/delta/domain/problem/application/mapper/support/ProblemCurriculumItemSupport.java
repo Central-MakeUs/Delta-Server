@@ -5,7 +5,8 @@ import cmc.delta.domain.problem.application.port.in.support.CurriculumItemRespon
 public interface ProblemCurriculumItemSupport {
 
 	default CurriculumItemResponse toItem(String id, String name) {
-		if (id == null) return null;
+		if (id == null)
+			return null;
 		return new CurriculumItemResponse(id, name);
 	}
 }

@@ -73,8 +73,7 @@ class ProblemTest {
 			"newAns",
 			"newSol",
 			true,
-			true
-		);
+			true);
 
 		// when
 		p.applyUpdate(cmd);

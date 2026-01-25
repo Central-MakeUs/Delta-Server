@@ -37,9 +37,10 @@ public class ProblemTypeController {
 	})
 	@GetMapping
 	public ApiResponse<ProblemTypeListResponse> getMyTypes(
-		@CurrentUser UserPrincipal principal,
-		@RequestParam(name = "includeInactive", required = false, defaultValue = "false") boolean includeInactive
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestParam(name = "includeInactive", required = false, defaultValue = "false")
+		boolean includeInactive) {
 		ProblemTypeListResponse data = problemTypeUseCase.getMyTypes(principal.userId(), includeInactive);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -55,11 +56,11 @@ public class ProblemTypeController {
 	})
 	@PostMapping
 	public ApiResponse<ProblemTypeItemResponse> createCustomType(
-		@CurrentUser UserPrincipal principal,
-		@RequestBody ProblemTypeCreateRequest request
-	) {
-		ProblemTypeItemResponse data =
-			problemTypeUseCase.createCustomType(principal.userId(), request.toCommand());
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		ProblemTypeCreateRequest request) {
+		ProblemTypeItemResponse data = problemTypeUseCase.createCustomType(principal.userId(), request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -75,12 +76,14 @@ public class ProblemTypeController {
 	})
 	@PatchMapping("/{typeId}")
 	public ApiResponse<ProblemTypeItemResponse> updateCustomType(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable String typeId,
-		@RequestBody ProblemTypeUpdateRequest request
-	) {
-		ProblemTypeItemResponse data =
-			problemTypeUseCase.updateCustomType(principal.userId(), typeId, request.toCommand());
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		String typeId,
+		@RequestBody
+		ProblemTypeUpdateRequest request) {
+		ProblemTypeItemResponse data = problemTypeUseCase.updateCustomType(principal.userId(), typeId,
+			request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -96,10 +99,12 @@ public class ProblemTypeController {
 	})
 	@PatchMapping("/{typeId}/activation")
 	public ApiResponse<Void> setCustomTypeActive(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable String typeId,
-		@RequestBody ProblemTypeActivationRequest request
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		String typeId,
+		@RequestBody
+		ProblemTypeActivationRequest request) {
 		problemTypeUseCase.setActive(principal.userId(), typeId, request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}

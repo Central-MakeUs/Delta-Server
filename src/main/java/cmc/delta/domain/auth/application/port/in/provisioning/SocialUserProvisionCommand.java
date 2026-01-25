@@ -6,5 +6,5 @@ public record SocialUserProvisionCommand(
 	SocialProvider provider,
 	String providerUserId,
 	String email,
-	String nickname
-) {}
+	String nickname) {
+}

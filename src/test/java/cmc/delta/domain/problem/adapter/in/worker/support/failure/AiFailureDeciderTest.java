@@ -55,8 +55,7 @@ class AiFailureDeciderTest {
 			"too many",
 			headers,
 			new byte[0],
-			null
-		);
+			null);
 
 		// when
 		FailureDecision decision = decider.decide(ex);
@@ -76,8 +75,7 @@ class AiFailureDeciderTest {
 			"too many",
 			null,
 			new byte[0],
-			null
-		);
+			null);
 
 		// when
 		FailureDecision decision = decider.decide(ex);

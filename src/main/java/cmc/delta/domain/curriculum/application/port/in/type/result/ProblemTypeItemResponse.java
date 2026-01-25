@@ -5,5 +5,5 @@ public record ProblemTypeItemResponse(
 	String name,
 	boolean custom,
 	boolean active,
-	int sortOrder
-) {}
+	int sortOrder) {
+}

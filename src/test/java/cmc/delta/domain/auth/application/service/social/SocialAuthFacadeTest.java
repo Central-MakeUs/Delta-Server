@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.model.SocialProvider;
@@ -36,7 +36,8 @@ class SocialAuthFacadeTest {
 
 		SocialLoginCommandUseCase.LoginResult out = sut.loginKakao("code");
 
-		ArgumentCaptor<SocialUserProvisionCommand> cmdCaptor = ArgumentCaptor.forClass(SocialUserProvisionCommand.class);
+		ArgumentCaptor<SocialUserProvisionCommand> cmdCaptor = ArgumentCaptor
+			.forClass(SocialUserProvisionCommand.class);
 		verify(provisioning).provisionSocialUser(cmdCaptor.capture());
 		assertThat(cmdCaptor.getValue())
 			.isEqualTo(new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "e@e.com", "nick"));

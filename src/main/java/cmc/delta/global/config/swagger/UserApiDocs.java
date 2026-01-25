@@ -2,8 +2,7 @@ package cmc.delta.global.config.swagger;
 
 public final class UserApiDocs {
 
-	private UserApiDocs() {
-	}
+	private UserApiDocs() {}
 
 	public static final String COMPLETE_ONBOARDING = """
 		추가 정보를 입력하여 회원가입을 완료합니다.

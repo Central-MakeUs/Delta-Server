@@ -22,6 +22,11 @@ public class ProblemScanTypePredictionId implements Serializable {
 		this.typeId = typeId;
 	}
 
-	public Long getScanId() { return scanId; }
-	public String getTypeId() { return typeId; }
+	public Long getScanId() {
+		return scanId;
+	}
+
+	public String getTypeId() {
+		return typeId;
+	}
 }

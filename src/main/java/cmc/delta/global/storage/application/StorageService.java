@@ -63,8 +63,7 @@ public class StorageService {
 			contentType,
 			bytes.length,
 			imageSize.width(),
-			imageSize.height()
-		);
+			imageSize.height());
 	}
 
 	/**
@@ -98,8 +97,7 @@ public class StorageService {
 			resolvedContentType,
 			bytes.length,
 			imageSize.width(),
-			imageSize.height()
-		);
+			imageSize.height());
 	}
 
 	public StoragePresignedGetData issueReadUrl(String storageKey, Integer ttlSecondsOrNull) {
@@ -114,8 +112,7 @@ public class StorageService {
 
 		log.info(
 			"스토리지 조회 URL 발급 완료 storageKey={} ttlSeconds={} durationMs={}",
-			storageKey, ttlSeconds, durationMs
-		);
+			storageKey, ttlSeconds, durationMs);
 
 		return new StoragePresignedGetData(url, ttlSeconds);
 	}
@@ -170,8 +167,7 @@ public class StorageService {
 		String contentType,
 		long sizeBytes,
 		ImageMetadataExtractor.ImageSize imageSize,
-		long durationMs
-	) {
+		long durationMs) {
 		log.info(
 			"스토리지 업로드 완료 storageKey={} directory={} contentType={} sizeBytes={} width={} height={} durationMs={}",
 			storageKey,
@@ -180,8 +176,7 @@ public class StorageService {
 			sizeBytes,
 			imageSize.width(),
 			imageSize.height(),
-			durationMs
-		);
+			durationMs);
 	}
 
 	private long elapsedMs(long startedAtNano) {

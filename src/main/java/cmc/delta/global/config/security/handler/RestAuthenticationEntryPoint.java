@@ -31,8 +31,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
 		objectMapper.writeValue(
 			response.getOutputStream(),
-			ApiResponses.fail(ec.status().value(), ec.code(), null, ec.defaultMessage())
-		);
+			ApiResponses.fail(ec.status().value(), ec.code(), null, ec.defaultMessage()));
 	}
 
 	private ErrorCode resolveErrorCode(HttpServletRequest request) {

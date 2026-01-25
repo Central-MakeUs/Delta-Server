@@ -77,9 +77,9 @@ class ProblemTypeControllerWebMvcTest {
 			.thenReturn(new ProblemTypeItemResponse("T_C_x", "서술형", true, true, 7));
 
 		mvc.perform(post("/api/v1/problem-types")
-				.requestAttr(ATTR, principal(10L))
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsBytes(req)))
+			.requestAttr(ATTR, principal(10L))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsBytes(req)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -92,9 +92,9 @@ class ProblemTypeControllerWebMvcTest {
 		ProblemTypeActivationRequest req = new ProblemTypeActivationRequest(false);
 
 		mvc.perform(patch("/api/v1/problem-types/T_C_x/activation")
-				.requestAttr(ATTR, principal(10L))
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsBytes(req)))
+			.requestAttr(ATTR, principal(10L))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsBytes(req)))
 			.andExpect(status().isOk());
 
 		verify(problemTypeUseCase).setActive(eq(10L), eq("T_C_x"), any());
@@ -108,9 +108,9 @@ class ProblemTypeControllerWebMvcTest {
 			.thenReturn(new ProblemTypeItemResponse("T_C_x", "새이름", true, true, 3));
 
 		mvc.perform(patch("/api/v1/problem-types/T_C_x")
-				.requestAttr(ATTR, principal(10L))
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsBytes(req)))
+			.requestAttr(ATTR, principal(10L))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsBytes(req)))
 			.andExpect(status().isOk());
 
 		verify(problemTypeUseCase).updateCustomType(eq(10L), eq("T_C_x"), any());

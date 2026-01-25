@@ -1,8 +1,8 @@
 package cmc.delta.domain.problem.application.validation.command;
 
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
-import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import org.springframework.stereotype.Component;
 
 @Component

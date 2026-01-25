@@ -4,13 +4,13 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemList
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCompleteRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
+import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
-import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
-import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
-import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
-import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -24,7 +24,6 @@ import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "오답카드")
@@ -37,10 +36,7 @@ public class ProblemController {
 	private final ProblemQueryUseCase problemQueryUseCase;
 	private final ProblemListConditionFactory conditionFactory;
 
-	@Operation(
-		summary = "오답카드 생성 (scan 기반 최종 저장)",
-		description = ProblemApiDocs.CREATE_WRONG_ANSWER_CARD
-	)
+	@Operation(summary = "오답카드 생성 (scan 기반 최종 저장)", description = ProblemApiDocs.CREATE_WRONG_ANSWER_CARD)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -52,17 +48,16 @@ public class ProblemController {
 	})
 	@PostMapping
 	public ApiResponse<ProblemCreateResponse> createWrongAnswerCard(
-		@CurrentUser UserPrincipal principal,
-		@RequestBody ProblemCreateRequest request
-	) {
-		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request.toCommand());
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		ProblemCreateRequest request) {
+		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(),
+			request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(
-		summary = "내 오답 카드 목록 조회",
-		description = ProblemApiDocs.LIST_MY_PROBLEMS
-	)
+	@Operation(summary = "내 오답 카드 목록 조회", description = ProblemApiDocs.LIST_MY_PROBLEMS)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -73,22 +68,20 @@ public class ProblemController {
 	})
 	@GetMapping
 	public ApiResponse<PagedResponse<ProblemListItemResponse>> getMyProblemList(
-		@CurrentUser UserPrincipal principal,
-		@ModelAttribute MyProblemListRequest query
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@ModelAttribute
+		MyProblemListRequest query) {
 		PageQuery pageQuery = new PageQuery(query.page(), query.size());
 		ProblemListCondition condition = conditionFactory.from(query);
 
-		PagedResponse<ProblemListItemResponse> data =
-			problemQueryUseCase.getMyProblemCardList(principal.userId(), condition, pageQuery);
+		PagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardList(principal.userId(),
+			condition, pageQuery);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(
-		summary = "오답카드 오답 완료 처리",
-		description = ProblemApiDocs.COMPLETE_WRONG_ANSWER_CARD
-	)
+	@Operation(summary = "오답카드 오답 완료 처리", description = ProblemApiDocs.COMPLETE_WRONG_ANSWER_CARD)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -96,16 +89,17 @@ public class ProblemController {
 	})
 	@PostMapping("/{problemId}/complete")
 	public ApiResponse<Void> completeWrongAnswerCard(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long problemId,
-		@RequestBody ProblemCompleteRequest request
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId,
+		@RequestBody
+		ProblemCompleteRequest request) {
 		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 
-	@Operation(summary = "내 오답카드 상세 조회",
-	description = ProblemApiDocs.GET_MY_PROBLEM_DETAIL)
+	@Operation(summary = "내 오답카드 상세 조회", description = ProblemApiDocs.GET_MY_PROBLEM_DETAIL)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -115,18 +109,16 @@ public class ProblemController {
 	})
 	@GetMapping("/{problemId}")
 	public ApiResponse<ProblemDetailResponse> getMyProblemDetail(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long problemId
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId) {
 		ProblemDetailResponse data = problemQueryUseCase.getMyProblemDetail(principal.userId(), problemId);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(
-		summary = "오답카드 정답/풀이 수정",
-		description = ProblemApiDocs.UPDATE_WRONG_ANSWER_CARD
-	)
+	@Operation(summary = "오답카드 정답/풀이 수정", description = ProblemApiDocs.UPDATE_WRONG_ANSWER_CARD)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -137,10 +129,12 @@ public class ProblemController {
 	})
 	@PatchMapping("/{problemId}")
 	public ApiResponse<Void> updateWrongAnswerCard(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long problemId,
-		@RequestBody ProblemUpdateRequest request
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId,
+		@RequestBody
+		ProblemUpdateRequest request) {
 		problemCommandUseCase.updateWrongAnswerCard(principal.userId(), problemId, request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}

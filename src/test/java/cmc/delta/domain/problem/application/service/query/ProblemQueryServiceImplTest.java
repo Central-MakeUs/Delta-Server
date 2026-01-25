@@ -3,17 +3,17 @@ package cmc.delta.domain.problem.application.service.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
+import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
-import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
-import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
@@ -48,8 +48,7 @@ class ProblemQueryServiceImplTest {
 			problemTypeTagQueryPort,
 			storagePort,
 			listMapper,
-			detailMapper
-		);
+			detailMapper);
 	}
 
 	@Test
@@ -75,8 +74,7 @@ class ProblemQueryServiceImplTest {
 			new CurriculumItemResponse("U1", "unit"),
 			List.of(),
 			new ProblemListItemResponse.PreviewImageResponse(1L, "https://read/s3/k.png"),
-			LocalDateTime.now()
-		);
+			LocalDateTime.now());
 		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(base);
 
 		// when
@@ -112,8 +110,7 @@ class ProblemQueryServiceImplTest {
 			"sol",
 			false,
 			null,
-			LocalDateTime.now()
-		);
+			LocalDateTime.now());
 		when(detailMapper.toResponse(row, "https://read/s3/d.png")).thenReturn(base);
 
 		// when

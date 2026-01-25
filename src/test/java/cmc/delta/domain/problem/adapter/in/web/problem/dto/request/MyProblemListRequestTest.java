@@ -14,7 +14,8 @@ class MyProblemListRequestTest {
 	void defaultsAndBounds() {
 		// when
 		MyProblemListRequest req1 = new MyProblemListRequest(null, null, null, null, null, null, null);
-		MyProblemListRequest req2 = new MyProblemListRequest(null, null, null, ProblemListSort.OLDEST, ProblemStatusFilter.SOLVED, -1, 200);
+		MyProblemListRequest req2 = new MyProblemListRequest(null, null, null, ProblemListSort.OLDEST,
+			ProblemStatusFilter.SOLVED, -1, 200);
 
 		// then
 		assertThat(req1.sort()).isEqualTo(ProblemListSort.RECENT);

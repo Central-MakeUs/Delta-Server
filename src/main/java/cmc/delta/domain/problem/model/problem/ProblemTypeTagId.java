@@ -22,6 +22,11 @@ public class ProblemTypeTagId implements Serializable {
 		this.typeId = typeId;
 	}
 
-	public Long getProblemId() { return problemId; }
-	public String getTypeId() { return typeId; }
+	public Long getProblemId() {
+		return problemId;
+	}
+
+	public String getTypeId() {
+		return typeId;
+	}
 }

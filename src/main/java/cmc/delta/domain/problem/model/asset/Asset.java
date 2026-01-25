@@ -11,15 +11,12 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(
-	name = "asset",
-	indexes = {
-		@Index(name = "idx_asset_storage_key", columnList = "storage_key", unique = true),
-		@Index(name = "idx_asset_scan_type", columnList = "scan_id, asset_type")
-	},
-	uniqueConstraints = {
-		@UniqueConstraint(name = "uk_asset_scan_type_slot", columnNames = {"scan_id", "asset_type", "slot"})
-	})
+@Table(name = "asset", indexes = {
+	@Index(name = "idx_asset_storage_key", columnList = "storage_key", unique = true),
+	@Index(name = "idx_asset_scan_type", columnList = "scan_id, asset_type")
+}, uniqueConstraints = {
+	@UniqueConstraint(name = "uk_asset_scan_type_slot", columnNames = {"scan_id", "asset_type", "slot"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Asset extends BaseCreatedEntity {
@@ -58,8 +55,7 @@ public class Asset extends BaseCreatedEntity {
 		String storageKey,
 		Integer width,
 		Integer height,
-		String meta
-	) {
+		String meta) {
 		this.scan = scan;
 		this.assetType = assetType;
 		this.slot = slot;
@@ -77,7 +73,6 @@ public class Asset extends BaseCreatedEntity {
 			storageKey,
 			width,
 			height,
-			null
-		);
+			null);
 	}
 }

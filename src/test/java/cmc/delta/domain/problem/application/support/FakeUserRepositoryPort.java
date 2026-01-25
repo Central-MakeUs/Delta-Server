@@ -38,13 +38,15 @@ public final class FakeUserRepositoryPort implements UserRepositoryPort {
 	@Override
 	public User getReferenceById(Long id) {
 		User user = store.get(id);
-		if (user == null) throw new IllegalStateException("user not found id=" + id);
+		if (user == null)
+			throw new IllegalStateException("user not found id=" + id);
 		return user;
 	}
 
 	@Override
 	public void delete(User user) {
-		if (user == null || user.getId() == null) return;
+		if (user == null || user.getId() == null)
+			return;
 		store.remove(user.getId());
 	}
 }

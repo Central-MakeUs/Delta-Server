@@ -23,8 +23,7 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 		"POST /api/v1/users/withdrawal",
 		"GET /api/v1/users/me",
 		"POST /api/v1/auth/logout",
-		"POST /api/v1/auth/reissue"
-	);
+		"POST /api/v1/auth/reissue");
 
 	public OnboardingBlockFilter(UserStatusQuery userStatusQuery) {
 		this.userStatusQuery = userStatusQuery;
@@ -34,8 +33,7 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(
 		HttpServletRequest request,
 		HttpServletResponse response,
-		FilterChain filterChain
-	) throws ServletException, IOException {
+		FilterChain filterChain) throws ServletException, IOException {
 
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal principal)) {

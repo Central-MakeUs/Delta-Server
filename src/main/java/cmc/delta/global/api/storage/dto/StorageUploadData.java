@@ -6,5 +6,5 @@ public record StorageUploadData(
 	String contentType,
 	long sizeBytes,
 	Integer width,
-	Integer height
-) {}
+	Integer height) {
+}

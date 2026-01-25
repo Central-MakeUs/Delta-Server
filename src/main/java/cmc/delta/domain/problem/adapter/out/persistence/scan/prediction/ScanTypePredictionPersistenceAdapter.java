@@ -27,7 +27,8 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 	@Transactional
 	public void replacePredictions(Long scanId, List<TypePrediction> predictions) {
 		ProblemScan scan = scanRepository.findById(scanId).orElse(null);
-		if (scan == null) return;
+		if (scan == null)
+			return;
 
 		predictionRepository.deleteAllByScan_Id(scanId);
 
@@ -38,7 +39,8 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 		int rank = 1;
 		for (TypePrediction p : top) {
 			ProblemType type = problemTypeReader.findById(p.typeId()).orElse(null);
-			if (type == null) continue;
+			if (type == null)
+				continue;
 
 			rows.add(new ProblemScanTypePrediction(scan, type, rank++, p.confidence()));
 		}
@@ -54,8 +56,7 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 				p.getType().getId(),
 				p.getType().getName(),
 				p.getRankNo(),
-				p.getConfidence()
-			))
+				p.getConfidence()))
 			.toList();
 	}
 }

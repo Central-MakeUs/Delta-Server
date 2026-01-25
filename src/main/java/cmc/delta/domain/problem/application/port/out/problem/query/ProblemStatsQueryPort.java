@@ -1,10 +1,9 @@
 package cmc.delta.domain.problem.application.port.out.problem.query;
 
-import java.util.List;
-
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
+import java.util.List;
 
 public interface ProblemStatsQueryPort {
 

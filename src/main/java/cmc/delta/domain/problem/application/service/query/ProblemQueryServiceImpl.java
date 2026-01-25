@@ -1,19 +1,19 @@
 package cmc.delta.domain.problem.application.service.query;
 
-import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
-import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
-import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
-import cmc.delta.domain.problem.application.port.in.support.PageQuery;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
@@ -44,8 +44,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	public PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,
 		ProblemListCondition condition,
-		PageQuery pageQuery
-	) {
+		PageQuery pageQuery) {
 		validatePagination(pageQuery);
 
 		PageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageQuery);
@@ -57,8 +56,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			pageData.page(),
 			pageData.size(),
 			pageData.totalElements(),
-			pageData.totalPages()
-		);
+			pageData.totalPages());
 	}
 
 	@Override
@@ -91,15 +89,12 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			.collect(
 				Collectors.groupingBy(
 					ProblemTypeTagRow::problemId,
-					Collectors.mapping(this::toTypeItem, Collectors.toList())
-				)
-			);
+					Collectors.mapping(this::toTypeItem, Collectors.toList())));
 	}
 
 	private List<ProblemListItemResponse> mapListItems(
 		PageResult<ProblemListRow> pageData,
-		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId
-	) {
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
 		return pageData.content().stream()
 			.map(row -> toListItem(row, typeItemsByProblemId))
 			.toList();
@@ -107,8 +102,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 	private ProblemListItemResponse toListItem(
 		ProblemListRow row,
-		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId
-	) {
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
 		String previewUrl = storagePort.issueReadUrl(row.storageKey());
 		ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
 
@@ -119,8 +113,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.unit(),
 			types,
 			base.previewImage(),
-			base.createdAt()
-		);
+			base.createdAt());
 	}
 
 	private List<CurriculumItemResponse> loadTypeItems(Long problemId) {
@@ -146,7 +139,6 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.solutionText(),
 			base.completed(),
 			base.completedAt(),
-			base.createdAt()
-		);
+			base.createdAt());
 	}
 }

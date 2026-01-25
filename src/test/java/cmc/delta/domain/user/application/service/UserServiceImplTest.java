@@ -2,8 +2,8 @@ package cmc.delta.domain.user.application.service;
 
 import static org.assertj.core.api.Assertions.*;
 
-import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
 import cmc.delta.domain.user.application.validator.UserValidator;
@@ -51,8 +51,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.getMyProfile(userId),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -82,8 +81,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.withdrawAccount(userId),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -99,8 +97,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.withdrawAccount(user.getId()),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -134,8 +131,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.completeOnboarding(userId, request),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -151,8 +147,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.completeOnboarding(user.getId(), request),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_WITHDRAWN);
@@ -167,8 +162,7 @@ class UserServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.completeOnboarding(user.getId(), null),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);

@@ -6,9 +6,9 @@ public record ProblemStatsRequest(
 	String subjectId,
 	String unitId,
 	String typeId,
-	ProblemStatsSort sort
-) {
+	ProblemStatsSort sort) {
 	public ProblemStatsRequest {
-		if (sort == null) sort = ProblemStatsSort.DEFAULT;
+		if (sort == null)
+			sort = ProblemStatsSort.DEFAULT;
 	}
 }

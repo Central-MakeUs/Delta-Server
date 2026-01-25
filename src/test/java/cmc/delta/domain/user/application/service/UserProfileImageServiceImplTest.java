@@ -54,8 +54,7 @@ class UserProfileImageServiceImplTest {
 		// when
 		UserProfileImageResult result = sut.uploadMyProfileImage(
 			10L,
-			new ProfileImageUploadCommand("x".getBytes(), "image/png", "p.png")
-		);
+			new ProfileImageUploadCommand("x".getBytes(), "image/png", "p.png"));
 
 		// then
 		assertThat(result.storageKey()).isEqualTo("new.png");
@@ -81,8 +80,7 @@ class UserProfileImageServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.uploadMyProfileImage(999L, new ProfileImageUploadCommand(new byte[0], "image/png", "p.png")),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
@@ -149,8 +147,7 @@ class UserProfileImageServiceImplTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> sut.getMyProfileImage(10L),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_WITHDRAWN);

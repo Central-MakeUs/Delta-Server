@@ -32,14 +32,13 @@ public class UserController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@GetMapping("/me")
-	public ApiResponse<UserMeData> getMyProfile(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<UserMeData> getMyProfile(@CurrentUser
+	UserPrincipal principal) {
 		UserMeData data = userUseCase.getMyProfile(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "추가정보 입력(가입 완료)",
-		description = UserApiDocs.COMPLETE_ONBOARDING
-	)
+	@Operation(summary = "추가정보 입력(가입 완료)", description = UserApiDocs.COMPLETE_ONBOARDING)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -49,9 +48,10 @@ public class UserController {
 	})
 	@PostMapping("/me/onboarding")
 	public ApiResponse<Void> completeOnboarding(
-		@CurrentUser UserPrincipal principal,
-		@RequestBody UserOnboardingRequest request
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		UserOnboardingRequest request) {
 		userUseCase.completeOnboarding(principal.userId(), request);
 		return ApiResponses.success(SuccessCode.OK);
 	}
@@ -64,7 +64,8 @@ public class UserController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@PostMapping("/withdrawal")
-	public ApiResponse<Void> withdrawMyAccount(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<Void> withdrawMyAccount(@CurrentUser
+	UserPrincipal principal) {
 		userUseCase.withdrawAccount(principal.userId());
 		return ApiResponses.success(SuccessCode.OK);
 	}

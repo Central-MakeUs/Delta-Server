@@ -13,11 +13,8 @@ final class GeminiSchemaFactory {
 				"type", "OBJECT",
 				"properties", Map.of(
 					"id", Map.of("type", "STRING"),
-					"score", Map.of("type", "NUMBER")
-				),
-				"required", List.of("id", "score")
-			)
-		);
+					"score", Map.of("type", "NUMBER")),
+				"required", List.of("id", "score")));
 
 		return Map.of(
 			"type", "OBJECT",
@@ -28,8 +25,7 @@ final class GeminiSchemaFactory {
 				"confidence", Map.of("type", "NUMBER"),
 				"subject_candidates", candidateArraySchema,
 				"unit_candidates", candidateArraySchema,
-				"type_candidates", candidateArraySchema
-			),
+				"type_candidates", candidateArraySchema),
 			"required", List.of(
 				"predicted_subject_id",
 				"predicted_unit_id",
@@ -37,8 +33,6 @@ final class GeminiSchemaFactory {
 				"confidence",
 				"subject_candidates",
 				"unit_candidates",
-				"type_candidates"
-			)
-		);
+				"type_candidates"));
 	}
 }

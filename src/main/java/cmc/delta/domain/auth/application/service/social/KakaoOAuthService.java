@@ -1,11 +1,10 @@
 package cmc.delta.domain.auth.application.service.social;
 
+import cmc.delta.domain.auth.application.exception.SocialAuthException;
+import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
-import cmc.delta.domain.auth.application.exception.SocialAuthException;
-import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -31,5 +30,6 @@ public class KakaoOAuthService {
 		return value;
 	}
 
-	public record SocialUserInfo(String providerUserId, String email, String nickname) {}
+	public record SocialUserInfo(String providerUserId, String email, String nickname) {
+	}
 }

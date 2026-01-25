@@ -7,16 +7,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "problem_type_tag",
-	indexes = {
-		@Index(name = "idx_problem_type_tag_type_problem", columnList = "type_id, problem_id"),
-		@Index(name = "idx_problem_type_tag_problem", columnList = "problem_id")
-	},
-	uniqueConstraints = {
-		@UniqueConstraint(name = "uk_problem_type_tag", columnNames = {"problem_id", "type_id"})
-	}
-)
+@Table(name = "problem_type_tag", indexes = {
+	@Index(name = "idx_problem_type_tag_type_problem", columnList = "type_id, problem_id"),
+	@Index(name = "idx_problem_type_tag_problem", columnList = "problem_id")
+}, uniqueConstraints = {
+	@UniqueConstraint(name = "uk_problem_type_tag", columnNames = {"problem_id", "type_id"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemTypeTag {

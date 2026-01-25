@@ -4,13 +4,12 @@ package cmc.delta.domain.problem.model.problem;
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.command.ProblemUpdateCommand;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,15 +18,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "problem",
-	indexes = {
-		@Index(name = "uk_problem_scan_id", columnList = "scan_id", unique = true),
-		@Index(name = "idx_problem_user_created", columnList = "user_id, created_at"),
-		@Index(name = "idx_problem_unit", columnList = "final_unit_id"),
-		@Index(name = "idx_problem_type", columnList = "final_type_id"),
-		@Index(name = "idx_problem_render_created", columnList = "render_mode, created_at")
-	})
+@Table(name = "problem", indexes = {
+	@Index(name = "uk_problem_scan_id", columnList = "scan_id", unique = true),
+	@Index(name = "idx_problem_user_created", columnList = "user_id, created_at"),
+	@Index(name = "idx_problem_unit", columnList = "final_unit_id"),
+	@Index(name = "idx_problem_type", columnList = "final_type_id"),
+	@Index(name = "idx_problem_render_created", columnList = "render_mode, created_at")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Problem extends BaseTimeEntity {
@@ -96,8 +93,7 @@ public class Problem extends BaseTimeEntity {
 		AnswerFormat answerFormat,
 		String answerValue,
 		Integer answerChoiceNo,
-		String solutionText
-	) {
+		String solutionText) {
 		Problem p = new Problem();
 		p.user = user;
 		p.scan = scan;

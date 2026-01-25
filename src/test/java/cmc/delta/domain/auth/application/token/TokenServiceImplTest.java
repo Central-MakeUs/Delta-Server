@@ -2,14 +2,14 @@ package cmc.delta.domain.auth.application.token;
 
 import static org.assertj.core.api.Assertions.*;
 
+import cmc.delta.domain.auth.application.exception.TokenException;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.domain.auth.application.service.token.TokenServiceImpl;
 import cmc.delta.domain.auth.application.support.FakeTokenIssuer;
 import cmc.delta.domain.auth.application.support.InMemoryAccessBlacklistStore;
 import cmc.delta.domain.auth.application.support.InMemoryRefreshTokenStore;
+import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.domain.auth.application.support.TokenFixtures;
-import cmc.delta.domain.auth.application.exception.TokenException;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import java.time.Clock;
@@ -38,8 +38,7 @@ class TokenServiceImplTest {
 			tokenIssuer,
 			refreshTokenStore,
 			blacklistStore,
-			TokenFixtures.noopAuditLogger()
-		);
+			TokenFixtures.noopAuditLogger());
 	}
 
 	@Test
@@ -82,8 +81,7 @@ class TokenServiceImplTest {
 		// when
 		TokenException ex = catchThrowableOfType(
 			() -> tokenService.reissue(issued.refreshToken()),
-			TokenException.class
-		);
+			TokenException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REFRESH_TOKEN);
@@ -98,8 +96,7 @@ class TokenServiceImplTest {
 		// when
 		TokenException ex = catchThrowableOfType(
 			() -> tokenService.reissue(refreshToken),
-			TokenException.class
-		);
+			TokenException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.REFRESH_TOKEN_REQUIRED);

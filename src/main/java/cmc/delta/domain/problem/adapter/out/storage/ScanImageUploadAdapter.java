@@ -24,8 +24,7 @@ public class ScanImageUploadAdapter implements ScanImageUploadPort {
 			"file",
 			file.originalFilename(),
 			file.contentType(),
-			file.bytes()
-		);
+			file.bytes());
 
 		StoragePort.UploadResult uploaded = storagePort.uploadImage(multipartFile, directory);
 		return new UploadResult(uploaded.storageKey(), uploaded.width(), uploaded.height());
@@ -42,8 +41,7 @@ public class ScanImageUploadAdapter implements ScanImageUploadPort {
 			String name,
 			String originalFilename,
 			String contentType,
-			byte[] bytes
-		) {
+			byte[] bytes) {
 			this.name = name;
 			this.originalFilename = originalFilename;
 			this.contentType = contentType;

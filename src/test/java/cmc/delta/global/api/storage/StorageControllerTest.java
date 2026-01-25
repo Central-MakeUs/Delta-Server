@@ -82,8 +82,7 @@ class StorageControllerTest {
 				"image/png",
 				123L,
 				10,
-				20
-			);
+				20);
 		}
 
 		@Override
@@ -93,7 +92,6 @@ class StorageControllerTest {
 		}
 
 		@Override
-		public void deleteImage(String storageKey) {
-		}
+		public void deleteImage(String storageKey) {}
 	}
 }

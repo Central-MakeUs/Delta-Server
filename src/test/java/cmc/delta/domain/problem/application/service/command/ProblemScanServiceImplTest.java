@@ -16,7 +16,6 @@ import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
-import cmc.delta.domain.user.model.User;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -55,8 +54,7 @@ class ProblemScanServiceImplTest {
 			assetRepositoryPort,
 			uploadValidator,
 			statusValidator,
-			fixedClock
-		);
+			fixedClock);
 	}
 
 	@Test

@@ -33,6 +33,6 @@ class OAuthClientExceptionMapperTest {
 			OAuthClientException.OP_TOKEN_EXCHANGE,
 			new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
 		assertThat(ex).isInstanceOf(OAuthClientException.class);
-		assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED);
+		assertThat(((BusinessException)ex).getErrorCode()).isEqualTo(ErrorCode.OAUTH_TOKEN_EXCHANGE_FAILED);
 	}
 }

@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
-import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
-import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.*;
@@ -47,7 +47,7 @@ class ProblemStatsControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problems/stats/units")
-				.requestAttr(ATTR, principal))
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(statsConditionFactory).from(any());
@@ -64,7 +64,7 @@ class ProblemStatsControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problems/stats/types")
-				.requestAttr(ATTR, principal))
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(statsConditionFactory).from(any());

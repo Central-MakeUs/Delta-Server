@@ -3,8 +3,7 @@ package cmc.delta.domain.problem.adapter.in.worker.support.failure;
 public record FailureDecision(
 	FailureReason reasonCode,
 	boolean retryable,
-	Long retryAfterSeconds
-) {
+	Long retryAfterSeconds) {
 	public static FailureDecision nonRetryable(FailureReason reasonCode) {
 		return new FailureDecision(reasonCode, false, null);
 	}

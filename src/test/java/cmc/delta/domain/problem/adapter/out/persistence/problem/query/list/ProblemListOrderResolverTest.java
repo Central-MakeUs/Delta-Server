@@ -3,8 +3,8 @@ package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -43,7 +43,8 @@ class ProblemListOrderResolverTest {
 		ProblemListCountExpressions countExpressions = mock(ProblemListCountExpressions.class);
 		ProblemListOrderResolver resolver = new ProblemListOrderResolver(countExpressions);
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.OLDEST, ProblemStatusFilter.ALL);
+		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.OLDEST,
+			ProblemStatusFilter.ALL);
 
 		// when
 		OrderSpecifier<?>[] orders = resolver.resolve(10L, cond, p);
@@ -64,7 +65,8 @@ class ProblemListOrderResolverTest {
 		ProblemListCountExpressions countExpressions = mock(ProblemListCountExpressions.class);
 		ProblemListOrderResolver resolver = new ProblemListOrderResolver(countExpressions);
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.UNIT_MOST, ProblemStatusFilter.ALL);
+		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.UNIT_MOST,
+			ProblemStatusFilter.ALL);
 
 		NumberExpression<Long> subjectCnt = Expressions.numberPath(Long.class, "subjectCnt");
 		when(countExpressions.subjectCount(eq(10L), eq(cond), any())).thenReturn(subjectCnt);
@@ -90,7 +92,8 @@ class ProblemListOrderResolverTest {
 		ProblemListCountExpressions countExpressions = mock(ProblemListCountExpressions.class);
 		ProblemListOrderResolver resolver = new ProblemListOrderResolver(countExpressions);
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.TYPE_LEAST, ProblemStatusFilter.ALL);
+		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.TYPE_LEAST,
+			ProblemStatusFilter.ALL);
 
 		NumberExpression<Long> typeCnt = Expressions.numberPath(Long.class, "typeCnt");
 		when(countExpressions.typeCount(eq(10L), eq(cond), any())).thenReturn(typeCnt);

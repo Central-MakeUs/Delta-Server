@@ -18,12 +18,12 @@ public class ProblemListConditionFactory {
 			trimToNull(query.unitId()),
 			trimToNull(query.typeId()),
 			sort,
-			status
-		);
+			status);
 	}
 
 	private String trimToNull(String v) {
-		if (v == null) return null;
+		if (v == null)
+			return null;
 		String t = v.trim();
 		return t.isEmpty() ? null : t;
 	}

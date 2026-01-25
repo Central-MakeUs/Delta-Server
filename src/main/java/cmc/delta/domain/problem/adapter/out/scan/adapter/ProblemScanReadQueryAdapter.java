@@ -1,10 +1,9 @@
 package cmc.delta.domain.problem.adapter.out.scan.adapter;
 
 import cmc.delta.domain.problem.application.port.out.persistence.ProblemScanSummaryQueryPort;
+import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import java.util.Optional;
-
-import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,14 +1,14 @@
 package cmc.delta.domain.problem.adapter.in.web.scan;
 
-import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanCreateResponse;
-import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanCreateResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.port.in.support.UploadFile;
-import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -16,9 +16,9 @@ import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
-import java.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -44,12 +44,12 @@ public class ProblemScanController {
 	})
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ApiResponse<ProblemScanCreateResponse> create(
-		@CurrentUser UserPrincipal principal,
-		@RequestPart("file") MultipartFile file
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestPart("file")
+		MultipartFile file) {
 		UploadFile uploadFile = toUploadFile(file);
-		ScanCreateResult result =
-			scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(uploadFile));
+		ScanCreateResult result = scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(uploadFile));
 		return ApiResponses.success(SuccessCode.OK, ProblemScanCreateResponse.from(result));
 	}
 
@@ -73,9 +73,10 @@ public class ProblemScanController {
 	})
 	@GetMapping("/{scanId}")
 	public ApiResponse<ProblemScanDetailResponse> getScanDetail(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long scanId
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long scanId) {
 		ProblemScanDetailResponse data = problemScanQueryUseCase.getDetail(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -92,9 +93,10 @@ public class ProblemScanController {
 	})
 	@GetMapping("/{scanId}/summary")
 	public ApiResponse<ProblemScanSummaryResponse> getScanSummary(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long scanId
-	) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long scanId) {
 		ProblemScanSummaryResponse data = problemScanQueryUseCase.getSummary(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

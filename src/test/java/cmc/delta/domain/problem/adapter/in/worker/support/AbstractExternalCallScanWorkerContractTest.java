@@ -52,8 +52,7 @@ class AbstractExternalCallScanWorkerContractTest {
 			lockGuard,
 			unlocker,
 			mock(BacklogLogger.class),
-			logPolicy
-		);
+			logPolicy);
 		sut.setDecision(decision);
 	}
 
@@ -81,8 +80,7 @@ class AbstractExternalCallScanWorkerContractTest {
 		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true);
 
 		HttpClientErrorException ex = HttpClientErrorException.create(
-			HttpStatus.BAD_REQUEST, "400", new HttpHeaders(), null, null
-		);
+			HttpStatus.BAD_REQUEST, "400", new HttpHeaders(), null, null);
 
 		when(logPolicy.shouldSuppressStacktrace(ex)).thenReturn(true);
 		sut.setToThrow(ex);
@@ -122,7 +120,6 @@ class AbstractExternalCallScanWorkerContractTest {
 		verifyNoMoreInteractions(logPolicy);
 	}
 
-
 	private static final class TestWorker extends AbstractExternalCallScanWorker {
 
 		private Exception toThrow;
@@ -139,8 +136,7 @@ class AbstractExternalCallScanWorkerContractTest {
 			ScanLockGuard lockGuard,
 			ScanUnlocker unlocker,
 			BacklogLogger backlogLogger,
-			WorkerLogPolicy logPolicy
-		) {
+			WorkerLogPolicy logPolicy) {
 			super(clock, tx, executor, identity, lockGuard, unlocker, backlogLogger, logPolicy);
 		}
 

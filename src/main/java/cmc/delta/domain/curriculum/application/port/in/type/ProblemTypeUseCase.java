@@ -1,9 +1,8 @@
 package cmc.delta.domain.curriculum.application.port.in.type;
 
 import cmc.delta.domain.curriculum.application.port.in.type.command.CreateCustomProblemTypeCommand;
-
-import cmc.delta.domain.curriculum.application.port.in.type.command.UpdateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.command.SetProblemTypeActiveCommand;
+import cmc.delta.domain.curriculum.application.port.in.type.command.UpdateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeItemResponse;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeListResponse;
 

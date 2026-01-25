@@ -67,7 +67,8 @@ class AppleOAuthClientTest {
 			3600L,
 			"refresh",
 			null);
-		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(AppleOAuthClient.AppleTokenResponse.class)))
+		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class),
+			eq(AppleOAuthClient.AppleTokenResponse.class)))
 			.thenReturn(ResponseEntity.ok(body));
 
 		BusinessException ex = catchThrowableOfType(
@@ -91,7 +92,8 @@ class AppleOAuthClientTest {
 		RestTemplate restTemplate = mock(RestTemplate.class);
 		AppleOAuthClient client = new AppleOAuthClient(props, restTemplate);
 
-		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(AppleOAuthClient.AppleTokenResponse.class)))
+		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class),
+			eq(AppleOAuthClient.AppleTokenResponse.class)))
 			.thenThrow(new HttpServerErrorException(org.springframework.http.HttpStatus.BAD_GATEWAY));
 
 		BusinessException ex = catchThrowableOfType(
@@ -115,7 +117,8 @@ class AppleOAuthClientTest {
 		RestTemplate restTemplate = mock(RestTemplate.class);
 		AppleOAuthClient client = new AppleOAuthClient(props, restTemplate);
 
-		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class), eq(AppleOAuthClient.AppleTokenResponse.class)))
+		when(restTemplate.exchange(anyString(), eq(HttpMethod.POST), any(HttpEntity.class),
+			eq(AppleOAuthClient.AppleTokenResponse.class)))
 			.thenThrow(new ResourceAccessException("timeout"));
 
 		BusinessException ex = catchThrowableOfType(

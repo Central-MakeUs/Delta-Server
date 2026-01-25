@@ -7,6 +7,5 @@ public record ProblemUnitStatsRow(
 	String unitName,
 	long solvedCount,
 	long unsolvedCount,
-	long totalCount
-) {
+	long totalCount) {
 }

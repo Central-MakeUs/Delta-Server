@@ -1,15 +1,14 @@
 package cmc.delta.domain.problem.application.validation.command;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeLoadPort;
 import cmc.delta.domain.curriculum.application.port.out.UnitLoadPort;
+import cmc.delta.domain.curriculum.model.ProblemType;
+import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
 import cmc.delta.global.error.ErrorCode;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +34,6 @@ public class ProblemCreateCurriculumValidator {
 		return typeLoadPort.findActiveVisibleById(userId, finalTypeId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
 	}
-
 
 	public List<ProblemType> getFinalTypes(Long userId, List<String> typeIds) {
 		if (typeIds == null || typeIds.isEmpty()) {

@@ -1,24 +1,22 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query;
 
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.ProblemDetailQuerySupport;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.ProblemListQuerySupport;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.ProblemTypeTagQuerySupport;
-import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
-import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
+import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
-
 import java.util.List;
 import java.util.Optional;
-
-import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -33,8 +31,7 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryPort, ProblemType
 	public PageResult<ProblemListRow> findMyProblemList(
 		Long userId,
 		ProblemListCondition condition,
-		PageQuery pageQuery
-	) {
+		PageQuery pageQuery) {
 		Pageable pageable = PageRequest.of(pageQuery.page(), pageQuery.size());
 		Page<ProblemListRow> page = listQuerySupport.findMyProblemList(userId, condition, pageable);
 		return new PageResult<>(
@@ -42,8 +39,7 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryPort, ProblemType
 			page.getNumber(),
 			page.getSize(),
 			page.getTotalElements(),
-			page.getTotalPages()
-		);
+			page.getTotalPages());
 	}
 
 	@Override

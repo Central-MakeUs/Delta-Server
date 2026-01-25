@@ -7,12 +7,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "problem_unit_tag",
-	indexes = {
-		@Index(name = "idx_problem_unit_tag_unit_problem", columnList = "unit_id, problem_id"),
-		@Index(name = "idx_problem_unit_tag_primary", columnList = "problem_id, is_primary")
-	})
+@Table(name = "problem_unit_tag", indexes = {
+	@Index(name = "idx_problem_unit_tag_unit_problem", columnList = "unit_id, problem_id"),
+	@Index(name = "idx_problem_unit_tag_primary", columnList = "problem_id, is_primary")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemUnitTag {

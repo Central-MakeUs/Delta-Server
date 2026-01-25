@@ -22,6 +22,11 @@ public class UnitTypeMapId implements Serializable {
 		this.typeId = typeId;
 	}
 
-	public String getUnitId() { return unitId; }
-	public String getTypeId() { return typeId; }
+	public String getUnitId() {
+		return unitId;
+	}
+
+	public String getTypeId() {
+		return typeId;
+	}
 }

@@ -42,7 +42,6 @@ public class GlobalExceptionHandler {
 		return logAndRespond(ec, ex, request, body);
 	}
 
-
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse<Object>> handleValidation(
 		MethodArgumentNotValidException ex, HttpServletRequest request) {

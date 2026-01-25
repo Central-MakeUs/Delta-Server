@@ -24,6 +24,5 @@ public record ProblemDetailRow(
 	String solutionText,
 
 	LocalDateTime completedAt,
-	LocalDateTime createdAt
-) {
+	LocalDateTime createdAt) {
 }

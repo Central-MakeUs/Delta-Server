@@ -24,8 +24,7 @@ public class ProblemListCountExpressions {
 			.from(p2)
 			.where(
 				predicateBuilder.buildCountBaseWhere(userId, condition, p2)
-					.and(p2.finalUnit.parent.id.eq(outerSubjectId))
-			);
+					.and(p2.finalUnit.parent.id.eq(outerSubjectId)));
 
 		return Expressions.numberTemplate(Long.class, "({0})", sub);
 	}
@@ -38,8 +37,7 @@ public class ProblemListCountExpressions {
 			.from(p2)
 			.where(
 				predicateBuilder.buildCountBaseWhere(userId, condition, p2)
-					.and(p2.finalUnit.id.eq(outerUnitId))
-			);
+					.and(p2.finalUnit.id.eq(outerUnitId)));
 
 		return Expressions.numberTemplate(Long.class, "({0})", sub);
 	}
@@ -52,8 +50,7 @@ public class ProblemListCountExpressions {
 			.from(p2)
 			.where(
 				predicateBuilder.buildCountBaseWhere(userId, condition, p2)
-					.and(p2.finalType.id.eq(outerTypeId))
-			);
+					.and(p2.finalType.id.eq(outerTypeId)));
 
 		return Expressions.numberTemplate(Long.class, "({0})", sub);
 	}

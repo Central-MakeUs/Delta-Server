@@ -1,24 +1,23 @@
 package cmc.delta.domain.problem.application.service.query;
 
-import java.util.List;
-
-import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
-import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
-import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.mapper.scan.ProblemScanDetailMapper;
 import cmc.delta.domain.problem.application.mapper.scan.ProblemScanSummaryMapper;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.out.prediction.ScanTypePredictionReader;
 import cmc.delta.domain.problem.application.port.out.scan.query.ScanQueryPort;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
+import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.application.support.query.UnitSubjectResolver;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanDetailValidator;
 import cmc.delta.domain.problem.application.validation.query.ProblemScanQueryValidator;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,14 +50,12 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 		String viewUrl = storagePort.issueReadUrl(row.getStorageKey());
 		SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
 
-		List<CurriculumItemResponse> types =
-			scanTypePredictionReader.findByScanId(scanId).stream()
-				.map(v -> new CurriculumItemResponse(v.typeId(), v.typeName()))
-				.toList();
+		List<CurriculumItemResponse> types = scanTypePredictionReader.findByScanId(scanId).stream()
+			.map(v -> new CurriculumItemResponse(v.typeId(), v.typeName()))
+			.toList();
 
 		return summaryMapper.toSummaryResponse(row, viewUrl, subject, types);
 	}
-
 
 	@Override
 	public ProblemScanDetailResponse getDetail(Long userId, Long scanId) {
@@ -70,22 +67,19 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 		String viewUrl = storagePort.issueReadUrl(p.getStorageKey());
 		SubjectInfo subject = subjectResolver.resolveByUnitId(p.getPredictedUnitId());
 
-		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes =
-			scanTypePredictionReader.findByScanId(scanId).stream()
-				.map(v -> new ProblemScanDetailResponse.PredictedTypeResponse(
-					v.typeId(),
-					v.typeName(),
-					v.rankNo(),
-					v.confidence()
-				))
-				.toList();
+		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes = scanTypePredictionReader
+			.findByScanId(scanId).stream()
+			.map(v -> new ProblemScanDetailResponse.PredictedTypeResponse(
+				v.typeId(),
+				v.typeName(),
+				v.rankNo(),
+				v.confidence()))
+			.toList();
 
-		ProblemScanDetailResponse.AiClassification ai =
-			detailMapper.toAiClassification(p, subject, predictedTypes);
+		ProblemScanDetailResponse.AiClassification ai = detailMapper.toAiClassification(p, subject, predictedTypes);
 
 		return detailMapper.toDetailResponse(p, viewUrl, ai);
 	}
-
 
 	private ProblemException scanNotFound() {
 		return new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);

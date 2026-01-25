@@ -2,10 +2,10 @@ package cmc.delta.domain.problem.application.mapper.scan;
 
 import static org.assertj.core.api.Assertions.*;
 
+import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
-import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +29,7 @@ class ProblemScanSummaryMapperTest {
 			"단원",
 			"T1",
 			"유형",
-			true
-		);
+			true);
 		SubjectInfo subject = new SubjectInfo("S1", "대단원");
 		List<CurriculumItemResponse> types = List.of(new CurriculumItemResponse("T1", "유형"));
 
@@ -62,8 +61,7 @@ class ProblemScanSummaryMapperTest {
 			null,
 			null,
 			null,
-			null
-		);
+			null);
 		SubjectInfo subject = SubjectInfo.empty();
 
 		// when

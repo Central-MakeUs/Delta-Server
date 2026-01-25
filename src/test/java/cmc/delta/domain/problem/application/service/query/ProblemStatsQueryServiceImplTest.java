@@ -3,12 +3,12 @@ package cmc.delta.domain.problem.application.service.query;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.problem.application.port.in.problem.result.*;
+import cmc.delta.domain.curriculum.application.port.out.ProblemTypeLoadPort;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
+import cmc.delta.domain.problem.application.port.in.problem.result.*;
+import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
-import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
-import cmc.delta.domain.curriculum.application.port.out.ProblemTypeLoadPort;
 import java.util.List;
 import org.junit.jupiter.api.*;
 

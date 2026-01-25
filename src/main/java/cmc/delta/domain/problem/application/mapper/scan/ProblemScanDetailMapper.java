@@ -1,9 +1,9 @@
 package cmc.delta.domain.problem.application.mapper.scan;
 
+import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse.PredictedTypeResponse;
 import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
-import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -13,8 +13,7 @@ public class ProblemScanDetailMapper {
 	public ProblemScanDetailResponse toDetailResponse(
 		ScanDetailProjection p,
 		String viewUrl,
-		ProblemScanDetailResponse.AiClassification ai
-	) {
+		ProblemScanDetailResponse.AiClassification ai) {
 		return new ProblemScanDetailResponse(
 			p.getScanId(),
 			enumName(p.getStatus()),
@@ -28,15 +27,13 @@ public class ProblemScanDetailMapper {
 			p.getCreatedAt(),
 			p.getOcrCompletedAt(),
 			p.getAiCompletedAt(),
-			p.getFailReason()
-		);
+			p.getFailReason());
 	}
 
 	public ProblemScanDetailResponse.AiClassification toAiClassification(
 		ScanDetailProjection p,
 		SubjectInfo subject,
-		List<PredictedTypeResponse> predictedTypes
-	) {
+		List<PredictedTypeResponse> predictedTypes) {
 		return new ProblemScanDetailResponse.AiClassification(
 			subject.subjectId(),
 			subject.subjectName(),
@@ -49,8 +46,7 @@ public class ProblemScanDetailMapper {
 			predictedTypes == null ? List.of() : predictedTypes,
 			p.getAiUnitCandidatesJson(),
 			p.getAiTypeCandidatesJson(),
-			p.getAiDraftJson()
-		);
+			p.getAiDraftJson());
 	}
 
 	private ProblemScanDetailResponse.OriginalImage toOriginalImage(ScanDetailProjection p, String viewUrl) {
@@ -58,8 +54,7 @@ public class ProblemScanDetailMapper {
 			p.getAssetId(),
 			viewUrl,
 			p.getWidth(),
-			p.getHeight()
-		);
+			p.getHeight());
 	}
 
 	private String enumName(Enum<?> value) {

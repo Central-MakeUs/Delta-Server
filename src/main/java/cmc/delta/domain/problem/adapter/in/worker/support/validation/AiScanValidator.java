@@ -20,7 +20,8 @@ public class AiScanValidator {
 	}
 
 	private String normalizeOcrText(String ocrText) {
-		if (ocrText == null) return "";
+		if (ocrText == null)
+			return "";
 		String normalized = ocrText.replaceAll("\\s+", " ").trim();
 		if (normalized.length() > OCR_TEXT_MAX_CHARS) {
 			normalized = normalized.substring(0, OCR_TEXT_MAX_CHARS);
@@ -28,5 +29,6 @@ public class AiScanValidator {
 		return normalized;
 	}
 
-	public record AiValidatedInput(Long userId, String normalizedOcrText) {}
+	public record AiValidatedInput(Long userId, String normalizedOcrText) {
+	}
 }

@@ -6,10 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 record GeminiProperties(
 	String baseUrl,
 	String apiKey,
-	String model
-) {
+	String model) {
 	public GeminiProperties {
-		if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://generativelanguage.googleapis.com";
-		if (model == null || model.isBlank()) model = "gemini-2.5-flash-lite";
+		if (baseUrl == null || baseUrl.isBlank())
+			baseUrl = "https://generativelanguage.googleapis.com";
+		if (model == null || model.isBlank())
+			model = "gemini-2.5-flash-lite";
 	}
 }

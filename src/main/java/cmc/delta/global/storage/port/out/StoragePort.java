@@ -15,6 +15,6 @@ public interface StoragePort {
 		String contentType,
 		long sizeBytes,
 		Integer width,
-		Integer height
-	) {}
+		Integer height) {
+	}
 }

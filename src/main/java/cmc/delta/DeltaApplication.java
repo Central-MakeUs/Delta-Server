@@ -1,13 +1,12 @@
 package cmc.delta;
 
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
-
-import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
-import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 
 @EnableScheduling
 @EnableJpaAuditing

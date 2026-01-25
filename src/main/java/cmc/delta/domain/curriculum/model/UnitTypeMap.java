@@ -6,11 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(
-	name = "unit_type_map",
-	indexes = {
-		@Index(name = "idx_unit_type_map_type_unit", columnList = "type_id, unit_id")
-	})
+@Table(name = "unit_type_map", indexes = {
+	@Index(name = "idx_unit_type_map_type_unit", columnList = "type_id, unit_id")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UnitTypeMap {

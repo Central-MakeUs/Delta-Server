@@ -25,9 +25,9 @@ public class KakaoOAuthConfig {
 
 	@Bean
 	public OAuthHttpClient kakaoOAuthHttpClient(
-		@Qualifier("kakaoRestTemplate") RestTemplate kakaoRestTemplate,
-		OAuthClientExceptionMapper exceptionMapper
-	) {
+		@Qualifier("kakaoRestTemplate")
+		RestTemplate kakaoRestTemplate,
+		OAuthClientExceptionMapper exceptionMapper) {
 		return new OAuthHttpClient(kakaoRestTemplate, exceptionMapper);
 	}
 }

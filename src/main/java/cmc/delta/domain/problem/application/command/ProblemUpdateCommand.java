@@ -5,6 +5,5 @@ public record ProblemUpdateCommand(
 	String answerValue,
 	String solutionText,
 	boolean hasAnswerChange,
-	boolean hasSolutionChange
-) {
+	boolean hasSolutionChange) {
 }

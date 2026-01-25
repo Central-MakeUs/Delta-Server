@@ -3,10 +3,10 @@ package cmc.delta.domain.problem.application.mapper.scan;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse.PredictedTypeResponse;
 import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanDetailProjection;
-import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import java.time.LocalDateTime;
@@ -41,8 +41,7 @@ class ProblemScanDetailMapperTest {
 		ProblemScanDetailResponse.AiClassification ai = mapper.toAiClassification(
 			p,
 			new SubjectInfo("S1", "대단원"),
-			List.of(new PredictedTypeResponse("T1", "유형", 1, java.math.BigDecimal.ONE))
-		);
+			List.of(new PredictedTypeResponse("T1", "유형", 1, java.math.BigDecimal.ONE)));
 
 		// when
 		ProblemScanDetailResponse res = mapper.toDetailResponse(p, "https://read", ai);

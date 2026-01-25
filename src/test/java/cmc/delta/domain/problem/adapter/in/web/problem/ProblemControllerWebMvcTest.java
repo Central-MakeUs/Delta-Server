@@ -7,9 +7,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
+import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
-import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.*;
@@ -33,7 +33,8 @@ class ProblemControllerWebMvcTest {
 		problemQueryUseCase = mock(ProblemQueryUseCase.class);
 		conditionFactory = mock(ProblemListConditionFactory.class);
 
-		ProblemController controller = new ProblemController(problemCommandUseCase, problemQueryUseCase, conditionFactory);
+		ProblemController controller = new ProblemController(problemCommandUseCase, problemQueryUseCase,
+			conditionFactory);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setCustomArgumentResolvers(new TestCurrentUserArgumentResolver())
@@ -53,9 +54,9 @@ class ProblemControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problems")
-				.param("page", "1")
-				.param("size", "20")
-				.requestAttr(ATTR, principal))
+			.param("page", "1")
+			.param("size", "20")
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -75,9 +76,9 @@ class ProblemControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(post("/api/v1/problems/{problemId}/complete", 5L)
-				.requestAttr(ATTR, principal)
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("{\"solutionText\":\"ans\"}"))
+			.requestAttr(ATTR, principal)
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"solutionText\":\"ans\"}"))
 			.andExpect(status().isOk());
 
 		verify(problemCommandUseCase).completeWrongAnswerCard(10L, 5L, "ans");
@@ -92,7 +93,7 @@ class ProblemControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problems/{problemId}", 5L)
-				.requestAttr(ATTR, principal))
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(problemQueryUseCase).getMyProblemDetail(10L, 5L);

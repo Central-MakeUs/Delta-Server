@@ -83,7 +83,7 @@ class UserProfileImageControllerWebMvcTest {
 	@DisplayName("DELETE /users/me/profile-image: usecase 호출")
 	void delete_ok_callsUseCase() throws Exception {
 		mvc.perform(delete("/api/v1/users/me/profile-image")
-				.requestAttr(ATTR, principal(10L)))
+			.requestAttr(ATTR, principal(10L)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 

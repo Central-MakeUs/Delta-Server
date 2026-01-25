@@ -34,14 +34,12 @@ class ProblemCreateAssemblerTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			"sol"
-		);
+			"sol");
 
 		// when
 		ProblemStateException ex = catchThrowableOfType(
 			() -> sut.assemble(mock(User.class), scan, mock(Unit.class), mock(ProblemType.class), cmd),
-			ProblemStateException.class
-		);
+			ProblemStateException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_SCAN_RENDER_MODE_MISSING);
@@ -67,8 +65,7 @@ class ProblemCreateAssemblerTest {
 			AnswerFormat.TEXT,
 			null,
 			"ans",
-			"sol"
-		);
+			"sol");
 
 		// when
 		Problem p1 = sut.assemble(mock(User.class), scan1, mock(Unit.class), mock(ProblemType.class), cmd);

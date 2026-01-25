@@ -1,8 +1,7 @@
 package cmc.delta.domain.problem.application.port.in.problem.command;
 
-import java.util.List;
-
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import java.util.List;
 
 public record CreateWrongAnswerCardCommand(
 	Long scanId,
@@ -11,5 +10,5 @@ public record CreateWrongAnswerCardCommand(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText
-) {}
+	String solutionText) {
+}

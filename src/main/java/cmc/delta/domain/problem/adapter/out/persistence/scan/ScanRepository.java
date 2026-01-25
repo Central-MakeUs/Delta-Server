@@ -14,13 +14,14 @@ public interface ScanRepository extends JpaRepository<ProblemScan, Long> {
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""
-		select s
-		  from ProblemScan s
-		 where s.id = :scanId
-		   and s.user.id = :userId
-	""")
+			select s
+			  from ProblemScan s
+			 where s.id = :scanId
+			   and s.user.id = :userId
+		""")
 	Optional<ProblemScan> findOwnedByForUpdate(
-		@Param("scanId") Long scanId,
-		@Param("userId") Long userId
-	);
+		@Param("scanId")
+		Long scanId,
+		@Param("userId")
+		Long userId);
 }

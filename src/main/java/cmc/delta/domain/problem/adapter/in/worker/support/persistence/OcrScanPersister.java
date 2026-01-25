@@ -1,11 +1,11 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.persistence;
 
-import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -21,8 +21,7 @@ public class OcrScanPersister {
 	public OcrScanPersister(
 		TransactionTemplate workerTransactionTemplate,
 		ScanWorkRepository scanWorkRepository,
-		ScanRepository scanRepository
-	) {
+		ScanRepository scanRepository) {
 		this.workerTransactionTemplate = workerTransactionTemplate;
 		this.scanWorkRepository = scanWorkRepository;
 		this.scanRepository = scanRepository;
@@ -33,11 +32,9 @@ public class OcrScanPersister {
 		String lockOwner,
 		String lockToken,
 		OcrResult ocrResult,
-		LocalDateTime completedAt
-	) {
-		inWorkerTxIfLocked(scanId, lockOwner, lockToken, scan ->
-			scan.markOcrSucceeded(ocrResult.plainText(), ocrResult.rawJson(), completedAt)
-		);
+		LocalDateTime completedAt) {
+		inWorkerTxIfLocked(scanId, lockOwner, lockToken,
+			scan -> scan.markOcrSucceeded(ocrResult.plainText(), ocrResult.rawJson(), completedAt));
 	}
 
 	public void persistOcrFailed(
@@ -45,8 +42,7 @@ public class OcrScanPersister {
 		String lockOwner,
 		String lockToken,
 		FailureDecision decision,
-		LocalDateTime now
-	) {
+		LocalDateTime now) {
 		inWorkerTxIfLocked(scanId, lockOwner, lockToken, scan -> applyFailure(scan, decision, now));
 	}
 
@@ -54,13 +50,14 @@ public class OcrScanPersister {
 		Long scanId,
 		String lockOwner,
 		String lockToken,
-		java.util.function.Consumer<ProblemScan> action
-	) {
+		java.util.function.Consumer<ProblemScan> action) {
 		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken)) return;
+			if (!isLockedByMe(scanId, lockOwner, lockToken))
+				return;
 
 			Optional<ProblemScan> optional = scanRepository.findById(scanId);
-			if (optional.isEmpty()) return;
+			if (optional.isEmpty())
+				return;
 
 			action.accept(optional.get());
 		});

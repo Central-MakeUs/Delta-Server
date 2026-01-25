@@ -1,12 +1,12 @@
 package cmc.delta.domain.curriculum.application.service;
 
+import cmc.delta.domain.curriculum.application.exception.ProblemTypeException;
 import cmc.delta.domain.curriculum.application.port.in.type.ProblemTypeUseCase;
 import cmc.delta.domain.curriculum.application.port.in.type.command.CreateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.command.SetProblemTypeActiveCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.command.UpdateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeItemResponse;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeListResponse;
-import cmc.delta.domain.curriculum.application.exception.ProblemTypeException;
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
 import cmc.delta.domain.curriculum.application.validation.ProblemTypeCommandValidator;
 import cmc.delta.domain.curriculum.model.ProblemType;
@@ -66,7 +66,8 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	}
 
 	@Override
-	public ProblemTypeItemResponse updateCustomType(Long userId, String typeId, UpdateCustomProblemTypeCommand command) {
+	public ProblemTypeItemResponse updateCustomType(Long userId, String typeId,
+		UpdateCustomProblemTypeCommand command) {
 		if (command == null) {
 			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
 		}
@@ -104,8 +105,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 			type.getName(),
 			type.isCustom(),
 			type.isActive(),
-			type.getSortOrder()
-		);
+			type.getSortOrder());
 	}
 
 	private String generateCustomTypeId() {

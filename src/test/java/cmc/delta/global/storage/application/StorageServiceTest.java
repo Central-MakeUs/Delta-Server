@@ -64,8 +64,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.uploadImage(file, "profiles"),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -80,8 +79,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.uploadImage(file, "profiles"),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -96,8 +94,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.uploadImage(file, "profiles"),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -112,8 +109,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.uploadImage(file, "profiles"),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -142,8 +138,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.issueReadUrl(key, 59),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -158,8 +153,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.issueReadUrl(key, 0),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -189,8 +183,7 @@ class StorageServiceTest {
 		// when
 		BusinessException ex = catchThrowableOfType(
 			() -> storageService.deleteImage(key),
-			BusinessException.class
-		);
+			BusinessException.class);
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
@@ -204,7 +197,6 @@ class StorageServiceTest {
 			60,
 			5_000_000L,
 			"dummy-1",
-			"dummy-2"
-		);
+			"dummy-2");
 	}
 }
