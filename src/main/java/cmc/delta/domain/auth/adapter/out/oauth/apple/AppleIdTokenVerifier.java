@@ -12,6 +12,7 @@ import java.text.ParseException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -29,6 +30,7 @@ public class AppleIdTokenVerifier {
 	private volatile JWKSet cachedJwkSet;
 	private volatile long cachedAtEpochSec;
 
+	@Autowired
 	public AppleIdTokenVerifier(AppleOAuthProperties props) {
 		this(props, Clock.systemUTC(), url -> JWKSet.load(new URL(url)));
 	}
