@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cmc.delta.domain.curriculum.adapter.in.web.type.dto.request.ProblemTypeActivationRequest;
 import cmc.delta.domain.curriculum.adapter.in.web.type.dto.request.ProblemTypeCreateRequest;
+import cmc.delta.domain.curriculum.adapter.in.web.type.dto.request.ProblemTypeUpdateRequest;
 import cmc.delta.domain.curriculum.application.port.in.type.ProblemTypeUseCase;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeItemResponse;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeListResponse;
@@ -97,6 +98,22 @@ class ProblemTypeControllerWebMvcTest {
 			.andExpect(status().isOk());
 
 		verify(problemTypeUseCase).setActive(eq(10L), eq("T_C_x"), any());
+	}
+
+	@Test
+	@DisplayName("PATCH /problem-types/{id}: request 전달 + usecase 호출")
+	void updateCustomType_ok_callsUseCase() throws Exception {
+		ProblemTypeUpdateRequest req = new ProblemTypeUpdateRequest("새이름", 3);
+		when(problemTypeUseCase.updateCustomType(eq(10L), eq("T_C_x"), any()))
+			.thenReturn(new ProblemTypeItemResponse("T_C_x", "새이름", true, true, 3));
+
+		mvc.perform(patch("/api/v1/problem-types/T_C_x")
+				.requestAttr(ATTR, principal(10L))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsBytes(req)))
+			.andExpect(status().isOk());
+
+		verify(problemTypeUseCase).updateCustomType(eq(10L), eq("T_C_x"), any());
 	}
 
 	private UserPrincipal principal(long userId) {

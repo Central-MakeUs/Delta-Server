@@ -3,6 +3,7 @@ package cmc.delta.domain.curriculum.application.service;
 import cmc.delta.domain.curriculum.application.port.in.type.ProblemTypeUseCase;
 import cmc.delta.domain.curriculum.application.port.in.type.command.CreateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.command.SetProblemTypeActiveCommand;
+import cmc.delta.domain.curriculum.application.port.in.type.command.UpdateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeItemResponse;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeListResponse;
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
@@ -67,6 +68,48 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
 		type.changeActive(command.active());
 		problemTypeRepositoryPort.save(type);
+	}
+
+	@Override
+	public ProblemTypeItemResponse updateCustomType(Long userId, String typeId, UpdateCustomProblemTypeCommand command) {
+		if (command == null) {
+			throw new ProblemValidationException("요청 본문이 비어있습니다.");
+		}
+
+		String newName = trimToNull(command.name());
+		Integer newSortOrder = command.sortOrder();
+
+		boolean hasNameChange = command.name() != null;
+		boolean hasSortOrderChange = newSortOrder != null;
+		if (!hasNameChange && !hasSortOrderChange) {
+			throw new ProblemValidationException("수정할 값이 없습니다.");
+		}
+
+		ProblemType type = problemTypeRepositoryPort.findOwnedCustomById(userId, typeId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
+
+		if (hasNameChange) {
+			if (newName == null) {
+				throw new ProblemValidationException("name은 필수입니다.");
+			}
+			if (newName.length() > 100) {
+				throw new ProblemValidationException("name은 100자 이하여야 합니다.");
+			}
+			if (!newName.equals(type.getName()) && problemTypeRepositoryPort.existsCustomByUserIdAndName(userId, newName)) {
+				throw new BusinessException(ErrorCode.INVALID_REQUEST, "이미 추가된 유형입니다.");
+			}
+			type.rename(newName);
+		}
+
+		if (hasSortOrderChange) {
+			if (newSortOrder.intValue() < 1) {
+				throw new ProblemValidationException("sortOrder는 1 이상이어야 합니다.");
+			}
+			type.changeSortOrder(newSortOrder.intValue());
+		}
+
+		ProblemType saved = problemTypeRepositoryPort.save(type);
+		return toItem(saved);
 	}
 
 	private String trimToNull(String v) {

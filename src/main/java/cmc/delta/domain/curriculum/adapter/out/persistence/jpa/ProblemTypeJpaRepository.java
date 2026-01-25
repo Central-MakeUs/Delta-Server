@@ -15,9 +15,9 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
           and (
                 t.custom = false
                 or (t.custom = true and t.createdByUser.id = :userId)
-          )
-        order by t.sortOrder asc
-        """)
+		  )
+		order by t.sortOrder asc, t.id asc
+		""")
 	List<ProblemType> findAllActiveForUser(@Param("userId") Long userId);
 
 	@Query("""
@@ -27,7 +27,7 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		      t.custom = false
 		      or (t.custom = true and t.createdByUser.id = :userId)
 		)
-		order by t.sortOrder asc
+		order by t.sortOrder asc, t.id asc
 		""")
 	List<ProblemType> findAllForUser(@Param("userId") Long userId);
 
