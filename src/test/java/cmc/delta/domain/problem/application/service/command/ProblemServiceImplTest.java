@@ -120,7 +120,8 @@ class ProblemServiceImplTest {
 
 		when(scanValidator.getOwnedScan(userId, cmd.scanId())).thenReturn(scan);
 		when(curriculumValidator.getFinalUnit(cmd.finalUnitId())).thenReturn(unit);
-		when(curriculumValidator.getFinalTypes(java.util.List.of("T1"))).thenReturn(java.util.List.of(type));
+		when(curriculumValidator.getFinalTypes(eq(10L), eq(java.util.List.of("T1"))))
+			.thenReturn(java.util.List.of(type));
 
 		User userRef = mock(User.class);
 		when(userRepositoryPort.getReferenceById(userId)).thenReturn(userRef);

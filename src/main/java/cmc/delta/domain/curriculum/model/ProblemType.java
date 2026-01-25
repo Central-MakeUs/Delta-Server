@@ -48,4 +48,16 @@ public class ProblemType {
 		this.createdByUser = createdByUser;
 		this.custom = custom;
 	}
+
+	public void rename(String name) {
+		this.name = name;
+	}
+
+	public void changeSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
+	}
+
+	public void changeActive(boolean active) {
+		this.active = active;
+	}
 }

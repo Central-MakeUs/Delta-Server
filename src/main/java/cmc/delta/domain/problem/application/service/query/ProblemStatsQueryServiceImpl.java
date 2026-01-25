@@ -9,6 +9,9 @@ import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTy
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
+import cmc.delta.domain.problem.application.exception.ProblemException;
+import cmc.delta.domain.curriculum.application.port.out.ProblemTypeLoadPort;
+import cmc.delta.global.error.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 
 	private final ProblemStatsQueryPort problemStatsQueryPort;
+	private final ProblemTypeLoadPort problemTypeLoadPort;
 
 	@Override
 	public ProblemStatsResponse<ProblemUnitStatsItemResponse> getUnitStats(Long userId, ProblemStatsCondition condition) {
@@ -36,6 +40,8 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 
 	@Override
 	public ProblemStatsResponse<ProblemTypeStatsItemResponse> getTypeStats(Long userId, ProblemStatsCondition condition) {
+		validateTypeFilter(userId, condition);
+
 		List<ProblemTypeStatsRow> rows = problemStatsQueryPort.findTypeStats(userId, condition);
 
 		List<ProblemTypeStatsItemResponse> items = new ArrayList<>(rows.size());
@@ -44,6 +50,15 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 		}
 
 		return new ProblemStatsResponse<>(items);
+	}
+
+	private void validateTypeFilter(Long userId, ProblemStatsCondition condition) {
+		String typeId = condition.typeId();
+		if (typeId == null || typeId.trim().isEmpty()) {
+			return;
+		}
+		problemTypeLoadPort.findActiveVisibleById(userId, typeId)
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
 	}
 
 	private ProblemUnitStatsItemResponse toUnitItem(ProblemUnitStatsRow r) {

@@ -8,18 +8,21 @@ import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCo
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
+import cmc.delta.domain.curriculum.application.port.out.ProblemTypeLoadPort;
 import java.util.List;
 import org.junit.jupiter.api.*;
 
 class ProblemStatsQueryServiceImplTest {
 
 	private ProblemStatsQueryPort statsPort;
+	private ProblemTypeLoadPort problemTypeLoadPort;
 	private ProblemStatsQueryServiceImpl sut;
 
 	@BeforeEach
 	void setUp() {
 		statsPort = mock(ProblemStatsQueryPort.class);
-		sut = new ProblemStatsQueryServiceImpl(statsPort);
+		problemTypeLoadPort = mock(ProblemTypeLoadPort.class);
+		sut = new ProblemStatsQueryServiceImpl(statsPort, problemTypeLoadPort);
 	}
 
 	@Test

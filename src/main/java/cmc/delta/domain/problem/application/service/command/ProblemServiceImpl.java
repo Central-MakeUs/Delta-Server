@@ -56,7 +56,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
 
-		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(command.finalTypeIds());
+		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(currentUserId, command.finalTypeIds());
 		if (finalTypes == null || finalTypes.isEmpty()) {
 			throw new ProblemException(ErrorCode.INVALID_REQUEST);
 		}

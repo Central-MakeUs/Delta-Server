@@ -31,22 +31,37 @@ public class ProblemCreateCurriculumValidator {
 		return unit;
 	}
 
-	public ProblemType getFinalType(String finalTypeId) {
-		return typeLoadPort.findById(finalTypeId)
+	public ProblemType getFinalType(Long userId, String finalTypeId) {
+		return typeLoadPort.findActiveVisibleById(userId, finalTypeId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
 	}
 
 
-	public List<ProblemType> getFinalTypes(List<String> typeIds) {
+	public List<ProblemType> getFinalTypes(Long userId, List<String> typeIds) {
 		if (typeIds == null || typeIds.isEmpty()) {
 			throw new ProblemException(ErrorCode.INVALID_REQUEST);
 		}
 
 		List<String> distinct = typeIds.stream().distinct().toList();
 
-		List<ProblemType> types = new ArrayList<>();
+		List<ProblemType> found = typeLoadPort.findActiveVisibleByIds(userId, distinct);
+		if (found.size() != distinct.size()) {
+			throw new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND);
+		}
+
+		// keep request order
+		java.util.Map<String, ProblemType> byId = new java.util.HashMap<>();
+		for (ProblemType t : found) {
+			byId.put(t.getId(), t);
+		}
+
+		List<ProblemType> types = new ArrayList<>(distinct.size());
 		for (String id : distinct) {
-			types.add(getFinalType(id));
+			ProblemType t = byId.get(id);
+			if (t == null) {
+				throw new ProblemException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND);
+			}
+			types.add(t);
 		}
 		return types;
 	}
