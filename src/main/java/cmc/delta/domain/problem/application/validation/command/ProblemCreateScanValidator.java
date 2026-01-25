@@ -2,13 +2,13 @@ package cmc.delta.domain.problem.application.validation.command;
 
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.scan.ProblemScanRepositoryPort;
 import cmc.delta.domain.problem.model.enums.ScanStatus;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +21,7 @@ public class ProblemCreateScanValidator {
 
 	public ProblemScan getOwnedScan(Long userId, Long scanId) {
 		return scanRepositoryPort.findOwnedById(scanId, userId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND));
+			.orElseThrow(ProblemException::scanNotFound);
 	}
 
 	public void validateScanIsAiDone(ProblemScan scan) {
@@ -39,7 +39,7 @@ public class ProblemCreateScanValidator {
 
 	public void validateFileNotEmpty(UploadFile file) {
 		if (file == null || file.isEmpty()) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일이 비어있습니다.");
+			throw new ProblemValidationException("업로드 파일이 비어있습니다.");
 		}
 	}
 }

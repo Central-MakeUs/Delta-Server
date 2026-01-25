@@ -14,8 +14,7 @@ import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +64,7 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 	@Override
 	public void retryFailed(Long userId, Long scanId) {
 		ProblemScan scan = scanRepositoryPort.findOwnedByForUpdate(scanId, userId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_SCAN_NOT_FOUND, "스캔을 찾을 수 없습니다."));
+			.orElseThrow(ProblemException::scanNotFound);
 
 		statusValidator.requireFailed(scan);
 		scan.retryFailed(LocalDateTime.now(clock));

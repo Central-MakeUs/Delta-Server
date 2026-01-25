@@ -8,6 +8,7 @@ import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.port.in.support.UploadFile;
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -15,7 +16,6 @@ import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 import java.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,7 +57,7 @@ public class ProblemScanController {
 		try {
 			return new UploadFile(file.getBytes(), file.getContentType(), file.getOriginalFilename());
 		} catch (IOException e) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일을 읽을 수 없습니다.");
+			throw new ProblemValidationException("업로드 파일을 읽을 수 없습니다.");
 		}
 	}
 

@@ -26,14 +26,13 @@ import com.nimbusds.jose.crypto.ECDSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 
 @Component
 public class AppleOAuthClient {
 
 	private static final String TOKEN_URL = "https://appleid.apple.com/auth/token";
 	private static final String GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code";
+	private static final long CLIENT_SECRET_TTL_SECONDS = 300L;
 
 	private final AppleOAuthProperties props;
 	private final RestTemplate appleRestTemplate;
@@ -45,7 +44,7 @@ public class AppleOAuthClient {
 
 	public AppleTokenResponse exchangeCode(String code) {
 		if (!StringUtils.hasText(code)) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "애플 authorization code가 비어있습니다.");
+			throw AppleOAuthException.authorizationCodeEmpty();
 		}
 
 		String clientSecretJwt = generateClientSecret();
@@ -68,22 +67,19 @@ public class AppleOAuthClient {
 
 		AppleTokenResponse body = resp.getBody();
 		if (body == null || !StringUtils.hasText(body.idToken())) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "애플 토큰 교환 응답이 비어있습니다.");
+			throw AppleOAuthException.tokenExchangeInvalidResponse();
 		}
 		return body;
 	}
 
-	/**
-	 * client_secret = ES256로 서명한 JWT
-	 * iss = team_id
-	 * sub = client_id (Services ID)
-	 * aud = https://appleid.apple.com
-	 */
-
+	// client_secret = ES256로 서명한 JWT
+	// iss = team_id
+	// sub = client_id (Services ID)
+	// aud = https://appleid.apple.com
 	private String generateClientSecret() {
 		try {
 			Instant now = Instant.now();
-			Instant exp = now.plusSeconds(300);
+			Instant exp = now.plusSeconds(CLIENT_SECRET_TTL_SECONDS);
 
 			JWTClaimsSet claims = new JWTClaimsSet.Builder()
 				.issuer(props.teamId())
@@ -107,10 +103,7 @@ public class AppleOAuthClient {
 			return jwt.serialize();
 
 		} catch (Exception e) {
-			throw new BusinessException(
-				ErrorCode.INTERNAL_ERROR,
-				"애플 client_secret 생성 실패: " + e.getClass().getSimpleName()
-			);
+			throw AppleOAuthException.clientSecretGenerateFailed(e);
 		}
 	}
 
@@ -142,10 +135,8 @@ public class AppleOAuthClient {
 		KeyFactory kf = KeyFactory.getInstance("EC");
 		return kf.generatePrivate(spec);
 	}
-	/**
-	 * 애플 토큰 응답(JSON)
-	 * id_token은 OpenID Connect ID Token(JWT)
-	 */
+	// 애플 토큰 응답(JSON)
+	// id_token은 OpenID Connect ID Token(JWT)
 	public static record AppleTokenResponse(
 		String access_token,
 		String token_type,

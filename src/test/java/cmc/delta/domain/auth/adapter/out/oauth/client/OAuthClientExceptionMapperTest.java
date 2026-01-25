@@ -23,10 +23,10 @@ class OAuthClientExceptionMapperTest {
 	}
 
 	@Test
-	@DisplayName("5xx면 INTERNAL_ERROR BusinessException으로 매핑")
+	@DisplayName("5xx면 OAUTH_PROVIDER_ERROR로 매핑")
 	void mapHttpStatus_when5xx_thenInternalError() {
 		RuntimeException ex = mapper.mapHttpStatus("kakao", "token", new HttpServerErrorException(HttpStatus.BAD_GATEWAY));
-		assertThat(ex).isInstanceOf(BusinessException.class);
-		assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.INTERNAL_ERROR);
+		assertThat(ex).isInstanceOf(OAuthClientException.class);
+		assertThat(((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.OAUTH_PROVIDER_ERROR);
 	}
 }

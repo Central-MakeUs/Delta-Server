@@ -6,13 +6,12 @@ import cmc.delta.domain.curriculum.application.port.in.type.command.SetProblemTy
 import cmc.delta.domain.curriculum.application.port.in.type.command.UpdateCustomProblemTypeCommand;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeItemResponse;
 import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeListResponse;
+import cmc.delta.domain.curriculum.application.exception.ProblemTypeException;
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
+import cmc.delta.domain.curriculum.application.validation.ProblemTypeCommandValidator;
 import cmc.delta.domain.curriculum.model.ProblemType;
-import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +25,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
 	private final ProblemTypeRepositoryPort problemTypeRepositoryPort;
 	private final UserRepositoryPort userRepositoryPort;
+	private final ProblemTypeCommandValidator validator;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -40,17 +40,12 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
 	@Override
 	public ProblemTypeItemResponse createCustomType(Long userId, CreateCustomProblemTypeCommand command) {
-		String name = trimToNull(command.name());
-		if (name == null) {
-			throw new ProblemValidationException("name은 필수입니다.");
-		}
-		if (name.length() > 100) {
-			throw new ProblemValidationException("name은 100자 이하여야 합니다.");
+		if (command == null) {
+			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
 		}
 
-		if (problemTypeRepositoryPort.existsCustomByUserIdAndName(userId, name)) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "이미 추가된 유형입니다.");
-		}
+		String name = validator.requireName(command.name());
+		validator.ensureNoDuplicateCustomName(userId, name);
 
 		int sortOrder = problemTypeRepositoryPort.findMaxSortOrderVisibleForUser(userId) + 1;
 		String id = generateCustomTypeId();
@@ -64,7 +59,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	@Override
 	public void setActive(Long userId, String typeId, SetProblemTypeActiveCommand command) {
 		ProblemType type = problemTypeRepositoryPort.findOwnedCustomById(userId, typeId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
+			.orElseThrow(ProblemTypeException::notFound);
 
 		type.changeActive(command.active());
 		problemTypeRepositoryPort.save(type);
@@ -73,49 +68,34 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	@Override
 	public ProblemTypeItemResponse updateCustomType(Long userId, String typeId, UpdateCustomProblemTypeCommand command) {
 		if (command == null) {
-			throw new ProblemValidationException("요청 본문이 비어있습니다.");
+			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
 		}
 
-		String newName = trimToNull(command.name());
 		Integer newSortOrder = command.sortOrder();
-
 		boolean hasNameChange = command.name() != null;
 		boolean hasSortOrderChange = newSortOrder != null;
 		if (!hasNameChange && !hasSortOrderChange) {
-			throw new ProblemValidationException("수정할 값이 없습니다.");
+			throw ProblemTypeException.invalid("수정할 값이 없습니다.");
 		}
+		validator.validateSortOrder(newSortOrder);
 
 		ProblemType type = problemTypeRepositoryPort.findOwnedCustomById(userId, typeId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.PROBLEM_FINAL_TYPE_NOT_FOUND));
+			.orElseThrow(ProblemTypeException::notFound);
 
 		if (hasNameChange) {
-			if (newName == null) {
-				throw new ProblemValidationException("name은 필수입니다.");
-			}
-			if (newName.length() > 100) {
-				throw new ProblemValidationException("name은 100자 이하여야 합니다.");
-			}
-			if (!newName.equals(type.getName()) && problemTypeRepositoryPort.existsCustomByUserIdAndName(userId, newName)) {
-				throw new BusinessException(ErrorCode.INVALID_REQUEST, "이미 추가된 유형입니다.");
+			String newName = validator.requireNameWhenPresent(command.name());
+			if (!newName.equals(type.getName())) {
+				validator.ensureNoDuplicateCustomName(userId, newName);
 			}
 			type.rename(newName);
 		}
 
 		if (hasSortOrderChange) {
-			if (newSortOrder.intValue() < 1) {
-				throw new ProblemValidationException("sortOrder는 1 이상이어야 합니다.");
-			}
 			type.changeSortOrder(newSortOrder.intValue());
 		}
 
 		ProblemType saved = problemTypeRepositoryPort.save(type);
 		return toItem(saved);
-	}
-
-	private String trimToNull(String v) {
-		if (v == null) return null;
-		String t = v.trim();
-		return t.isEmpty() ? null : t;
 	}
 
 	private ProblemTypeItemResponse toItem(ProblemType type) {

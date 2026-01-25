@@ -8,6 +8,11 @@ public enum ErrorCode {
 	AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_001", "인증에 실패했습니다.", LogLevel.WARN),
 	ACCESS_DENIED(HttpStatus.FORBIDDEN, "AUTH_002", "접근 권한이 없습니다.", LogLevel.WARN),
 
+	// OAUTH
+	OAUTH_PROVIDER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_100", "외부 OAuth 호출에 실패했습니다.", LogLevel.ERROR),
+	OAUTH_PROVIDER_TIMEOUT(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_101", "외부 OAuth 호출이 지연되고 있습니다.", LogLevel.ERROR),
+	OAUTH_INVALID_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH_102", "외부 OAuth 응답이 올바르지 않습니다.", LogLevel.ERROR),
+
 	// JWT (Access)
 	TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_010", "토큰이 필요합니다.", LogLevel.WARN), // access 누락
 	INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_011", "유효하지 않은 토큰입니다.", LogLevel.WARN), // 서명/형식 오류

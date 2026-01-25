@@ -15,7 +15,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
 
-import cmc.delta.global.error.ErrorCode;
+
 import cmc.delta.global.error.exception.BusinessException;
 
 @Component
@@ -23,6 +23,7 @@ public class AppleIdTokenVerifier {
 
 	private static final String ISSUER = "https://appleid.apple.com";
 	private static final String JWK_URL = "https://appleid.apple.com/auth/keys";
+	private static final long JWK_CACHE_TTL_SECONDS = 600L;
 
 	private final AppleOAuthProperties props;
 
@@ -35,7 +36,7 @@ public class AppleIdTokenVerifier {
 
 	public AppleIdClaims verifyAndExtract(String idToken) {
 		if (!StringUtils.hasText(idToken)) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "애플 id_token이 비어있습니다.");
+			throw AppleOAuthException.idTokenEmpty();
 		}
 
 		SignedJWT jwt = parse(idToken);
@@ -47,7 +48,7 @@ public class AppleIdTokenVerifier {
 		String email = getStringClaim(jwt, "email");
 
 		if (!StringUtils.hasText(sub)) {
-			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 sub가 비어있습니다.");
+			throw AppleOAuthException.subEmpty();
 		}
 
 		return new AppleIdClaims(sub, email);
@@ -57,7 +58,7 @@ public class AppleIdTokenVerifier {
 		try {
 			return SignedJWT.parse(idToken);
 		} catch (ParseException e) {
-			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token 파싱에 실패했습니다.");
+			throw AppleOAuthException.idTokenParseFailed(e);
 		}
 	}
 
@@ -65,21 +66,21 @@ public class AppleIdTokenVerifier {
 		try {
 			String iss = jwt.getJWTClaimsSet().getIssuer();
 			if (!ISSUER.equals(iss)) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 iss가 올바르지 않습니다.");
+				throw AppleOAuthException.issuerInvalid();
 			}
 
 			if (jwt.getJWTClaimsSet().getAudience() == null
 				|| !jwt.getJWTClaimsSet().getAudience().contains(props.clientId())) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 aud가 올바르지 않습니다.");
+				throw AppleOAuthException.audienceInvalid();
 			}
 
 			Date exp = jwt.getJWTClaimsSet().getExpirationTime();
 			if (exp == null || exp.toInstant().isBefore(Instant.now())) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token이 만료되었습니다.");
+				throw AppleOAuthException.tokenExpired();
 			}
 
 		} catch (ParseException e) {
-			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 클레임 조회에 실패했습니다.");
+			throw AppleOAuthException.claimReadFailed(e);
 		}
 	}
 
@@ -87,7 +88,7 @@ public class AppleIdTokenVerifier {
 		try {
 			String kid = jwt.getHeader().getKeyID();
 			if (!StringUtils.hasText(kid)) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 토큰 헤더 kid가 비어있습니다.");
+				throw AppleOAuthException.kidEmpty();
 			}
 
 			JWKSet jwkSet = loadJwkSet();
@@ -98,30 +99,27 @@ public class AppleIdTokenVerifier {
 				jwk = jwkSet.getKeyByKeyId(kid);
 			}
 			if (jwk == null) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 공개키(kid)에 해당하는 키를 찾지 못했습니다.");
+				throw AppleOAuthException.publicKeyNotFound();
 			}
 
 			if (!(jwk instanceof RSAKey)) {
-				throw new BusinessException(
-					ErrorCode.AUTHENTICATION_FAILED,
-					"애플 공개키 타입이 RSA가 아닙니다: " + jwk.getKeyType()
-				);
+				throw AppleOAuthException.publicKeyTypeNotRsa(String.valueOf(jwk.getKeyType()));
 			}
 
 			if (!JWSAlgorithm.RS256.equals(jwt.getHeader().getAlgorithm())) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 토큰 알고리즘이 RS256이 아닙니다.");
+				throw AppleOAuthException.algorithmNotRs256();
 			}
 
 			RSAKey rsaKey = (RSAKey) jwk;
 			boolean ok = jwt.verify(new RSASSAVerifier(rsaKey.toRSAPublicKey()));
 			if (!ok) {
-				throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token 서명 검증에 실패했습니다.");
+				throw AppleOAuthException.signatureVerifyFailed();
 			}
 
 		} catch (BusinessException e) {
 			throw e;
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token 검증 중 오류가 발생했습니다.");
+			throw AppleOAuthException.verifyUnexpectedError(e);
 		}
 	}
 
@@ -136,7 +134,7 @@ public class AppleIdTokenVerifier {
 
 	private JWKSet loadJwkSet() {
 		long now = Instant.now().getEpochSecond();
-		if (cachedJwkSet != null && (now - cachedAtEpochSec) < 600) {
+		if (cachedJwkSet != null && (now - cachedAtEpochSec) < JWK_CACHE_TTL_SECONDS) {
 			return cachedJwkSet;
 		}
 		try {
@@ -145,7 +143,7 @@ public class AppleIdTokenVerifier {
 			cachedAtEpochSec = now;
 			return jwkSet;
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "애플 공개키(JWK) 로딩에 실패했습니다.");
+			throw AppleOAuthException.jwkLoadFailed(e);
 		}
 	}
 

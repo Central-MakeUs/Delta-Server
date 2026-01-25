@@ -2,8 +2,7 @@ package cmc.delta.domain.auth.adapter.out.oauth.kakao;
 
 import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
+import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthClientException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
@@ -51,7 +50,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 		);
 
 		if (body == null || !StringUtils.hasText(body.accessToken())) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "카카오 토큰 응답이 비어있습니다.");
+			throw OAuthClientException.invalidResponse(PROVIDER_NAME, OP_TOKEN);
 		}
 
 		return new OAuthToken(body.accessToken());
@@ -71,7 +70,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 		);
 
 		if (body == null || body.id() <= 0) {
-			throw new BusinessException(ErrorCode.INTERNAL_ERROR, "카카오 유저 응답이 비어있습니다.");
+			throw OAuthClientException.invalidResponse(PROVIDER_NAME, OP_USER);
 		}
 
 		String email = (body.kakaoAccount() == null) ? null : body.kakaoAccount().email();

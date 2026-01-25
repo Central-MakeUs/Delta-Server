@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cmc.delta.domain.auth.adapter.out.oauth.apple.AppleIdTokenVerifier;
 import cmc.delta.domain.auth.adapter.out.oauth.apple.AppleOAuthClient;
-import cmc.delta.global.error.ErrorCode;
-import cmc.delta.global.error.exception.BusinessException;
+import cmc.delta.domain.auth.application.exception.SocialAuthException;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,7 +26,7 @@ public class AppleOAuthService {
 
 		String providerUserId = verified.sub();
 		if (!StringUtils.hasText(providerUserId)) {
-			throw new BusinessException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token(sub)이 비어있습니다.");
+			throw SocialAuthException.authenticationFailed("애플 id_token(sub)이 비어있습니다.");
 		}
 
 		AppleUserFromForm form = parseUserJsonOrNull(userJson);
@@ -52,7 +51,7 @@ public class AppleOAuthService {
 		try {
 			return objectMapper.readValue(userJson, AppleUserFromForm.class);
 		} catch (Exception e) {
-			throw new BusinessException(ErrorCode.INVALID_REQUEST, "애플 user 파싱에 실패했습니다.");
+			throw SocialAuthException.invalidRequest("애플 user 파싱에 실패했습니다.");
 		}
 	}
 
