@@ -15,6 +15,7 @@ public class BearerTokenResolver {
 		if (raw == null || raw.isBlank() || !raw.startsWith(PREFIX)) {
 			return null;
 		}
-		return raw.substring(PREFIX.length()).trim();
+		String token = raw.substring(PREFIX.length()).trim();
+		return token.isBlank() ? null : token;
 	}
 }
