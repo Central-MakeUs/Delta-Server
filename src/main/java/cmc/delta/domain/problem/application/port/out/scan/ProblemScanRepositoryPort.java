@@ -6,5 +6,7 @@ import java.util.Optional;
 public interface ProblemScanRepositoryPort {
 	ProblemScan save(ProblemScan scan);
 
+	Optional<ProblemScan> findOwnedById(Long scanId, Long userId);
+
 	Optional<ProblemScan> findOwnedByForUpdate(Long scanId, Long userId);
 }

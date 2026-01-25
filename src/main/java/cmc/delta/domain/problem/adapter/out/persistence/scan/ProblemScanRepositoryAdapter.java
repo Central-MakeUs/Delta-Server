@@ -18,6 +18,11 @@ public class ProblemScanRepositoryAdapter implements ProblemScanRepositoryPort {
 	}
 
 	@Override
+	public Optional<ProblemScan> findOwnedById(Long scanId, Long userId) {
+		return scanRepository.findByIdAndUserId(scanId, userId);
+	}
+
+	@Override
 	public Optional<ProblemScan> findOwnedByForUpdate(Long scanId, Long userId) {
 		return scanRepository.findOwnedByForUpdate(scanId, userId);
 	}

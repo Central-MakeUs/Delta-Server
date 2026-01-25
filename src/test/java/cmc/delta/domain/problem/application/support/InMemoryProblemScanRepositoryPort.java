@@ -22,11 +22,22 @@ public final class InMemoryProblemScanRepositoryPort implements ProblemScanRepos
 	}
 
 	@Override
+	public Optional<ProblemScan> findOwnedById(Long scanId, Long userId) {
+		return findOwned(scanId, userId);
+	}
+
+	@Override
 	public Optional<ProblemScan> findOwnedByForUpdate(Long scanId, Long userId) {
-		ProblemScan s = store.get(scanId);
-		if (s == null) return Optional.empty();
-		Long ownerId = s.getUser().getId();
-		return ownerId != null && ownerId.equals(userId) ? Optional.of(s) : Optional.empty();
+		return findOwned(scanId, userId);
+	}
+
+	private Optional<ProblemScan> findOwned(Long scanId, Long userId) {
+		ProblemScan scan = store.get(scanId);
+		if (scan == null) {
+			return Optional.empty();
+		}
+		Long ownerId = scan.getUser().getId();
+		return ownerId != null && ownerId.equals(userId) ? Optional.of(scan) : Optional.empty();
 	}
 
 	public int count() {

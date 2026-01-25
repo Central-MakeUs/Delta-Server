@@ -5,6 +5,8 @@ import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanComma
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.scan.ProblemScanRepositoryPort;
+import cmc.delta.domain.problem.application.port.out.storage.ScanImageUploadPort;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.domain.problem.application.support.command.ProblemScanStoragePaths;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemScanStatusValidator;
@@ -14,19 +16,17 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
 public class ProblemScanServiceImpl implements ScanCommandUseCase {
 
-	private final StoragePort storagePort;
+	private final ScanImageUploadPort scanImageUploadPort;
 	private final UserRepositoryPort userRepositoryPort;
 	private final ProblemScanRepositoryPort scanRepositoryPort;
 	private final AssetRepositoryPort assetRepositoryPort;
@@ -38,11 +38,11 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 	@Transactional
 	@Override
 	public ScanCreateResult createScan(Long userId, CreateScanCommand command) {
-		MultipartFile file = command.file();
+		UploadFile file = command.file();
 		uploadValidator.validateFileNotEmpty(file);
 
-		StoragePort.UploadResult uploaded =
-			storagePort.uploadImage(file, ProblemScanStoragePaths.ORIGINAL_DIR);
+		ScanImageUploadPort.UploadResult uploaded =
+			scanImageUploadPort.uploadImage(file, ProblemScanStoragePaths.ORIGINAL_DIR);
 
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScan scan = scanRepositoryPort.save(ProblemScan.uploaded(userRef));

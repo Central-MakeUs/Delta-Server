@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.application.service.query;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
@@ -13,6 +14,7 @@ import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
+import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.error.ErrorCode;
@@ -21,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,15 +44,21 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	public PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,
 		ProblemListCondition condition,
-		Pageable pageable
+		PageQuery pageQuery
 	) {
-		validatePagination(pageable);
+		validatePagination(pageQuery);
 
-		Page<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageable);
+		PageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemList(userId, condition, pageQuery);
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData);
 		List<ProblemListItemResponse> items = mapListItems(pageData, typeItemsByProblemId);
 
-		return PagedResponse.of(pageData, items);
+		return PagedResponse.of(
+			items,
+			pageData.page(),
+			pageData.size(),
+			pageData.totalElements(),
+			pageData.totalPages()
+		);
 	}
 
 	@Override
@@ -67,12 +73,12 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		return withTypes(base, types);
 	}
 
-	private void validatePagination(Pageable pageable) {
-		requestValidator.validatePagination(pageable);
+	private void validatePagination(PageQuery pageQuery) {
+		requestValidator.validatePagination(pageQuery);
 	}
 
-	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(Page<ProblemListRow> pageData) {
-		List<Long> problemIds = pageData.getContent().stream().map(ProblemListRow::problemId).toList();
+	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(PageResult<ProblemListRow> pageData) {
+		List<Long> problemIds = pageData.content().stream().map(ProblemListRow::problemId).toList();
 		if (problemIds.isEmpty()) {
 			return Map.of();
 		}
@@ -91,10 +97,10 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	}
 
 	private List<ProblemListItemResponse> mapListItems(
-		Page<ProblemListRow> pageData,
+		PageResult<ProblemListRow> pageData,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId
 	) {
-		return pageData.getContent().stream()
+		return pageData.content().stream()
 			.map(row -> toListItem(row, typeItemsByProblemId))
 			.toList();
 	}

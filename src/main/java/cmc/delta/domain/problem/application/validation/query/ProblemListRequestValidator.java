@@ -1,9 +1,8 @@
 package cmc.delta.domain.problem.application.validation.query;
 
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.error.ErrorCode;
-
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -11,9 +10,9 @@ public class ProblemListRequestValidator {
 
 	private static final int MAX_SIZE = 50;
 
-	public void validatePagination(Pageable pageable) {
-		int page = pageable.getPageNumber();
-		int size = pageable.getPageSize();
+	public void validatePagination(PageQuery pageQuery) {
+		int page = pageQuery.page();
+		int size = pageQuery.size();
 
 		if (page < 0) {
 			throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);

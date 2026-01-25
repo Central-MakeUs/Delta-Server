@@ -10,6 +10,7 @@ import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.*;
 import org.mockito.ArgumentCaptor;
@@ -17,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.data.domain.Pageable;
 
 class ProblemControllerWebMvcTest {
 
@@ -43,13 +43,13 @@ class ProblemControllerWebMvcTest {
 
 	@Test
 	@DisplayName("GET /problems: page/size 바인딩 + factory/from 호출 + usecase 호출")
-	void list_ok_bindsPageable() throws Exception {
+	void list_ok_bindsPageQuery() throws Exception {
 		// given
 		UserPrincipal principal = principal(10L);
 		when(conditionFactory.from(any())).thenReturn(null);
-		when(problemQueryUseCase.getMyProblemCardList(eq(10L), any(), any(Pageable.class))).thenReturn(null);
+		when(problemQueryUseCase.getMyProblemCardList(eq(10L), any(), any(PageQuery.class))).thenReturn(null);
 
-		ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+		ArgumentCaptor<PageQuery> pageQueryCaptor = ArgumentCaptor.forClass(PageQuery.class);
 
 		// when & then
 		mvc.perform(get("/api/v1/problems")
@@ -60,11 +60,11 @@ class ProblemControllerWebMvcTest {
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
 		verify(conditionFactory).from(any());
-		verify(problemQueryUseCase).getMyProblemCardList(eq(10L), any(), pageableCaptor.capture());
+		verify(problemQueryUseCase).getMyProblemCardList(eq(10L), any(), pageQueryCaptor.capture());
 
-		Pageable pageable = pageableCaptor.getValue();
-		Assertions.assertEquals(1, pageable.getPageNumber());
-		Assertions.assertEquals(20, pageable.getPageSize());
+		PageQuery pageQuery = pageQueryCaptor.getValue();
+		Assertions.assertEquals(1, pageQuery.page());
+		Assertions.assertEquals(20, pageQuery.size());
 	}
 
 	@Test

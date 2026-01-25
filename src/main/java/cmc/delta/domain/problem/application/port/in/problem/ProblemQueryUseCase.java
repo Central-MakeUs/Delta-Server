@@ -4,14 +4,14 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetail
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.global.api.response.PagedResponse;
-import org.springframework.data.domain.Pageable;
+import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 
 public interface ProblemQueryUseCase {
 
 	PagedResponse<ProblemListItemResponse> getMyProblemCardList(
 		Long userId,
 		ProblemListCondition condition,
-		Pageable pageable
+		PageQuery pageQuery
 	);
 
 	ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId);

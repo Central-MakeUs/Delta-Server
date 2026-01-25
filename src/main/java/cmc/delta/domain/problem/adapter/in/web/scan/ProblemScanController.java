@@ -7,6 +7,7 @@ import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -14,6 +15,8 @@ import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.error.exception.BusinessException;
+import java.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +47,18 @@ public class ProblemScanController {
 		@CurrentUser UserPrincipal principal,
 		@RequestPart("file") MultipartFile file
 	) {
-		ScanCreateResult result = scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(file));
+		UploadFile uploadFile = toUploadFile(file);
+		ScanCreateResult result =
+			scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(uploadFile));
 		return ApiResponses.success(SuccessCode.OK, ProblemScanCreateResponse.from(result));
+	}
+
+	private UploadFile toUploadFile(MultipartFile file) {
+		try {
+			return new UploadFile(file.getBytes(), file.getContentType(), file.getOriginalFilename());
+		} catch (IOException e) {
+			throw new BusinessException(ErrorCode.INVALID_REQUEST, "업로드 파일을 읽을 수 없습니다.");
+		}
 	}
 
 	@Operation(summary = "문제 스캔 상세 조회 (원본 이미지 URL + OCR/LaTeX 상태)")

@@ -11,6 +11,16 @@ public record PagedResponse<T>(
 	long totalElements,
 	int totalPages
 ) {
+	public static <T> PagedResponse<T> of(
+		List<T> content,
+		int page,
+		int size,
+		long totalElements,
+		int totalPages
+	) {
+		return new PagedResponse<>(content, page, size, totalElements, totalPages);
+	}
+
 	public static <T> PagedResponse<T> from(Page<T> pageData) {
 		return new PagedResponse<T>(
 			pageData.getContent(),
