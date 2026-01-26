@@ -97,7 +97,7 @@ public class SecurityConfig {
 		api.setAllowedOriginPatterns(List.of(
 			"https://deltasemo.cloud",
 			"http://localhost:*"));
-		api.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
 		api.setExposedHeaders(List.of("Authorization", "X-Refresh-Token", "X-Trace-Id"));
 
