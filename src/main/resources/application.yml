@@ -43,3 +43,8 @@ logging:
   level:
     cmc.delta.domain.problem.adapter.in.worker: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus

@@ -29,7 +29,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_GET_PATHS = {
-		"/oauth/**", "/favicon.ico", "/error", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/health", "/health"
+		"/oauth/**",
+		"/favicon.ico",
+		"/error",
+		"/swagger-ui/**",
+		"/v3/api-docs/**",
+		"/actuator/health",
+		"/actuator/prometheus",
+		"/health"
 	};
 
 	private static final String[] PUBLIC_POST_PATHS = {
