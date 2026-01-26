@@ -29,46 +29,46 @@ public enum ErrorCode {
 		LogLevel.ERROR),
 
 	// JWT (Access)
-	TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_010", "토큰이 필요합니다.", LogLevel.WARN), // access 누락
+	TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_010", "토큰이 필요합니다.", LogLevel.INFO), // access 누락
 	INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_011", "유효하지 않은 토큰입니다.", LogLevel.WARN), // 서명/형식 오류
 	EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_012", "만료된 토큰입니다.", LogLevel.WARN), // exp 만료
 	BLACKLISTED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_013", "폐기된 토큰입니다.", LogLevel.WARN), // (옵션) 블랙리스트
 
 	// JWT (Refresh)
-	REFRESH_TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_020", "리프레시 토큰이 필요합니다.", LogLevel.WARN),
+	REFRESH_TOKEN_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_020", "리프레시 토큰이 필요합니다.", LogLevel.INFO),
 	INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_021", "유효하지 않은 리프레시 토큰입니다.", LogLevel.WARN),
 
 	// REQUEST
-	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "REQ_001", "요청이 올바르지 않습니다.", LogLevel.WARN),
-	METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "REQ_002", "허용되지 않은 메서드입니다.", LogLevel.WARN),
+	INVALID_REQUEST(HttpStatus.BAD_REQUEST, "REQ_001", "요청이 올바르지 않습니다.", LogLevel.INFO),
+	METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "REQ_002", "허용되지 않은 메서드입니다.", LogLevel.INFO),
 
 	// RESOURCE
-	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RES_404", "리소스를 찾을 수 없습니다.", LogLevel.WARN),
+	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RES_404", "리소스를 찾을 수 없습니다.", LogLevel.INFO),
 
 	// SYSTEM
 	INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "SYS_500", "서버 오류가 발생했습니다.", LogLevel.ERROR),
 
 	// USER
-	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.", LogLevel.WARN),
+	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다.", LogLevel.INFO),
 	USER_WITHDRAWN(HttpStatus.FORBIDDEN, "USER_002", "탈퇴한 사용자입니다.", LogLevel.WARN),
 	USER_ONBOARDING_REQUIRED(HttpStatus.FORBIDDEN, "USER_003", "추가 정보 입력이 필요합니다.", LogLevel.WARN),
 
 	// PROBLEM
-	PROBLEM_SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_001", "스캔을 찾을 수 없습니다.", LogLevel.WARN),
-	PROBLEM_ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_002", "원본 이미지를 찾을 수 없습니다.", LogLevel.WARN),
+	PROBLEM_SCAN_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_001", "스캔을 찾을 수 없습니다.", LogLevel.INFO),
+	PROBLEM_ASSET_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_002", "원본 이미지를 찾을 수 없습니다.", LogLevel.INFO),
 	PROBLEM_SCAN_FORBIDDEN(HttpStatus.FORBIDDEN, "PROB_003", "해당 스캔에 접근할 수 없습니다.", LogLevel.WARN),
-	PROBLEM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_200", "오답카드를 찾을 수 없습니다.", LogLevel.WARN),
-	PROBLEM_UPDATE_EMPTY(HttpStatus.BAD_REQUEST, "PROB_201", "수정할 값이 없습니다.", LogLevel.WARN),
-	PROBLEM_UPDATE_INVALID_ANSWER(HttpStatus.BAD_REQUEST, "PROB_202", "정답 입력값이 올바르지 않습니다.", LogLevel.WARN),
+	PROBLEM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROB_200", "오답카드를 찾을 수 없습니다.", LogLevel.INFO),
+	PROBLEM_UPDATE_EMPTY(HttpStatus.BAD_REQUEST, "PROB_201", "수정할 값이 없습니다.", LogLevel.INFO),
+	PROBLEM_UPDATE_INVALID_ANSWER(HttpStatus.BAD_REQUEST, "PROB_202", "정답 입력값이 올바르지 않습니다.", LogLevel.INFO),
 
 	// 오답카드 생성/저장
-	PROBLEM_FINAL_UNIT_MUST_BE_CHILD(HttpStatus.BAD_REQUEST, "PROB_004", "단원은 과목이 아닌 하위 단원을 선택해야 합니다.", LogLevel.WARN),
-	PROBLEM_FINAL_UNIT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_005", "선택한 단원을 찾을 수 없습니다.", LogLevel.WARN),
-	PROBLEM_FINAL_TYPE_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_006", "선택한 유형을 찾을 수 없습니다.", LogLevel.WARN),
-	PROBLEM_SCAN_NOT_READY(HttpStatus.BAD_REQUEST, "PROB_007", "AI 분석이 완료된 스캔만 오답카드를 생성할 수 있습니다.", LogLevel.WARN),
+	PROBLEM_FINAL_UNIT_MUST_BE_CHILD(HttpStatus.BAD_REQUEST, "PROB_004", "단원은 과목이 아닌 하위 단원을 선택해야 합니다.", LogLevel.INFO),
+	PROBLEM_FINAL_UNIT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_005", "선택한 단원을 찾을 수 없습니다.", LogLevel.INFO),
+	PROBLEM_FINAL_TYPE_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_006", "선택한 유형을 찾을 수 없습니다.", LogLevel.INFO),
+	PROBLEM_SCAN_NOT_READY(HttpStatus.BAD_REQUEST, "PROB_007", "AI 분석이 완료된 스캔만 오답카드를 생성할 수 있습니다.", LogLevel.INFO),
 	PROBLEM_ALREADY_CREATED(HttpStatus.CONFLICT, "PROB_008", "이미 해당 스캔으로 생성된 오답카드가 있습니다.", LogLevel.WARN),
-	PROBLEM_SCAN_RENDER_MODE_MISSING(HttpStatus.BAD_REQUEST, "PROB_009", "스캔 렌더 모드가 누락되었습니다.", LogLevel.WARN),
-	PROBLEM_LIST_INVALID_PAGINATION(HttpStatus.BAD_REQUEST, "PROB_100", "페이지네이션 값이 올바르지 않습니다.", LogLevel.WARN),
+	PROBLEM_SCAN_RENDER_MODE_MISSING(HttpStatus.BAD_REQUEST, "PROB_009", "스캔 렌더 모드가 누락되었습니다.", LogLevel.INFO),
+	PROBLEM_LIST_INVALID_PAGINATION(HttpStatus.BAD_REQUEST, "PROB_100", "페이지네이션 값이 올바르지 않습니다.", LogLevel.INFO),
 
 	// OCR / AI
 	OCR_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_010", "OCR 처리에 실패했습니다.", LogLevel.ERROR),
