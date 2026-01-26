@@ -57,6 +57,7 @@ public class ProblemListQuerySupport {
 				p.type.name,
 				p.asset.id,
 				p.asset.storageKey,
+				p.problem.completedAt,
 				p.problem.createdAt))
 			.from(p.problem)
 			.join(p.problem.finalUnit, p.unit)

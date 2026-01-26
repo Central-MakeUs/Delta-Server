@@ -15,5 +15,6 @@ public interface ProblemListMapper extends ProblemCurriculumItemSupport {
 	@Mapping(target = "unit", expression = "java(toItem(row.unitId(), row.unitName()))")
 	@Mapping(target = "types", expression = "java(List.of())")
 	@Mapping(target = "previewImage", expression = "java(new ProblemListItemResponse.PreviewImageResponse(row.assetId(), viewUrl))")
+	@Mapping(target = "isCompleted", expression = "java(row.completedAt() != null)")
 	ProblemListItemResponse toResponse(ProblemListRow row, String viewUrl);
 }

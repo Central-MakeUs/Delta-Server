@@ -10,6 +10,7 @@ public record ProblemListItemResponse(
 	CurriculumItemResponse unit,
 	List<CurriculumItemResponse> types,
 	PreviewImageResponse previewImage,
+	boolean isCompleted,
 	LocalDateTime createdAt) {
 	public record PreviewImageResponse(
 		Long assetId,

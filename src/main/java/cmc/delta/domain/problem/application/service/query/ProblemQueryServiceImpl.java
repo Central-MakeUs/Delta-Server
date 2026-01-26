@@ -113,6 +113,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.unit(),
 			types,
 			base.previewImage(),
+			base.isCompleted(),
 			base.createdAt());
 	}
 
