@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.application.service.query;
 
 import cmc.delta.domain.problem.application.exception.ProblemException;
+import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
@@ -8,15 +9,18 @@ import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCon
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.PagedResponse;
+import cmc.delta.global.api.response.CursorPagedResponse;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.util.List;
@@ -60,6 +64,25 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	}
 
 	@Override
+	public CursorPagedResponse<ProblemListItemResponse> getMyProblemCardListCursor(
+		Long userId,
+		ProblemListCondition condition,
+		CursorQuery cursorQuery) {
+		validateCursorPagination(condition, cursorQuery);
+
+		CursorPageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemListCursor(userId, condition,
+			cursorQuery);
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData.content());
+		List<ProblemListItemResponse> items = mapListItems(pageData.content(), typeItemsByProblemId);
+
+		CursorPagedResponse.Cursor nextCursor = (pageData.nextLastId() == null)
+			? null
+			: new CursorPagedResponse.Cursor(pageData.nextLastId(), pageData.nextLastCreatedAt());
+
+		return CursorPagedResponse.of(items, pageData.hasNext(), nextCursor, pageData.totalElements());
+	}
+
+	@Override
 	public ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId) {
 		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
@@ -75,8 +98,32 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		requestValidator.validatePagination(pageQuery);
 	}
 
+	private void validateCursorPagination(ProblemListCondition condition, CursorQuery cursorQuery) {
+		// size validation은 기존 validator(MAX_SIZE=50)를 재사용한다.
+		requestValidator.validatePagination(new PageQuery(0, cursorQuery.size()));
+
+		boolean hasLastId = cursorQuery.lastId() != null;
+		boolean hasLastCreatedAt = cursorQuery.lastCreatedAt() != null;
+		if (hasLastId != hasLastCreatedAt) {
+			throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
+		}
+
+		// RECENT/OLDEST 외 정렬은 커서 기반을 지원하지 않는다.
+		if (condition.sort() != null) {
+			switch (condition.sort()) {
+				case RECENT, OLDEST -> {
+				}
+				default -> throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
+			}
+		}
+	}
+
 	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(PageResult<ProblemListRow> pageData) {
-		List<Long> problemIds = pageData.content().stream().map(ProblemListRow::problemId).toList();
+		return loadTypeItemsByProblemId(pageData.content());
+	}
+
+	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(List<ProblemListRow> rows) {
+		List<Long> problemIds = rows.stream().map(ProblemListRow::problemId).toList();
 		if (problemIds.isEmpty()) {
 			return Map.of();
 		}
@@ -95,7 +142,13 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	private List<ProblemListItemResponse> mapListItems(
 		PageResult<ProblemListRow> pageData,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
-		return pageData.content().stream()
+		return mapListItems(pageData.content(), typeItemsByProblemId);
+	}
+
+	private List<ProblemListItemResponse> mapListItems(
+		List<ProblemListRow> rows,
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
+		return rows.stream()
 			.map(row -> toListItem(row, typeItemsByProblemId))
 			.toList();
 	}

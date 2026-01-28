@@ -1,6 +1,16 @@
 package cmc.delta.domain.problem.adapter.in.web.problem;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemListRequest;
+import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemScrollRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCompleteRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
@@ -11,9 +21,11 @@ import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCon
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
+import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
+import cmc.delta.global.api.response.CursorPagedResponse;
 import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
@@ -24,7 +36,6 @@ import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "오답카드")
 @RestController
@@ -52,8 +63,7 @@ public class ProblemController {
 		UserPrincipal principal,
 		@RequestBody
 		ProblemCreateRequest request) {
-		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(),
-			request.toCommand());
+		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -75,8 +85,31 @@ public class ProblemController {
 		PageQuery pageQuery = new PageQuery(query.page(), query.size());
 		ProblemListCondition condition = conditionFactory.from(query);
 
-		PagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardList(principal.userId(),
-			condition, pageQuery);
+		PagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardList(principal.userId(), condition, pageQuery);
+
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "내 오답 카드 목록 조회(무한 스크롤)", description = "커서 기반(No-Offset) 무한 스크롤 목록 조회")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.PROBLEM_LIST_INVALID_PAGINATION,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/scroll")
+	public ApiResponse<CursorPagedResponse<ProblemListItemResponse>> getMyProblemListScroll(
+		@CurrentUser
+		UserPrincipal principal,
+		@ModelAttribute
+		MyProblemScrollRequest query) {
+		ProblemListCondition condition = conditionFactory.from(query);
+		CursorQuery cursorQuery = new CursorQuery(query.lastId(), query.lastCreatedAt(), query.size());
+
+		CursorPagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardListCursor(principal.userId(), condition, cursorQuery);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

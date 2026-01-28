@@ -4,12 +4,14 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail.Pro
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.list.ProblemListQuerySupport;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.query.type.ProblemTypeTagQuerySupport;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
+import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,14 @@ public class ProblemQueryRepositoryImpl implements ProblemQueryPort, ProblemType
 			page.getSize(),
 			page.getTotalElements(),
 			page.getTotalPages());
+	}
+
+	@Override
+	public CursorPageResult<ProblemListRow> findMyProblemListCursor(
+		Long userId,
+		ProblemListCondition condition,
+		CursorQuery cursorQuery) {
+		return listQuerySupport.findMyProblemListCursor(userId, condition, cursorQuery);
 	}
 
 	@Override
