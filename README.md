@@ -14,7 +14,19 @@
 세모는 수학 문제 사진을 업로드하면 OCR/AI 분석을 통해 단원·유형을 추천하고,
 사용자는 최소 수정만으로 오답카드를 생성/관리할 수 있는 서비스입니다.
 
-## 설계 포인트
+### 개선 과정
+
+- [페이지 최적화](https://recondite-bear-a3b.notion.site/2f65b82d76f480b9afa5f2b5f89a642f?source=copy_link)
+- [비동기 파이프라인 개선](https://recondite-bear-a3b.notion.site/2f65b82d76f4803db2b5e124a14e1bfe?source=copy_link)
+- [OCR 선택 과정](https://recondite-bear-a3b.notion.site/OCR-2e15b82d76f4805e84a5c9764f14fd3f?source=copy_link)
+
+### 테스트
+- 단위 테스트: JUnit5, Mockito
+
+**커버리지는 60% 이상을 목표로 하며, 주요 도메인/서비스에 집중합니다.**
+현재 커버리지 65% 이상을 유지하고 있습니다.
+
+## 설계
 
 ### 1) 외부 API 기반 파이프라인의 운영 안정성
 
