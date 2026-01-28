@@ -68,12 +68,21 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		Long userId,
 		ProblemListCondition condition,
 		CursorQuery cursorQuery) {
+		return getMyProblemCardListCursor(userId, condition, cursorQuery, true);
+	}
+
+	@Override
+	public CursorPagedResponse<ProblemListItemResponse> getMyProblemCardListCursor(
+		Long userId,
+		ProblemListCondition condition,
+		CursorQuery cursorQuery,
+		boolean includePreviewUrl) {
 		validateCursorPagination(condition, cursorQuery);
 
 		CursorPageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemListCursor(userId, condition,
 			cursorQuery);
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData.content());
-		List<ProblemListItemResponse> items = mapListItems(pageData.content(), typeItemsByProblemId);
+		List<ProblemListItemResponse> items = mapListItems(pageData.content(), typeItemsByProblemId, includePreviewUrl);
 
 		CursorPagedResponse.Cursor nextCursor = (pageData.nextLastId() == null)
 			? null
@@ -142,21 +151,23 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	private List<ProblemListItemResponse> mapListItems(
 		PageResult<ProblemListRow> pageData,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
-		return mapListItems(pageData.content(), typeItemsByProblemId);
+		return mapListItems(pageData.content(), typeItemsByProblemId, true);
 	}
 
 	private List<ProblemListItemResponse> mapListItems(
 		List<ProblemListRow> rows,
-		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
+		boolean includePreviewUrl) {
 		return rows.stream()
-			.map(row -> toListItem(row, typeItemsByProblemId))
+			.map(row -> toListItem(row, typeItemsByProblemId, includePreviewUrl))
 			.toList();
 	}
 
 	private ProblemListItemResponse toListItem(
 		ProblemListRow row,
-		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
-		String previewUrl = storagePort.issueReadUrl(row.storageKey());
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
+		boolean includePreviewUrl) {
+		String previewUrl = includePreviewUrl ? storagePort.issueReadUrl(row.storageKey()) : null;
 		ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
 
 		List<CurriculumItemResponse> types = typeItemsByProblemId.getOrDefault(base.problemId(), List.of());

@@ -109,7 +109,11 @@ public class ProblemController {
 		ProblemListCondition condition = conditionFactory.from(query);
 		CursorQuery cursorQuery = new CursorQuery(query.lastId(), query.lastCreatedAt(), query.size());
 
-		CursorPagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardListCursor(principal.userId(), condition, cursorQuery);
+		CursorPagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardListCursor(
+			principal.userId(),
+			condition,
+			cursorQuery,
+			query.includePreviewUrl());
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

@@ -14,6 +14,7 @@ public record ProblemListItemResponse(
 	LocalDateTime createdAt) {
 	public record PreviewImageResponse(
 		Long assetId,
+		String storageKey,
 		String viewUrl) {
 	}
 }

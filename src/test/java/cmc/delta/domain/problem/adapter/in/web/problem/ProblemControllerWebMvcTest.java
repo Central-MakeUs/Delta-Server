@@ -77,7 +77,8 @@ class ProblemControllerWebMvcTest {
 		// given
 		UserPrincipal principal = principal(10L);
 		when(conditionFactory.from(any(MyProblemScrollRequest.class))).thenReturn(null);
-		when(problemQueryUseCase.getMyProblemCardListCursor(eq(10L), any(), any(CursorQuery.class))).thenReturn(null);
+		when(problemQueryUseCase.getMyProblemCardListCursor(eq(10L), any(), any(CursorQuery.class), anyBoolean()))
+			.thenReturn(null);
 
 		ArgumentCaptor<CursorQuery> cursorCaptor = ArgumentCaptor.forClass(CursorQuery.class);
 
@@ -91,7 +92,7 @@ class ProblemControllerWebMvcTest {
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
 		verify(conditionFactory).from(any(MyProblemScrollRequest.class));
-		verify(problemQueryUseCase).getMyProblemCardListCursor(eq(10L), any(), cursorCaptor.capture());
+		verify(problemQueryUseCase).getMyProblemCardListCursor(eq(10L), any(), cursorCaptor.capture(), anyBoolean());
 
 		CursorQuery cursorQuery = cursorCaptor.getValue();
 		Assertions.assertEquals(123L, cursorQuery.lastId());

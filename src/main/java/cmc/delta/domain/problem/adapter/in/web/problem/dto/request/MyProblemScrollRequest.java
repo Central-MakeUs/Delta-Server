@@ -19,7 +19,8 @@ public record MyProblemScrollRequest(
 	Long lastId,
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
 	LocalDateTime lastCreatedAt,
-	Integer size) {
+	Integer size,
+	Boolean includePreviewUrl) {
 	public MyProblemScrollRequest {
 		// sort/status 기본값
 		if (sort == null)
@@ -31,5 +32,9 @@ public record MyProblemScrollRequest(
 			size = 20;
 		if (size > 50)
 			size = 50; // validator MAX_SIZE와 동일
+
+		// default true for backward compatibility
+		if (includePreviewUrl == null)
+			includePreviewUrl = true;
 	}
 }

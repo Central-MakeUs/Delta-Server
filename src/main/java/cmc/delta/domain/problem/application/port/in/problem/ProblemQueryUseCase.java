@@ -20,5 +20,11 @@ public interface ProblemQueryUseCase {
 		ProblemListCondition condition,
 		CursorQuery cursorQuery);
 
+	CursorPagedResponse<ProblemListItemResponse> getMyProblemCardListCursor(
+		Long userId,
+		ProblemListCondition condition,
+		CursorQuery cursorQuery,
+		boolean includePreviewUrl);
+
 	ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId);
 }

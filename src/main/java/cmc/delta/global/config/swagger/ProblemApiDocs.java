@@ -92,6 +92,11 @@ public final class ProblemApiDocs {
 		페이지 크기:
 		- size: 기본 20, 최대 50
 
+		미리보기 URL 포함 여부:
+		- includePreviewUrl: true/false (기본 true)
+		  - true: previewImage.viewUrl(presigned URL) 포함
+		  - false: previewImage.viewUrl은 null, previewImage.storageKey만 포함 (payload/CPU 절감)
+
 		응답:
 		- content: 목록
 		- hasNext: 다음 페이지 존재 여부

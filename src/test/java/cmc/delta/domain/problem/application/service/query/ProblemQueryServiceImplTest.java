@@ -73,7 +73,7 @@ class ProblemQueryServiceImplTest {
 			new CurriculumItemResponse("S1", "subject"),
 			new CurriculumItemResponse("U1", "unit"),
 			List.<CurriculumItemResponse>of(),
-			new ProblemListItemResponse.PreviewImageResponse(1L, "https://read/s3/k.png"),
+			new ProblemListItemResponse.PreviewImageResponse(1L, "s3/k.png", "https://read/s3/k.png"),
 			false,
 			LocalDateTime.now());
 		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(base);
