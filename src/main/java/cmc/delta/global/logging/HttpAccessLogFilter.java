@@ -95,7 +95,7 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 			log.warn(format, args);
 			return;
 		}
-		log.debug(format, args);
+		log.info(format, args);
 	}
 
 	private String resolveClientIp(HttpServletRequest request) {
