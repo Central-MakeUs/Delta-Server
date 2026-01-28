@@ -90,7 +90,7 @@ public class ProblemController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "내 오답 카드 목록 조회(무한 스크롤)", description = "커서 기반(No-Offset) 무한 스크롤 목록 조회")
+	@Operation(summary = "내 오답 카드 목록 조회(무한 스크롤)", description = ProblemApiDocs.LIST_MY_PROBLEMS_SCROLL)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,

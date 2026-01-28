@@ -60,6 +60,45 @@ public final class ProblemApiDocs {
 		- Swagger 기본 예시값 "string"은 실제 필터로 동작하므로, 필터를 끄려면 입력값을 지우거나 빈값으로 보내세요.
 		""";
 
+	public static final String LIST_MY_PROBLEMS_SCROLL = """
+		내 오답카드를 무한 스크롤(커서 기반, No-Offset) 방식으로 조회합니다.
+
+		이 API는 offset/page를 사용하지 않고, 직전 응답의 커서(nextCursor)를 그대로 넘겨 다음 목록을 가져옵니다.
+
+		요청:
+		- GET /api/v1/problems/scroll
+
+		필터(선택):
+		- subjectId: 과목(Unit) ID (부모 단원) 예) U_COMMON_1
+		- unitId: 단원(Unit) ID (자식 단원) 예) U_C1_POLY
+		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+
+		정렬(sort):
+		- RECENT: 최신순(기본)
+		- OLDEST: 오래된순
+		- 커서 페이징은 RECENT/OLDEST만 지원합니다.
+
+		상태(status): '오답 완료 버튼' 기준
+		- ALL: 전체(기본)
+		- UNSOLVED: 오답 완료 전
+		- SOLVED: 오답 완료
+
+		커서 파라미터:
+		- 첫 페이지: lastId/lastCreatedAt 없이 호출
+		- 다음 페이지: 직전 응답의 nextCursor 값을 그대로 전달
+		  - lastId: 마지막으로 받은 항목의 problemId
+		  - lastCreatedAt: 마지막으로 받은 항목의 createdAt (ISO-8601)
+
+		페이지 크기:
+		- size: 기본 20, 최대 50
+
+		응답:
+		- content: 목록
+		- hasNext: 다음 페이지 존재 여부
+		- nextCursor: 다음 요청에 사용할 커서(lastId, lastCreatedAt)
+		- totalElements: 첫 페이지에서만 포함(상단 'N개' 표시용)
+		""";
+
 	public static final String GET_MY_PROBLEM_DETAIL = """
 		내 오답카드 상세 정보를 조회합니다.
 
