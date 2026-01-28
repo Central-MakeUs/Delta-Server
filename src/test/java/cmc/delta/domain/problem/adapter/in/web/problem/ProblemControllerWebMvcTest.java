@@ -7,9 +7,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
+import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemListRequest;
+import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemScrollRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.*;
@@ -47,7 +50,7 @@ class ProblemControllerWebMvcTest {
 	void list_ok_bindsPageQuery() throws Exception {
 		// given
 		UserPrincipal principal = principal(10L);
-		when(conditionFactory.from(any())).thenReturn(null);
+		when(conditionFactory.from(any(MyProblemListRequest.class))).thenReturn(null);
 		when(problemQueryUseCase.getMyProblemCardList(eq(10L), any(), any(PageQuery.class))).thenReturn(null);
 
 		ArgumentCaptor<PageQuery> pageQueryCaptor = ArgumentCaptor.forClass(PageQuery.class);
@@ -60,12 +63,40 @@ class ProblemControllerWebMvcTest {
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-		verify(conditionFactory).from(any());
+		verify(conditionFactory).from(any(MyProblemListRequest.class));
 		verify(problemQueryUseCase).getMyProblemCardList(eq(10L), any(), pageQueryCaptor.capture());
 
 		PageQuery pageQuery = pageQueryCaptor.getValue();
 		Assertions.assertEquals(1, pageQuery.page());
 		Assertions.assertEquals(20, pageQuery.size());
+	}
+
+	@Test
+	@DisplayName("GET /problems/scroll: lastId/lastCreatedAt/size 바인딩 + factory/from 호출 + usecase 호출")
+	void scroll_ok_bindsCursorQuery() throws Exception {
+		// given
+		UserPrincipal principal = principal(10L);
+		when(conditionFactory.from(any(MyProblemScrollRequest.class))).thenReturn(null);
+		when(problemQueryUseCase.getMyProblemCardListCursor(eq(10L), any(), any(CursorQuery.class), anyBoolean()))
+			.thenReturn(null);
+
+		ArgumentCaptor<CursorQuery> cursorCaptor = ArgumentCaptor.forClass(CursorQuery.class);
+
+		// when & then
+		mvc.perform(get("/api/v1/problems/scroll")
+			.param("lastId", "123")
+			.param("lastCreatedAt", "2026-01-28T12:00:00")
+			.param("size", "20")
+			.requestAttr(ATTR, principal))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+		verify(conditionFactory).from(any(MyProblemScrollRequest.class));
+		verify(problemQueryUseCase).getMyProblemCardListCursor(eq(10L), any(), cursorCaptor.capture(), anyBoolean());
+
+		CursorQuery cursorQuery = cursorCaptor.getValue();
+		Assertions.assertEquals(123L, cursorQuery.lastId());
+		Assertions.assertEquals(20, cursorQuery.size());
 	}
 
 	@Test

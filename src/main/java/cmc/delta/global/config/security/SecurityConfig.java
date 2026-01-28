@@ -29,7 +29,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
 	private static final String[] PUBLIC_GET_PATHS = {
-		"/oauth/**", "/favicon.ico", "/error", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/health", "/health"
+		"/oauth/**",
+		"/favicon.ico",
+		"/error",
+		"/swagger-ui/**",
+		"/v3/api-docs/**",
+		"/actuator/health",
+		"/actuator/prometheus",
+		"/health"
 	};
 
 	private static final String[] PUBLIC_POST_PATHS = {
@@ -90,7 +97,7 @@ public class SecurityConfig {
 		api.setAllowedOriginPatterns(List.of(
 			"https://deltasemo.cloud",
 			"http://localhost:*"));
-		api.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
 		api.setExposedHeaders(List.of("Authorization", "X-Refresh-Token", "X-Trace-Id"));
 

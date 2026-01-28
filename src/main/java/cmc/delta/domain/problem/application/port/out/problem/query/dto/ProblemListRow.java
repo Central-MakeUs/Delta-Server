@@ -17,5 +17,7 @@ public record ProblemListRow(
 	Long assetId,
 	String storageKey,
 
+	LocalDateTime completedAt,
+
 	LocalDateTime createdAt) {
 }
