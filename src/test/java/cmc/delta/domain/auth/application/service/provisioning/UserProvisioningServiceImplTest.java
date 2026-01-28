@@ -61,12 +61,17 @@ class UserProvisioningServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("프로비저닝: 신규 생성 시 email이 없으면 INVALID_REQUEST")
-	void provisionSocialUser_whenCreateMissingEmail_thenInvalidRequest() {
-		UserException ex = catchThrowableOfType(
-			() -> sut.provisionSocialUser(new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", " ", "nick")),
-			UserException.class);
-		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	@DisplayName("프로비저닝: 신규 생성 시 email/nickname이 비어 있어도 유저를 생성하고 isNewUser=true (온보딩 플로우)")
+	void provisionSocialUser_whenCreateMissingProfile_thenCreatesProvisionedUser() {
+		UserProvisioningUseCase.ProvisioningResult out = sut.provisionSocialUser(
+			new SocialUserProvisionCommand(SocialProvider.APPLE, "pid", " ", " "));
+
+		assertThat(out.userId()).isPositive();
+		assertThat(out.email()).isNull();
+		assertThat(out.nickname()).isNull();
+		assertThat(out.isNewUser()).isTrue();
+		assertThat(socialAccountRepositoryPort.findByProviderAndProviderUserId(SocialProvider.APPLE, "pid"))
+			.isPresent();
 	}
 
 	@Test
