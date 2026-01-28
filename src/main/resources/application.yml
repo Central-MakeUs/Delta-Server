@@ -22,7 +22,7 @@ spring:
 jwt:
   issuer: cmc-delta
   secret-base64: ${JWT_SECRET_BASE64}
-  access-ttl-seconds: 900
+  access-ttl-seconds: ${JWT_ACCESS_TTL_SECONDS:7200}
   blacklist:
     enabled: true
 
