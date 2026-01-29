@@ -16,11 +16,11 @@
 
 ### Service/Infra Architecture
 
-![img_2.png](img/img_2.png)
+<img src="img/img_2.png" width="70%" />
 
 ### System Architecture
 
-![img_4.png](img/img_4.png)
+<img src="img/img_4.png" width="60%" />
 
 ## Tech Stack
 
