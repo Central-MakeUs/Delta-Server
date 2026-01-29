@@ -1,5 +1,6 @@
 package cmc.delta.global.config.security.handler;
 
+import cmc.delta.global.config.security.jwt.JwtAuthenticationException;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.error.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,7 +25,7 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 	public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException ex)
 		throws IOException {
 
-		ErrorCode ec = resolveErrorCode(request);
+		ErrorCode ec = resolveErrorCode(request, ex);
 
 		response.setStatus(ec.status().value());
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -34,7 +35,11 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
 			ApiResponses.fail(ec.status().value(), ec.code(), null, ec.defaultMessage()));
 	}
 
-	private ErrorCode resolveErrorCode(HttpServletRequest request) {
+	private ErrorCode resolveErrorCode(HttpServletRequest request, AuthenticationException ex) {
+		if (ex instanceof JwtAuthenticationException jwtEx) {
+			return jwtEx.getErrorCode();
+		}
+
 		String authorization = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (!StringUtils.hasText(authorization)) {
 			return ErrorCode.TOKEN_REQUIRED;
