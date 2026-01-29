@@ -1,9 +1,11 @@
 package cmc.delta.domain.problem.adapter.in.web.problem;
 
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemStatsRequest;
+import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemMonthlyProgressRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsConditionFactory;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemMonthlyProgressResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemUnitStatsItemResponse;
@@ -66,6 +68,28 @@ public class ProblemStatsController {
 		ProblemStatsCondition condition = statsConditionFactory.from(query);
 		ProblemStatsResponse<ProblemTypeStatsItemResponse> data = statsUseCase.getTypeStats(principal.userId(),
 			condition);
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "월별 오답 현황(등록/완료)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/monthly")
+	public ApiResponse<ProblemMonthlyProgressResponse> getMyMonthlyProgress(
+		@CurrentUser
+		UserPrincipal principal,
+		@ModelAttribute
+		ProblemMonthlyProgressRequest query) {
+		ProblemMonthlyProgressResponse data = statsUseCase.getMonthlyProgress(
+			principal.userId(),
+			query.year(),
+			query.month());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 }

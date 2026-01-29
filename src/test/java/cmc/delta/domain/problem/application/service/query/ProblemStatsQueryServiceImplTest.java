@@ -9,6 +9,7 @@ import cmc.delta.domain.problem.application.port.in.problem.result.*;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
+import cmc.delta.domain.problem.application.validation.query.ProblemMonthlyProgressValidator;
 import java.util.List;
 import org.junit.jupiter.api.*;
 
@@ -22,7 +23,7 @@ class ProblemStatsQueryServiceImplTest {
 	void setUp() {
 		statsPort = mock(ProblemStatsQueryPort.class);
 		problemTypeLoadPort = mock(ProblemTypeLoadPort.class);
-		sut = new ProblemStatsQueryServiceImpl(statsPort, problemTypeLoadPort);
+		sut = new ProblemStatsQueryServiceImpl(statsPort, problemTypeLoadPort, new ProblemMonthlyProgressValidator());
 	}
 
 	@Test

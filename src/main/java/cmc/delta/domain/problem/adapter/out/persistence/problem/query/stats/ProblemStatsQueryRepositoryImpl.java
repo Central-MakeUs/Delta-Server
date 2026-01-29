@@ -6,6 +6,7 @@ import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemStatsCondition;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemStatsQueryPort;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemMonthlyProgressRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.model.enums.ProblemStatsSort;
@@ -16,6 +17,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -127,6 +129,44 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 			.groupBy(type.id, type.name)
 			.orderBy(orderBy)
 			.fetch();
+	}
+
+	@Override
+	public ProblemMonthlyProgressRow findMonthlyProgress(Long userId, LocalDateTime fromInclusive,
+		LocalDateTime toExclusive) {
+		QProblem problem = QProblem.problem;
+
+		BooleanBuilder where = new BooleanBuilder();
+		where.and(problem.user.id.eq(userId));
+		where.and(problem.createdAt.goe(fromInclusive));
+		where.and(problem.createdAt.lt(toExclusive));
+
+		NumberExpression<Long> solvedCount = new CaseBuilder()
+			.when(problem.completedAt.isNotNull()).then(1L)
+			.otherwise(0L)
+			.sum();
+
+		NumberExpression<Long> unsolvedCount = new CaseBuilder()
+			.when(problem.completedAt.isNull()).then(1L)
+			.otherwise(0L)
+			.sum();
+
+		NumberExpression<Long> totalCount = problem.id.count();
+
+		ProblemMonthlyProgressRow row = queryFactory
+			.select(constructor(
+				ProblemMonthlyProgressRow.class,
+				totalCount,
+				solvedCount,
+				unsolvedCount))
+			.from(problem)
+			.where(where)
+			.fetchOne();
+
+		if (row == null) {
+			return new ProblemMonthlyProgressRow(0, 0, 0);
+		}
+		return row;
 	}
 
 	private OrderSpecifier<?>[] resolveUnitSort(

@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsConditionFactory;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemMonthlyProgressResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import java.util.List;
@@ -69,6 +70,25 @@ class ProblemStatsControllerWebMvcTest {
 
 		verify(statsConditionFactory).from(any());
 		verify(statsUseCase).getTypeStats(eq(10L), any());
+	}
+
+	@Test
+	@DisplayName("GET /problems/stats/monthly: modelAttribute 바인딩 + usecase 호출")
+	void monthlyProgress_ok() throws Exception {
+		// given
+		UserPrincipal principal = principal(10L);
+		when(statsUseCase.getMonthlyProgress(eq(10L), any(), any()))
+			.thenReturn(new ProblemMonthlyProgressResponse("2026-01", 0, 0, 0));
+
+		// when & then
+		mvc.perform(get("/api/v1/problems/stats/monthly")
+				.param("year", "2026")
+				.param("month", "1")
+				.requestAttr(ATTR, principal))
+			.andExpect(status().isOk());
+
+		verify(statsUseCase).getMonthlyProgress(eq(10L), eq(2026), eq(1));
+		verifyNoInteractions(statsConditionFactory);
 	}
 
 	private UserPrincipal principal(long userId) {
