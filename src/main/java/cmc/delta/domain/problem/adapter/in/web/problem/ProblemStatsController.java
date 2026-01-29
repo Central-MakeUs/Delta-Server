@@ -71,7 +71,7 @@ public class ProblemStatsController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
-	@Operation(summary = "월별 오답 현황(등록/완료)")
+	@Operation(summary = "월별 오답 현황(등록/완료)", description = ProblemApiDocs.MONTHLY_PROGRESS)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,

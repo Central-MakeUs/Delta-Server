@@ -26,6 +26,9 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 
+	private static final long COUNT_ONE = 1L;
+	private static final long COUNT_ZERO = 0L;
+
 	private final JPAQueryFactory queryFactory;
 
 	@Override
@@ -45,13 +48,13 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 		}
 
 		NumberExpression<Long> solvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNotNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNotNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> unsolvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> totalCount = problem.id.count();
@@ -99,13 +102,13 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 		}
 
 		NumberExpression<Long> solvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNotNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNotNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> unsolvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> totalCount = tag.id.problemId.count(); // tag row 기준 count
@@ -142,13 +145,13 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 		where.and(problem.createdAt.lt(toExclusive));
 
 		NumberExpression<Long> solvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNotNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNotNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> unsolvedCount = new CaseBuilder()
-			.when(problem.completedAt.isNull()).then(1L)
-			.otherwise(0L)
+			.when(problem.completedAt.isNull()).then(COUNT_ONE)
+			.otherwise(COUNT_ZERO)
 			.sum();
 
 		NumberExpression<Long> totalCount = problem.id.count();
@@ -164,7 +167,7 @@ public class ProblemStatsQueryRepositoryImpl implements ProblemStatsQueryPort {
 			.fetchOne();
 
 		if (row == null) {
-			return new ProblemMonthlyProgressRow(0, 0, 0);
+			return new ProblemMonthlyProgressRow(COUNT_ZERO, COUNT_ZERO, COUNT_ZERO);
 		}
 		return row;
 	}
