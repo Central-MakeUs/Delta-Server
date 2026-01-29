@@ -3,6 +3,7 @@ package cmc.delta.domain.user.application.service;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
@@ -166,5 +167,27 @@ class UserServiceImplTest {
 
 		// then
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+	}
+
+	@Test
+	@DisplayName("이름 수정: 요청이 유효하면 name이 변경됨")
+	void updateMyName_whenValidRequest_thenUpdatesName() {
+		User user = userRepositoryPort.save(UserFixtures.activeUser());
+		UserNameUpdateRequest request = new UserNameUpdateRequest("김철수");
+
+		userService.updateMyName(user.getId(), request);
+
+		User updated = userRepositoryPort.getReferenceById(user.getId());
+		assertThat(updated.getName()).isEqualTo("김철수");
+	}
+
+	@Test
+	@DisplayName("이름 수정: 유저가 없으면 USER_NOT_FOUND가 발생함")
+	void updateMyName_whenUserMissing_thenThrowsUserNotFound() {
+		BusinessException ex = catchThrowableOfType(
+			() -> userService.updateMyName(999L, new UserNameUpdateRequest("김철수")),
+			BusinessException.class);
+
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
 	}
 }

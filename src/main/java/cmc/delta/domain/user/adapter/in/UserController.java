@@ -1,6 +1,7 @@
 package cmc.delta.domain.user.adapter.in;
 
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.api.response.ApiResponse;
@@ -53,6 +54,25 @@ public class UserController {
 		@RequestBody
 		UserOnboardingRequest request) {
 		userUseCase.completeOnboarding(principal.userId(), request);
+		return ApiResponses.success(SuccessCode.OK);
+	}
+
+	@Operation(summary = "내 정보 수정(이름)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.USER_ONBOARDING_REQUIRED,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN
+	})
+	@PatchMapping("/me")
+	public ApiResponse<Void> updateMyName(
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		UserNameUpdateRequest request) {
+		userUseCase.updateMyName(principal.userId(), request);
 		return ApiResponses.success(SuccessCode.OK);
 	}
 

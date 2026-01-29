@@ -95,6 +95,10 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
+	public void updateName(String name) {
+		this.name = normalize(name);
+	}
+
 	private static String normalize(String value) {
 		if (value == null)
 			return null;

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.config.security.principal.UserPrincipal;
@@ -75,6 +76,21 @@ class UserControllerWebMvcTest {
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
 		verify(userUseCase).withdrawAccount(10L);
+	}
+
+	@Test
+	@DisplayName("PATCH /users/me: request 전달 + usecase 호출")
+	void updateMyName_ok_callsUseCase() throws Exception {
+		UserNameUpdateRequest req = new UserNameUpdateRequest("홍길동");
+
+		mvc.perform(patch("/api/v1/users/me")
+			.requestAttr(ATTR, principal(10L))
+			.contentType(MediaType.APPLICATION_JSON)
+			.content(objectMapper.writeValueAsBytes(req)))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+		verify(userUseCase).updateMyName(eq(10L), any(UserNameUpdateRequest.class));
 	}
 
 	private UserPrincipal principal(long userId) {

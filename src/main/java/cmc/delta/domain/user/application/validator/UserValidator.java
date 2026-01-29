@@ -2,6 +2,7 @@ package cmc.delta.domain.user.application.validator;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.application.exception.UserException;
 import java.time.LocalDate;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,15 @@ public class UserValidator {
 			throw UserException.invalidRequest();
 		}
 		if (!request.termsAgreed()) {
+			throw UserException.invalidRequest();
+		}
+	}
+
+	public void validate(UserNameUpdateRequest request) {
+		if (request == null) {
+			throw UserException.invalidRequest();
+		}
+		if (!StringUtils.hasText(request.name())) {
 			throw UserException.invalidRequest();
 		}
 	}
