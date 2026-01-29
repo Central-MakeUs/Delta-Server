@@ -8,6 +8,7 @@ import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import cmc.delta.global.storage.adapter.out.s3.S3Properties;
 import cmc.delta.global.storage.support.FakeObjectStorage;
+import cmc.delta.global.storage.support.PresignedUrlCache;
 import cmc.delta.global.storage.support.StorageFixtures;
 import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
@@ -33,7 +34,9 @@ class StorageServiceTest {
 		StorageKeyGenerator keyGenerator = new StorageKeyGenerator(properties);
 		ReflectionTestUtils.invokeMethod(keyGenerator, "init");
 
-		storageService = new StorageService(objectStorage, properties, validator, keyGenerator);
+		PresignedUrlCache presignedUrlCache = new PresignedUrlCache();
+
+		storageService = new StorageService(presignedUrlCache, objectStorage, properties, validator, keyGenerator);
 	}
 
 	@Test

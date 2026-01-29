@@ -6,11 +6,11 @@ import cmc.delta.global.storage.adapter.out.s3.S3Properties;
 import cmc.delta.global.storage.exception.StorageException;
 import cmc.delta.global.storage.port.out.ObjectStorage;
 import cmc.delta.global.storage.support.ImageMetadataExtractor;
+import cmc.delta.global.storage.support.PresignedUrlCache;
 import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
 import java.time.Duration;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +26,7 @@ public class StorageService {
 	private static final String DEFAULT_DIRECTORY = "temp";
 	private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
 
-	private static final int PRESIGNED_CACHE_MAX_ENTRIES = 10_000;
-	private static final long PRESIGNED_CACHE_MAX_AGE_MS = 30_000; // keep short; URL TTL can be 10min+
-
-	private final ConcurrentHashMap<PresignedCacheKey, PresignedCacheEntry> presignedGetCache =
-		new ConcurrentHashMap<>();
-
+	private final PresignedUrlCache presignedUrlCache;
 	private final ObjectStorage objectStorage;
 	private final S3Properties properties;
 
@@ -126,34 +121,18 @@ public class StorageService {
 	}
 
 	private String getOrCreateCachedPresignedGetUrl(String storageKey, int ttlSeconds) {
-		evictPresignedCacheIfNeeded();
-
-		PresignedCacheKey key = new PresignedCacheKey(storageKey, ttlSeconds);
-		PresignedCacheEntry cached = presignedGetCache.get(key);
-		long now = System.currentTimeMillis();
-		if (cached != null && cached.expiresAtMs() > now) {
-			return cached.url();
+		String cachedUrl = presignedUrlCache.get(storageKey, ttlSeconds);
+		if (cachedUrl != null) {
+			return cachedUrl;
 		}
 
 		String url = createPresignedGetUrl(storageKey, ttlSeconds);
-		long expiresAtMs = now + Math.min(PRESIGNED_CACHE_MAX_AGE_MS, (long)ttlSeconds * 1000L);
-		presignedGetCache.put(key, new PresignedCacheEntry(url, expiresAtMs));
+		presignedUrlCache.put(storageKey, ttlSeconds, url);
 		return url;
 	}
 
-	private void evictPresignedCacheIfNeeded() {
-		if (presignedGetCache.size() > PRESIGNED_CACHE_MAX_ENTRIES) {
-			presignedGetCache.clear();
-		}
-	}
-
-	private record PresignedCacheKey(String storageKey, int ttlSeconds) {
-	}
-
-	private record PresignedCacheEntry(String url, long expiresAtMs) {
-	}
-
 	public void deleteImage(String storageKey) {
+
 		long startedAt = System.nanoTime();
 
 		validator.validateStorageKey(storageKey);

@@ -11,6 +11,10 @@ public record MyProblemListRequest(
 	ProblemStatusFilter status,
 	Integer page,
 	Integer size) {
+	private static final int DEFAULT_PAGE = 0;
+	private static final int DEFAULT_SIZE = 20;
+	private static final int MAX_SIZE = 100;
+
 	public MyProblemListRequest {
 		// sort/status 기본값
 		if (sort == null)
@@ -19,10 +23,10 @@ public record MyProblemListRequest(
 			status = ProblemStatusFilter.ALL;
 
 		if (page == null || page < 0)
-			page = 0;
+			page = DEFAULT_PAGE;
 		if (size == null || size <= 0)
-			size = 20;
-		if (size > 100)
-			size = 100; // 과도한 요청 방어
+			size = DEFAULT_SIZE;
+		if (size > MAX_SIZE)
+			size = MAX_SIZE; // 과도한 요청 방어
 	}
 }
