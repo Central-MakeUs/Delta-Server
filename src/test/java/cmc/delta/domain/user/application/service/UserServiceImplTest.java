@@ -3,7 +3,7 @@ package cmc.delta.domain.user.application.service;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
-import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
@@ -109,14 +109,14 @@ class UserServiceImplTest {
 	void completeOnboarding_whenValidRequest_thenCompletesOnboarding() {
 		// given
 		User user = userRepositoryPort.save(UserFixtures.activeUser());
-    UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		userService.completeOnboarding(user.getId(), request);
 
 		// then
-        User updated = userRepositoryPort.getReferenceById(user.getId());
-        assertThat(updated.getNickname()).isEqualTo("홍길동");
+		User updated = userRepositoryPort.getReferenceById(user.getId());
+		assertThat(updated.getNickname()).isEqualTo("홍길동");
 		assertThat(updated.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
 		assertThat(updated.getTermsAgreedAt()).isNotNull();
 		assertThat(updated.getStatus()).isEqualTo(UserStatus.ACTIVE);
@@ -127,7 +127,7 @@ class UserServiceImplTest {
 	void completeOnboarding_whenUserMissing_thenThrowsUserNotFound() {
 		// given
 		long userId = 999L;
-        UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -143,7 +143,7 @@ class UserServiceImplTest {
 	void completeOnboarding_whenUserWithdrawn_thenThrowsUserWithdrawn() {
 		// given
 		User user = userRepositoryPort.save(UserFixtures.withdrawnUser());
-        UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -170,22 +170,20 @@ class UserServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("이름 수정: 요청이 유효하면 name이 변경됨")
-	void updateMyName_whenValidRequest_thenUpdatesName() {
+	@DisplayName("닉네임 수정: 요청이 유효하면 nickname이 변경됨")
+	void updateMyNickname_whenValidRequest_thenUpdatesNickname() {
 		User user = userRepositoryPort.save(UserFixtures.activeUser());
-    UserNameUpdateRequest request = new UserNameUpdateRequest("김철수");
+		userService.updateMyNickname(user.getId(), new UserNicknameUpdateRequest("김철수"));
 
-        userService.updateMyNickname(user.getId(), new cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest("김철수"));
-
-        User updated = userRepositoryPort.getReferenceById(user.getId());
-        assertThat(updated.getNickname()).isEqualTo("김철수");
+		User updated = userRepositoryPort.getReferenceById(user.getId());
+		assertThat(updated.getNickname()).isEqualTo("김철수");
 	}
 
 	@Test
-	@DisplayName("이름 수정: 유저가 없으면 USER_NOT_FOUND가 발생함")
-	void updateMyName_whenUserMissing_thenThrowsUserNotFound() {
+	@DisplayName("닉네임 수정: 유저가 없으면 USER_NOT_FOUND가 발생함")
+	void updateMyNickname_whenUserMissing_thenThrowsUserNotFound() {
 		BusinessException ex = catchThrowableOfType(
-			() -> userService.updateMyName(999L, new UserNameUpdateRequest("김철수")),
+			() -> userService.updateMyNickname(999L, new UserNicknameUpdateRequest("김철수")),
 			BusinessException.class);
 
 		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
