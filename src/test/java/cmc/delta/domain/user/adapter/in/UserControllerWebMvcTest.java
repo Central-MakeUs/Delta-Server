@@ -80,18 +80,18 @@ class UserControllerWebMvcTest {
 
 	@Test
 	@DisplayName("PATCH /users/me: request 전달 + usecase 호출")
-	void updateMyName_ok_callsUseCase() throws Exception {
-		UserNameUpdateRequest req = new UserNameUpdateRequest("홍길동");
+    void updateMyName_ok_callsUseCase() throws Exception {
+        cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest req = new cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest("홍길동");
 
-		mvc.perform(patch("/api/v1/users/me")
-			.requestAttr(ATTR, principal(10L))
-			.contentType(MediaType.APPLICATION_JSON)
-			.content(objectMapper.writeValueAsBytes(req)))
-			.andExpect(status().isOk())
-			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+        mvc.perform(patch("/api/v1/users/me")
+            .requestAttr(ATTR, principal(10L))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsBytes(req)))
+            .andExpect(status().isOk())
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
-		verify(userUseCase).updateMyName(eq(10L), any(UserNameUpdateRequest.class));
-	}
+        verify(userUseCase).updateMyNickname(eq(10L), any(cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest.class));
+    }
 
 	private UserPrincipal principal(long userId) {
 		UserPrincipal p = mock(UserPrincipal.class);

@@ -134,7 +134,7 @@ class UserValidatorTest {
 	@Test
 	@DisplayName("이름 수정 검증: name이 blank면 INVALID_REQUEST")
 	void validateNameUpdate_whenNameBlank_thenThrowsInvalidRequest() {
-		UserNameUpdateRequest req = new UserNameUpdateRequest("  ");
+    UserNameUpdateRequest req = new UserNameUpdateRequest("  ");
 
 		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
 

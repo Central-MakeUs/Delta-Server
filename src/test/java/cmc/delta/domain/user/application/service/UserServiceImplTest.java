@@ -109,14 +109,14 @@ class UserServiceImplTest {
 	void completeOnboarding_whenValidRequest_thenCompletesOnboarding() {
 		// given
 		User user = userRepositoryPort.save(UserFixtures.activeUser());
-		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+    UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		userService.completeOnboarding(user.getId(), request);
 
 		// then
-		User updated = userRepositoryPort.getReferenceById(user.getId());
-		assertThat(updated.getName()).isEqualTo("홍길동");
+        User updated = userRepositoryPort.getReferenceById(user.getId());
+        assertThat(updated.getNickname()).isEqualTo("홍길동");
 		assertThat(updated.getBirthDate()).isEqualTo(LocalDate.of(2000, 1, 1));
 		assertThat(updated.getTermsAgreedAt()).isNotNull();
 		assertThat(updated.getStatus()).isEqualTo(UserStatus.ACTIVE);
@@ -127,7 +127,7 @@ class UserServiceImplTest {
 	void completeOnboarding_whenUserMissing_thenThrowsUserNotFound() {
 		// given
 		long userId = 999L;
-		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+        UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -143,7 +143,7 @@ class UserServiceImplTest {
 	void completeOnboarding_whenUserWithdrawn_thenThrowsUserWithdrawn() {
 		// given
 		User user = userRepositoryPort.save(UserFixtures.withdrawnUser());
-		UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+        UserOnboardingRequest request = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -173,12 +173,12 @@ class UserServiceImplTest {
 	@DisplayName("이름 수정: 요청이 유효하면 name이 변경됨")
 	void updateMyName_whenValidRequest_thenUpdatesName() {
 		User user = userRepositoryPort.save(UserFixtures.activeUser());
-		UserNameUpdateRequest request = new UserNameUpdateRequest("김철수");
+    UserNameUpdateRequest request = new UserNameUpdateRequest("김철수");
 
-		userService.updateMyName(user.getId(), request);
+        userService.updateMyNickname(user.getId(), new cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest("김철수"));
 
-		User updated = userRepositoryPort.getReferenceById(user.getId());
-		assertThat(updated.getName()).isEqualTo("김철수");
+        User updated = userRepositoryPort.getReferenceById(user.getId());
+        assertThat(updated.getNickname()).isEqualTo("김철수");
 	}
 
 	@Test
