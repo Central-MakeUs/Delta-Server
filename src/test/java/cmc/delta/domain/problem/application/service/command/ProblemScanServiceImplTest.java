@@ -81,9 +81,12 @@ class ProblemScanServiceImplTest {
 		return cmd;
 	}
 
-	private void thenCreatedAsUploaded(ScanCreateResult r, String key, int w, int h) {
-		assertThat(r.status()).isEqualTo("UPLOADED");
-		assertThat(scanImageUploadPort.lastUploadDirectory).isEqualTo(ProblemScanStoragePaths.ORIGINAL_DIR);
+    private void thenCreatedAsUploaded(ScanCreateResult r, String key, int w, int h) {
+        assertThat(r.status()).isEqualTo("UPLOADED");
+        String datePath = "2026/01/21"; // fixed clock in test setup
+        long userId = scanRepositoryPort.getAll().get(0).getUser().getId();
+        String expectedDir = ProblemScanStoragePaths.ORIGINAL_DIR + "/" + datePath + "/" + userId;
+        assertThat(scanImageUploadPort.lastUploadDirectory).isEqualTo(expectedDir);
 
 		assertThat(scanRepositoryPort.count()).isEqualTo(1);
 		assertThat(assetRepositoryPort.count()).isEqualTo(1);
