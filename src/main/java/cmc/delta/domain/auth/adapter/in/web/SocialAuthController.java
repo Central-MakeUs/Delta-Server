@@ -53,7 +53,7 @@ public class SocialAuthController {
 		this.loginKeyStore = loginKeyStore;
 	}
 
-	@Operation(summary = "Apple form_post 콜백 처리 (로그인키 발급)", description = "Apple에서 전달된 code와 optional user 정보를 처리하고, 1회용 loginKey를 발급하여 프론트로 303 리다이렉트합니다.")
+    @Operation(summary = "Apple form_post 콜백 처리 (로그인키 발급)", description = AuthApiDocs.APPLE_FORM_POST_CALLBACK)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
@@ -76,10 +76,10 @@ public class SocialAuthController {
 		response.setHeader(org.springframework.http.HttpHeaders.LOCATION, redirect);
 	}
 
-	@Operation(summary = "loginKey 교환", description = "프론트가 전달한 loginKey로 Redis에 저장된 토큰을 소비하고 Authorization/X-Refresh-Token 헤더로 토큰을 전달합니다.")
-	@PostMapping("/apple/exchange")
-	public ApiResponse<SocialLoginData> exchange(@RequestParam("loginKey")
-	String loginKey, HttpServletResponse response) {
+    @Operation(summary = "loginKey 교환", description = AuthApiDocs.APPLE_EXCHANGE)
+    @PostMapping("/apple/exchange")
+    public ApiResponse<SocialLoginData> exchange(@RequestParam("loginKey")
+    String loginKey, HttpServletResponse response) {
 		RedisLoginKeyStore.Stored stored = loginKeyStore.consume(loginKey);
 		if (stored == null) {
 			throw new RuntimeException("invalid_or_expired_login_key");

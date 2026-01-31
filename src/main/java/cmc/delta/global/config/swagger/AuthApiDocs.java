@@ -54,4 +54,24 @@ public final class AuthApiDocs {
 		- body.data:
 		  - email, nickname, isNewUser
 		""";
+
+	public static final String APPLE_EXCHANGE = """
+		애플 로그인 시 발급된 1회용 loginKey를 교환하여 Access/Refresh 토큰을 전달합니다.
+
+		요청:
+		- POST /api/v1/auth/apple/exchange
+		- query/form: loginKey (프론트가 Apple redirect 이후 전달받은 loginKey)
+
+		동작:
+		- Redis에 저장된 loginKey를 조회(소비)합니다. 유효하지 않거나 만료된 경우 에러를 반환합니다.
+		- 저장된 토큰을 응답 헤더(Authorization, X-Refresh-Token)로 내려줍니다.
+
+		응답:
+		- header:
+		  - Authorization: Bearer {accessToken}
+		  - X-Refresh-Token: {refreshToken} (있을 때만)
+		  - Access-Control-Expose-Headers: Authorization, X-Refresh-Token, X-Trace-Id
+		- body.data:
+		  - email, nickname, isNewUser
+		""";
 }
