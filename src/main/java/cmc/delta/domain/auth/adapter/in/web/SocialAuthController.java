@@ -1,11 +1,5 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
 import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
@@ -21,6 +15,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "인증")
 @RestController
@@ -53,7 +52,7 @@ public class SocialAuthController {
 		this.loginKeyStore = loginKeyStore;
 	}
 
-    @Operation(summary = "Apple form_post 콜백 처리 (로그인키 발급)", description = AuthApiDocs.APPLE_FORM_POST_CALLBACK)
+	@Operation(summary = "Apple form_post 콜백 처리 (로그인키 발급)", description = AuthApiDocs.APPLE_FORM_POST_CALLBACK)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
@@ -76,10 +75,10 @@ public class SocialAuthController {
 		response.setHeader(org.springframework.http.HttpHeaders.LOCATION, redirect);
 	}
 
-    @Operation(summary = "loginKey 교환", description = AuthApiDocs.APPLE_EXCHANGE)
-    @PostMapping("/apple/exchange")
-    public ApiResponse<SocialLoginData> exchange(@RequestParam("loginKey")
-    String loginKey, HttpServletResponse response) {
+	@Operation(summary = "loginKey 교환", description = AuthApiDocs.APPLE_EXCHANGE)
+	@PostMapping("/apple/exchange")
+	public ApiResponse<SocialLoginData> exchange(@RequestParam("loginKey")
+	String loginKey, HttpServletResponse response) {
 		RedisLoginKeyStore.Stored stored = loginKeyStore.consume(loginKey);
 		if (stored == null) {
 			throw new RuntimeException("invalid_or_expired_login_key");
