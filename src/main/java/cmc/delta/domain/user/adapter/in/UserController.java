@@ -1,7 +1,7 @@
 package cmc.delta.domain.user.adapter.in;
 
-import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.api.response.ApiResponse;
@@ -57,7 +57,7 @@ public class UserController {
 		return ApiResponses.success(SuccessCode.OK);
 	}
 
-    @Operation(summary = "내 정보 수정(닉네임)")
+	@Operation(summary = "내 정보 수정(닉네임)")
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,
 		ErrorCode.TOKEN_REQUIRED,
@@ -66,15 +66,15 @@ public class UserController {
 		ErrorCode.USER_NOT_FOUND,
 		ErrorCode.USER_WITHDRAWN
 	})
-    @PatchMapping("/me")
-    public ApiResponse<Void> updateMyNickname(
-        @CurrentUser
-        UserPrincipal principal,
-        @RequestBody
-        UserNicknameUpdateRequest request) {
-        userUseCase.updateMyNickname(principal.userId(), request);
-        return ApiResponses.success(SuccessCode.OK);
-    }
+	@PatchMapping("/me")
+	public ApiResponse<Void> updateMyNickname(
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		UserNicknameUpdateRequest request) {
+		userUseCase.updateMyNickname(principal.userId(), request);
+		return ApiResponses.success(SuccessCode.OK);
+	}
 
 	@Operation(summary = "회원 탈퇴")
 	@ApiErrorCodeExamples({

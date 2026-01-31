@@ -32,10 +32,10 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private UserStatus status;
 
-    // name column removed; keep for compatibility until DB migration
-    @Deprecated
-    @Column(name = "name", length = 50)
-    private String name;
+	// name column removed; keep for compatibility until DB migration
+	@Deprecated
+	@Column(name = "name", length = 50)
+	private String name;
 
 	@Column(name = "birth_date")
 	private LocalDate birthDate;
@@ -84,10 +84,10 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
-    public void completeOnboarding(String nicknameOrName, LocalDate birthDate, Instant agreedAt) {
-        // prefer nickname; legacy name parameter may be passed during transition
-        this.nickname = normalize(nicknameOrName);
-        this.birthDate = birthDate;
+	public void completeOnboarding(String nicknameOrName, LocalDate birthDate, Instant agreedAt) {
+		// prefer nickname; legacy name parameter may be passed during transition
+		this.nickname = normalize(nicknameOrName);
+		this.birthDate = birthDate;
 
 		if (this.termsAgreedAt == null) {
 			this.termsAgreedAt = agreedAt;
@@ -98,10 +98,10 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
-    public void updateName(String nickname) {
-        // map legacy updateName to nickname update
-        this.nickname = normalize(nickname);
-    }
+	public void updateName(String nickname) {
+		// map legacy updateName to nickname update
+		this.nickname = normalize(nickname);
+	}
 
 	private static String normalize(String value) {
 		if (value == null)

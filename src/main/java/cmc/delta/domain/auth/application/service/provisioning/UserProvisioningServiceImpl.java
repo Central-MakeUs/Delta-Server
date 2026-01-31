@@ -5,8 +5,8 @@ import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUs
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
 import cmc.delta.domain.auth.application.validation.SocialUserProvisionValidator;
 import cmc.delta.domain.auth.model.SocialAccount;
-import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.application.exception.UserException;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;

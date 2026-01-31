@@ -67,7 +67,8 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 		LocalDateTime to = ym.plusMonths(1).atDay(1).atStartOfDay();
 
 		ProblemMonthlyProgressRow row = problemStatsQueryPort.findMonthlyProgress(userId, from, to);
-		return new ProblemMonthlyProgressResponse(ym.toString(), row.totalCount(), row.solvedCount(), row.unsolvedCount());
+		return new ProblemMonthlyProgressResponse(ym.toString(), row.totalCount(), row.solvedCount(),
+			row.unsolvedCount());
 	}
 
 	private void validateTypeFilter(Long userId, ProblemStatsCondition condition) {

@@ -3,8 +3,8 @@ package cmc.delta.domain.user.application.validator;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
-import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import java.time.LocalDate;
@@ -134,7 +134,7 @@ class UserValidatorTest {
 	@Test
 	@DisplayName("이름 수정 검증: name이 blank면 INVALID_REQUEST")
 	void validateNameUpdate_whenNameBlank_thenThrowsInvalidRequest() {
-    UserNameUpdateRequest req = new UserNameUpdateRequest("  ");
+		UserNameUpdateRequest req = new UserNameUpdateRequest("  ");
 
 		BusinessException ex = catchThrowableOfType(() -> validator.validate(req), BusinessException.class);
 

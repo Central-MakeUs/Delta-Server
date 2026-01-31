@@ -19,8 +19,8 @@ import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTy
 import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
-import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.api.response.CursorPagedResponse;
+import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.util.List;
@@ -120,8 +120,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		// RECENT/OLDEST 외 정렬은 커서 기반을 지원하지 않는다.
 		if (condition.sort() != null) {
 			switch (condition.sort()) {
-				case RECENT, OLDEST -> {
-				}
+				case RECENT, OLDEST -> {}
 				default -> throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
 			}
 		}

@@ -82,9 +82,9 @@ class ProblemStatsControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problems/stats/monthly")
-				.param("year", "2026")
-				.param("month", "1")
-				.requestAttr(ATTR, principal))
+			.param("year", "2026")
+			.param("month", "1")
+			.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(statsUseCase).getMonthlyProgress(eq(10L), eq(2026), eq(1));

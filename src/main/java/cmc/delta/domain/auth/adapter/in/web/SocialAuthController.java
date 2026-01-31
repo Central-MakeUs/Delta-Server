@@ -1,7 +1,14 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
+import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.global.api.response.ApiResponse;
@@ -14,16 +21,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "인증")
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
 public class SocialAuthController {
 
@@ -45,20 +45,47 @@ public class SocialAuthController {
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
 
+	private final RedisLoginKeyStore redisLoginKeyStore;
+
+	public SocialAuthController(SocialLoginCommandUseCase socialLoginCommandUseCase,
+		TokenHeaderWriter tokenHeaderWriter,
+		RedisLoginKeyStore redisLoginKeyStore) {
+		this.socialLoginCommandUseCase = socialLoginCommandUseCase;
+		this.tokenHeaderWriter = tokenHeaderWriter;
+		this.redisLoginKeyStore = redisLoginKeyStore;
+	}
+
 	@Operation(summary = "애플 콜백(form_post) 처리 후 로그인 서버용", description = AuthApiDocs.APPLE_FORM_POST_CALLBACK)
 	@ApiErrorCodeExamples({
 		ErrorCode.INVALID_REQUEST,
 		ErrorCode.AUTHENTICATION_FAILED
 	})
 	@PostMapping(value = "/apple", consumes = "application/x-www-form-urlencoded")
-	public ApiResponse<SocialLoginData> callback(
+	public void callback(
 		@RequestParam("code")
 		String code,
 		@RequestParam(value = "user", required = false)
 		String userJson,
 		HttpServletResponse response) {
+
 		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginApple(code, userJson);
-		tokenHeaderWriter.write(response, result.tokens());
-		return ApiResponses.success(SuccessCode.OK, result.data());
+
+		String loginKey = java.util.UUID.randomUUID().toString();
+		redisLoginKeyStore.save(loginKey, result.data(), result.tokens(), java.time.Duration.ofSeconds(60));
+
+		String redirect = "http://localhost:3000/oauth/apple/callback?loginKey=" + loginKey;
+		response.setStatus(org.springframework.http.HttpStatus.SEE_OTHER.value()); // 303
+		response.setHeader(org.springframework.http.HttpHeaders.LOCATION, redirect);
+	}
+
+	@PostMapping("/apple/exchange")
+	public ApiResponse<SocialLoginData> exchange(@RequestParam("loginKey")
+	String loginKey, HttpServletResponse response) {
+		RedisLoginKeyStore.Stored stored = redisLoginKeyStore.consume(loginKey);
+		if (stored == null) {
+			throw new RuntimeException("invalid_or_expired_login_key");
+		}
+		tokenHeaderWriter.write(response, stored.tokens());
+		return ApiResponses.success(SuccessCode.OK, stored.data());
 	}
 }

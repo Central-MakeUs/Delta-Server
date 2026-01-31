@@ -11,5 +11,5 @@ public interface UserUseCase {
 
 	void completeOnboarding(long userId, UserOnboardingRequest request);
 
-    void updateMyNickname(long userId, UserNicknameUpdateRequest request);
+	void updateMyNickname(long userId, UserNicknameUpdateRequest request);
 }

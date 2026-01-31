@@ -1,7 +1,13 @@
 package cmc.delta.global.config.security;
 
+import cmc.delta.domain.user.application.port.in.UserStatusQuery;
+import cmc.delta.global.config.security.handler.RestAccessDeniedHandler;
+import cmc.delta.global.config.security.handler.RestAuthenticationEntryPoint;
+import cmc.delta.global.config.security.jwt.JwtAuthenticationFilter;
+import cmc.delta.global.config.security.jwt.JwtProperties;
+import cmc.delta.global.config.security.jwt.OnboardingBlockFilter;
 import java.util.List;
-
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -16,14 +22,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import cmc.delta.domain.user.application.port.in.UserStatusQuery;
-import cmc.delta.global.config.security.handler.RestAccessDeniedHandler;
-import cmc.delta.global.config.security.handler.RestAuthenticationEntryPoint;
-import cmc.delta.global.config.security.jwt.JwtAuthenticationFilter;
-import cmc.delta.global.config.security.jwt.JwtProperties;
-import cmc.delta.global.config.security.jwt.OnboardingBlockFilter;
-import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor

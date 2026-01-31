@@ -21,6 +21,7 @@ public record MyProblemScrollRequest(
 	LocalDateTime lastCreatedAt,
 	Integer size,
 	Boolean includePreviewUrl) {
+
 	private static final int DEFAULT_SIZE = 20;
 	private static final int MAX_SIZE = 50;
 
