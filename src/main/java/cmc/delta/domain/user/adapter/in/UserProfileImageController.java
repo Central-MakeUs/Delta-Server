@@ -79,11 +79,11 @@ public class UserProfileImageController {
 		return ApiResponses.success(SuccessCode.OK);
 	}
 
-	private byte[] readBytes(MultipartFile file) {
-		try {
-			return file.getBytes();
-		} catch (IOException e) {
-			throw StorageException.internalError("파일을 읽는 중 오류가 발생했습니다.", e);
-		}
-	}
+    private byte[] readBytes(MultipartFile file) {
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw StorageException.internalError("파일을 읽는 중 오류가 발생했습니다.", e);
+        }
+    }
 }

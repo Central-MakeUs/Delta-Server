@@ -31,7 +31,7 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 				userInfo.providerUserId(),
 				userInfo.email(),
 				userInfo.nickname()));
-		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
+        TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
 		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(),
 			provisioned.isNewUser());
 		return new LoginResult(data, tokens);

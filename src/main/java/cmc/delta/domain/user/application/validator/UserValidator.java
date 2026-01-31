@@ -32,9 +32,9 @@ public class UserValidator {
 			throw UserException.invalidRequest();
 		}
 		// 미래 생년월일 방지 (원치 않으면 제거)
-		if (birthDate.isAfter(LocalDate.now())) {
-			throw UserException.invalidRequest();
-		}
+        if (birthDate.isAfter(LocalDate.now())) {
+            throw UserException.invalidRequest();
+        }
 		if (!request.termsAgreed()) {
 			throw UserException.invalidRequest();
 		}

@@ -65,9 +65,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 		String email = command.email();
 		String nickname = command.nickname();
 
-		if (StringUtils.hasText(email) || StringUtils.hasText(nickname)) {
-			user.syncProfile(email, nickname);
-		}
+        if (StringUtils.hasText(email) || StringUtils.hasText(nickname)) {
+            user.syncProfile(email, nickname);
+        }
 
 		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
 	}

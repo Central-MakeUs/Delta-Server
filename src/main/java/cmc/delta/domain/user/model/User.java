@@ -64,9 +64,9 @@ public class User extends BaseTimeEntity {
 		this.status = UserStatus.WITHDRAWN;
 	}
 
-	public void updateProfileImage(String storageKey) {
-		this.profileImageStorageKey = normalize(storageKey);
-	}
+    public void updateProfileImage(String storageKey) {
+        this.profileImageStorageKey = normalize(storageKey);
+    }
 
 	public void clearProfileImage() {
 		this.profileImageStorageKey = null;
@@ -85,7 +85,6 @@ public class User extends BaseTimeEntity {
 	}
 
 	public void completeOnboarding(String nicknameOrName, LocalDate birthDate, Instant agreedAt) {
-		// prefer nickname; legacy name parameter may be passed during transition
 		this.nickname = normalize(nicknameOrName);
 		this.birthDate = birthDate;
 
@@ -99,7 +98,6 @@ public class User extends BaseTimeEntity {
 	}
 
 	public void updateName(String nickname) {
-		// map legacy updateName to nickname update
 		this.nickname = normalize(nickname);
 	}
 

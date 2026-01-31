@@ -1,11 +1,14 @@
 package cmc.delta.domain.auth.adapter.out.oauth.token.redis;
 
-import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import java.time.Duration;
 import java.util.List;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
+
+import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
+import cmc.delta.domain.auth.application.support.TokenConstants;
 
 /** Redis에 Refresh 토큰 해시를 TTL로 저장하고 rotate를 원자 처리한다. */
 @Component
@@ -55,17 +58,17 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 	}
 
 	private String key(Long userId, String sessionId) {
-		String sid = (sessionId == null || sessionId.isBlank()) ? "default" : sessionId;
-		return KEY_PREFIX + userId + ":" + sid;
+        String sid = (sessionId == null || sessionId.isBlank()) ? TokenConstants.DEFAULT_SESSION_ID.toLowerCase() : sessionId;
+        return KEY_PREFIX + userId + ":" + sid;
 	}
 
-	private boolean invalid(String key, String hash, Duration ttl) {
-		if (key == null || key.isBlank())
-			return true;
-		if (hash == null || hash.isBlank())
-			return true;
-		return ttl == null || ttl.isZero() || ttl.isNegative();
-	}
+    private boolean invalid(String key, String hash, Duration ttl) {
+        if (key == null || key.isBlank())
+            return true;
+        if (hash == null || hash.isBlank())
+            return true;
+        return ttl == null || ttl.isZero() || ttl.isNegative();
+    }
 
 	private DefaultRedisScript<Long> buildRotateScript() {
 		// GET -> 비교 -> PSETEX 를 원자적으로 수행한다.
