@@ -1,11 +1,14 @@
 package cmc.delta.domain.auth.adapter.out.oauth.redis;
 
-import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
-import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
+import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 
 /**
  * Redis에 loginKey와 연관된 페이로드를 저장하고 1회성으로 소비하는 책임을 가진 컴포넌트입니다.
@@ -41,11 +44,12 @@ public class RedisLoginKeyStore {
 	 */
 	public Stored consume(String loginKey) {
 		String key = KEY_PREFIX + loginKey;
-		String json = redisTemplate.opsForValue().get(key);
+		// 두 소비자가 동일한 키를 동시에 읽는 race 조건을 피하기 위해
+		// Redis의 getAndDelete를 사용하여 원자적으로 읽고 삭제합니다.
+		String json = redisTemplate.opsForValue().getAndDelete(key);
 		if (json == null) {
 			return null;
 		}
-		redisTemplate.delete(key);
 		try {
 			LoginKeyPayload payload = objectMapper.readValue(json, LoginKeyPayload.class);
 			return new Stored(payload.data(), payload.tokens());

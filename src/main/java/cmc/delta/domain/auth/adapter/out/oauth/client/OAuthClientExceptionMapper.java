@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 
-// 외부 OAuth 통신 예외를 우리 예외(ErrorCode 정책)로 매핑
+// 외부 OAuth 통신 예외를 우리 예외(ErrorCode 정책)로 매핑합니다.
 // - provider 4xx(잘못된 code/토큰 등) -> UnauthorizedException(AUTHENTICATION_FAILED)
 // - provider 5xx/timeout -> OAuthClientException(OAUTH_*)
 @Component

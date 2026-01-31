@@ -40,7 +40,7 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 	@Override
 	public LoginResult loginApple(String code, String userJson) {
 		AppleOAuthService.AppleUserInfo apple = appleOAuthService.fetchUserInfoByCode(code, userJson);
-		String providerUserId = apple.providerUserId(); // sub
+		String providerUserId = apple.providerUserId(); // sub (토큰의 sub 클레임)
 
 		UserProvisioningUseCase.ProvisioningResult provisioned = userProvisioningUseCase.provisionSocialUser(
 			new SocialUserProvisionCommand(
