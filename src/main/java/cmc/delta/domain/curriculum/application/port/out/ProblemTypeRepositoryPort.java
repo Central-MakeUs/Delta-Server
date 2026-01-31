@@ -11,6 +11,9 @@ public interface ProblemTypeRepositoryPort {
 
 	Optional<ProblemType> findOwnedCustomById(Long userId, String typeId);
 
+	// 사용자 소유의 커스텀 유형을 이름으로 조회(존재 여부 및 활성 상태 확인용)
+	Optional<ProblemType> findOwnedCustomByUserIdAndName(Long userId, String name);
+
 	boolean existsCustomByUserIdAndName(Long userId, String name);
 
 	int findMaxSortOrderVisibleForUser(Long userId);

@@ -30,6 +30,11 @@ public class ProblemTypeRepositoryAdapter implements ProblemTypeRepositoryPort {
 	}
 
 	@Override
+	public Optional<ProblemType> findOwnedCustomByUserIdAndName(Long userId, String name) {
+		return problemTypeJpaRepository.findOwnedCustomByUserIdAndName(userId, name);
+	}
+
+	@Override
 	public boolean existsCustomByUserIdAndName(Long userId, String name) {
 		return problemTypeJpaRepository.existsByCreatedByUserIdAndCustomTrueAndName(userId, name);
 	}

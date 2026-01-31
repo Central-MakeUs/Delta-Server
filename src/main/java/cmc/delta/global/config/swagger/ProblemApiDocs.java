@@ -257,10 +257,29 @@ public final class ProblemApiDocs {
 		- 요청 바디:
 		  {"name":"서술형"}
 		- 응답 바디 예시:
+		  성공:
 		  {
 		    "success": true,
 		    "code": "OK",
 		    "data": {"id":"T_C_7f2c...","name":"서술형","custom":true,"active":true,"sortOrder":7}
+		  }
+
+		  실패(중복 - 활성):
+		  HTTP 409
+		  {
+		    "status": 409,
+		    "code": "REQ_002",
+		    "data": null,
+		    "message": "이미 추가된 유형입니다."
+		  }
+
+		  실패(중복 - 비활성, 복구 가능):
+		  HTTP 409
+		  {
+		    "status": 409,
+		    "code": "REQ_002",
+		    "data": { "existingTypeId": "T_C_ebc069..." },
+		    "message": "이미 추가된 유형입니다."
 		  }
 		""";
 

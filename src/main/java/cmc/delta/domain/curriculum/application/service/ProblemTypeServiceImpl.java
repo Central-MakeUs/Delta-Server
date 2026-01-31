@@ -45,7 +45,17 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		}
 
 		String name = validator.requireName(command.name());
-		validator.ensureNoDuplicateCustomName(userId, name);
+
+		// 같은 이름의 커스텀 유형(사용자 소유)이 존재하는지 확인한다.
+		// 존재하면서 active이면 충돌로 처리하고, 존재하지만 비활성화(삭제)된 항목이면 복구 가능 정보를 포함해 예외를 던진다.
+		problemTypeRepositoryPort.findOwnedCustomByUserIdAndName(userId, name).ifPresent(existing -> {
+			if (existing.isActive()) {
+				// 활성화된 동일 이름 존재 -> 충돌
+				throw ProblemTypeException.duplicateName();
+			}
+			// 비활성화된 동일 이름 존재 -> 복구 가능 정보를 함께 던짐
+			throw ProblemTypeException.duplicateNameWithExistingId(existing.getId());
+		});
 
 		int sortOrder = problemTypeRepositoryPort.findMaxSortOrderVisibleForUser(userId) + 1;
 		String id = generateCustomTypeId();

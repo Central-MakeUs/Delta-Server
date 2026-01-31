@@ -13,26 +13,27 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SocialAuthService {
 
-    private final LoginKeyExchangeUseCase loginKeyExchangeUseCase;
-    private final FrontendProperties frontendProperties;
+	private final LoginKeyExchangeUseCase loginKeyExchangeUseCase;
+	private final FrontendProperties frontendProperties;
 
-    public String createLoginKeyAndBuildRedirect(cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase.LoginResult result,
-        Duration ttl) {
-        String loginKey = UUID.randomUUID().toString();
-        loginKeyExchangeUseCase.save(loginKey, result.data(), result.tokens(), ttl);
+	public String createLoginKeyAndBuildRedirect(
+		cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase.LoginResult result,
+		Duration ttl) {
+		String loginKey = UUID.randomUUID().toString();
+		loginKeyExchangeUseCase.save(loginKey, result.data(), result.tokens(), ttl);
 
-        String base = frontendProperties.baseUrl() != null && !frontendProperties.baseUrl().isBlank()
-            ? frontendProperties.baseUrl()
-            : "http://localhost:3000";
+		String base = frontendProperties.baseUrl() != null && !frontendProperties.baseUrl().isBlank()
+			? frontendProperties.baseUrl()
+			: "http://localhost:3000";
 
-        return base + "/oauth/apple/callback?loginKey=" + loginKey;
-    }
+		return base + "/oauth/apple/callback?loginKey=" + loginKey;
+	}
 
-    public RedisLoginKeyStore.Stored consumeLoginKey(String loginKey) {
-        RedisLoginKeyStore.Stored stored = loginKeyExchangeUseCase.exchange(loginKey);
-        if (stored == null) {
-            throw SocialAuthException.invalidRequest("invalid_or_expired_login_key");
-        }
-        return stored;
-    }
+	public RedisLoginKeyStore.Stored consumeLoginKey(String loginKey) {
+		RedisLoginKeyStore.Stored stored = loginKeyExchangeUseCase.exchange(loginKey);
+		if (stored == null) {
+			throw SocialAuthException.invalidRequest("invalid_or_expired_login_key");
+		}
+		return stored;
+	}
 }
