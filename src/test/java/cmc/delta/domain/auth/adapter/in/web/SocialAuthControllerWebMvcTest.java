@@ -23,16 +23,16 @@ class SocialAuthControllerWebMvcTest {
 
 	private SocialLoginCommandUseCase socialLoginCommandUseCase;
 	private TokenHeaderWriter tokenHeaderWriter;
-	private cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore redisLoginKeyStore;
+	private cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore loginKeyStore;
 
 	@BeforeEach
 	void setUp() {
 		socialLoginCommandUseCase = mock(SocialLoginCommandUseCase.class);
 		tokenHeaderWriter = mock(TokenHeaderWriter.class);
-		redisLoginKeyStore = mock(cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore.class);
+		loginKeyStore = mock(cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore.class);
 
 		SocialAuthController controller = new SocialAuthController(socialLoginCommandUseCase, tokenHeaderWriter,
-			redisLoginKeyStore);
+			loginKeyStore);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setMessageConverters(new MappingJackson2HttpMessageConverter())
@@ -74,14 +74,14 @@ class SocialAuthControllerWebMvcTest {
 				org.hamcrest.Matchers.containsString("http://localhost:3000/oauth/apple/callback?loginKey=")));
 
 		verify(socialLoginCommandUseCase).loginApple("code", "user");
-		verify(redisLoginKeyStore).save(anyString(), any(), eq(tokens), any());
+		verify(loginKeyStore).save(anyString(), any(), eq(tokens), any());
 	}
 
 	@Test
 	@DisplayName("POST /auth/apple/exchange: loginKey 교환 -> 토큰 헤더 작성 + JSON 반환")
 	void apple_exchange_ok() throws Exception {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
-		when(redisLoginKeyStore.consume("key"))
+		when(loginKeyStore.consume("key"))
 			.thenReturn(new cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore.Stored(
 				new SocialLoginData("e@e.com", "nick", false), tokens));
 

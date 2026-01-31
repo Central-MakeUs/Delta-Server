@@ -7,39 +7,48 @@ import java.time.Duration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Redis에 loginKey와 연관된 페이로드를 저장하고 1회성으로 소비하는 책임을 가진 컴포넌트입니다.
+ */
 @Component
 public class RedisLoginKeyStore {
 
 	private static final String KEY_PREFIX = "lk:";
-	private final StringRedisTemplate redis;
+	private final StringRedisTemplate redisTemplate;
 	private final ObjectMapper objectMapper;
 
-	public RedisLoginKeyStore(StringRedisTemplate redis, ObjectMapper objectMapper) {
-		this.redis = redis;
+	public RedisLoginKeyStore(StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
+		this.redisTemplate = redisTemplate;
 		this.objectMapper = objectMapper;
 	}
 
+	/**
+	 * loginKey와 연관된 사용자 데이터 및 토큰을 Redis에 저장합니다.
+	 * 저장 시 TTL을 적용하여 단기간만 유효하도록 보장합니다.
+	 */
 	public void save(String loginKey, SocialLoginData data, TokenIssuer.IssuedTokens tokens, Duration ttl) {
 		try {
 			LoginKeyPayload payload = new LoginKeyPayload(data, tokens);
 			String json = objectMapper.writeValueAsString(payload);
-			redis.opsForValue().set(KEY_PREFIX + loginKey, json, ttl);
+			redisTemplate.opsForValue().set(KEY_PREFIX + loginKey, json, ttl);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
+	/**
+	 * 주어진 loginKey에 해당하는 값을 읽고 즉시 삭제합니다. 키가 없으면 null을 반환합니다.
+	 */
 	public Stored consume(String loginKey) {
 		String key = KEY_PREFIX + loginKey;
-		String json = redis.opsForValue().get(key);
-		if (json == null)
+		String json = redisTemplate.opsForValue().get(key);
+		if (json == null) {
 			return null;
-		redis.delete(key);
+		}
+		redisTemplate.delete(key);
 		try {
 			LoginKeyPayload payload = objectMapper.readValue(json, LoginKeyPayload.class);
-			SocialLoginData data = payload.data();
-			TokenIssuer.IssuedTokens tokens = payload.tokens();
-			return new Stored(data, tokens);
+			return new Stored(payload.data(), payload.tokens());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
