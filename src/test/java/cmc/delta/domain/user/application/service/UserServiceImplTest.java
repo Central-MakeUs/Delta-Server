@@ -19,29 +19,49 @@ import org.junit.jupiter.api.Test;
 
 class UserServiceImplTest {
 
-	private FakeUserRepositoryPort userRepositoryPort;
-	private UserServiceImpl userService;
+    private FakeUserRepositoryPort userRepositoryPort;
+    private cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort socialAccountRepositoryPort;
+    private UserServiceImpl userService;
 
 	@BeforeEach
 	void setUp() {
-		userRepositoryPort = FakeUserRepositoryPort.create();
-		userService = new UserServiceImpl(userRepositoryPort, new UserValidator());
+        userRepositoryPort = FakeUserRepositoryPort.create();
+        socialAccountRepositoryPort = cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort.create();
+        userService = new UserServiceImpl(userRepositoryPort, socialAccountRepositoryPort, new UserValidator());
 	}
 
 	@Test
 	@DisplayName("내 프로필 조회: 유저가 있으면 UserMeData를 반환함")
-	void getMyProfile_whenUserExists_thenReturnsUserMeData() {
-		// given
-		User user = userRepositoryPort.save(UserFixtures.activeUser());
+    void getMyProfile_whenUserExists_thenReturnsUserMeData() {
+        // given
+        User user = userRepositoryPort.save(UserFixtures.activeUser());
+        // no social account -> oauthProvider should be null
 
-		// when
-		UserMeData result = userService.getMyProfile(user.getId());
+        // when
+        UserMeData result = userService.getMyProfile(user.getId());
 
-		// then
-		assertThat(result.userId()).isEqualTo(user.getId());
-		assertThat(result.email()).isEqualTo(user.getEmail());
-		assertThat(result.nickname()).isEqualTo(user.getNickname());
-	}
+        // then
+        assertThat(result.userId()).isEqualTo(user.getId());
+        assertThat(result.email()).isEqualTo(user.getEmail());
+        assertThat(result.nickname()).isEqualTo(user.getNickname());
+        assertThat(result.oauthProvider()).isNull();
+    }
+
+    @Test
+    @DisplayName("내 프로필 조회: 소셜 계정이 연결되어 있으면 oauthProvider를 반환함")
+    void getMyProfile_whenSocialAccountExists_thenReturnsProvider() {
+        // given
+        User user = userRepositoryPort.save(UserFixtures.activeUser());
+        cmc.delta.domain.auth.model.SocialAccount account = cmc.delta.domain.auth.model.SocialAccount.link(cmc.delta.domain.auth.model.SocialProvider.KAKAO, "pid", user);
+        socialAccountRepositoryPort.put(account);
+
+        // when
+        UserMeData result = userService.getMyProfile(user.getId());
+
+        // then
+        assertThat(result.userId()).isEqualTo(user.getId());
+        assertThat(result.oauthProvider()).isEqualTo(cmc.delta.domain.auth.model.SocialProvider.KAKAO);
+    }
 
 	@Test
 	@DisplayName("내 프로필 조회: 유저가 없으면 USER_NOT_FOUND가 발생함")

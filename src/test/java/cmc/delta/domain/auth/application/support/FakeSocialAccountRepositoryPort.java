@@ -24,10 +24,18 @@ public final class FakeSocialAccountRepositoryPort implements SocialAccountRepos
 
 	private FakeSocialAccountRepositoryPort() {}
 
-	@Override
-	public Optional<SocialAccount> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId) {
-		return Optional.ofNullable(store.get(key(provider, providerUserId)));
-	}
+    @Override
+    public Optional<SocialAccount> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId) {
+        return Optional.ofNullable(store.get(key(provider, providerUserId)));
+    }
+
+    @Override
+    public Optional<SocialAccount> findByUser(cmc.delta.domain.user.model.User user) {
+        if (user == null || user.getId() == null) return Optional.empty();
+        return store.values().stream()
+            .filter(a -> a.getUser() != null && user.getId().equals(a.getUser().getId()))
+            .findFirst();
+    }
 
 	@Override
 	public SocialAccount save(SocialAccount account) {

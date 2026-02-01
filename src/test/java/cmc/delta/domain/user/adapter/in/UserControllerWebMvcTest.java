@@ -41,7 +41,7 @@ class UserControllerWebMvcTest {
 	@Test
 	@DisplayName("GET /users/me: usecase 호출")
 	void getMyProfile_ok_callsUseCase() throws Exception {
-		when(userUseCase.getMyProfile(10L)).thenReturn(new UserMeData(10L, "user@example.com", "delta"));
+        when(userUseCase.getMyProfile(10L)).thenReturn(new UserMeData(10L, "user@example.com", "delta", null));
 
 		mvc.perform(get("/api/v1/users/me")
 				.requestAttr(ATTR, principal(10L)))
