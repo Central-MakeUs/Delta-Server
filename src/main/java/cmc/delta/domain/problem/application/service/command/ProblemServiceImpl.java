@@ -11,6 +11,7 @@ import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongA
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
+import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateRequestValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
@@ -41,6 +42,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	private final ProblemCreateAssembler assembler;
 	private final ProblemCreateMapper mapper;
 	private final ProblemUpdateRequestValidator updateRequestValidator;
+	private final ProblemScrollCacheEpochStore scrollCacheEpochStore;
 
 	private final Clock clock;
 
@@ -68,6 +70,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		newProblem.replaceTypes(finalTypes);
 
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
+		scrollCacheEpochStore.bumpAfterCommit(currentUserId);
 
 		return mapper.toResponse(savedProblem);
 	}
@@ -79,6 +82,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
 		problem.complete(solutionText, LocalDateTime.now(clock));
+		scrollCacheEpochStore.bumpAfterCommit(currentUserId);
 	}
 
 	@Override
@@ -89,5 +93,6 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, command);
 		problem.applyUpdate(cmd);
+		scrollCacheEpochStore.bumpAfterCommit(userId);
 	}
 }

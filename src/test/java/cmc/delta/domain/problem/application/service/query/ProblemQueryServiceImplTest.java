@@ -28,6 +28,7 @@ class ProblemQueryServiceImplTest {
 	private ProblemQueryPort problemQueryPort;
 	private ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private StoragePort storagePort;
+	private ProblemScrollQueryService scrollQueryService;
 	private ProblemListMapper listMapper;
 	private ProblemDetailMapper detailMapper;
 
@@ -39,6 +40,7 @@ class ProblemQueryServiceImplTest {
 		problemQueryPort = mock(ProblemQueryPort.class);
 		problemTypeTagQueryPort = mock(ProblemTypeTagQueryPort.class);
 		storagePort = mock(StoragePort.class);
+		scrollQueryService = mock(ProblemScrollQueryService.class);
 		listMapper = mock(ProblemListMapper.class);
 		detailMapper = mock(ProblemDetailMapper.class);
 
@@ -47,6 +49,7 @@ class ProblemQueryServiceImplTest {
 			problemQueryPort,
 			problemTypeTagQueryPort,
 			storagePort,
+			scrollQueryService,
 			listMapper,
 			detailMapper);
 	}

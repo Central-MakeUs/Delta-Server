@@ -43,6 +43,8 @@
         </root>
 
         <logger name="cmc.delta" level="DEBUG"/>
+		<logger name="cmc.delta.global.logging.HttpAccessLogFilter" level="INFO"/>
+		<logger name="cmc.delta.global.storage.application.StorageService" level="INFO"/>
         <logger name="org.hibernate" level="WARN"/>
         <logger name="com.zaxxer.hikari" level="INFO"/>
         <logger name="io.netty.resolver.dns.DnsServerAddressStreamProviders" level="OFF"/>
@@ -74,6 +76,8 @@
         </root>
 
         <logger name="cmc.delta" level="DEBUG"/>
+		<logger name="cmc.delta.global.logging.HttpAccessLogFilter" level="INFO"/>
+		<logger name="cmc.delta.global.storage.application.StorageService" level="INFO"/>
         <logger name="org.hibernate" level="WARN"/>
         <logger name="com.zaxxer.hikari" level="INFO"/>
         <logger name="io.netty.resolver.dns.DnsServerAddressStreamProviders" level="OFF"/>
@@ -86,6 +90,8 @@
         </root>
 
         <logger name="cmc.delta" level="DEBUG"/>
+		<logger name="cmc.delta.global.logging.HttpAccessLogFilter" level="INFO"/>
+		<logger name="cmc.delta.global.storage.application.StorageService" level="INFO"/>
         <logger name="org.hibernate" level="WARN"/>
         <logger name="com.zaxxer.hikari" level="INFO"/>
     </springProfile>

@@ -1,7 +1,6 @@
 package cmc.delta.domain.problem.application.service.query;
 
 import cmc.delta.domain.problem.application.exception.ProblemException;
-import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemDetailMapper;
 import cmc.delta.domain.problem.application.mapper.problem.ProblemListMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
@@ -16,7 +15,6 @@ import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTa
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
-import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.application.port.out.support.PageResult;
 import cmc.delta.domain.problem.application.validation.query.ProblemListRequestValidator;
 import cmc.delta.global.api.response.CursorPagedResponse;
@@ -39,6 +37,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	private final ProblemQueryPort problemQueryPort;
 	private final ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private final StoragePort storagePort;
+	private final ProblemScrollQueryService scrollQueryService;
 
 	private final ProblemListMapper problemListMapper;
 	private final ProblemDetailMapper problemDetailMapper;
@@ -77,18 +76,15 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		ProblemListCondition condition,
 		CursorQuery cursorQuery,
 		boolean includePreviewUrl) {
-		validateCursorPagination(condition, cursorQuery);
-
-		CursorPageResult<ProblemListRow> pageData = problemQueryPort.findMyProblemListCursor(userId, condition,
+		CursorPagedResponse<ProblemListItemResponse> base = scrollQueryService.getMyProblemCardListCursorBase(
+			userId,
+			condition,
 			cursorQuery);
-		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData.content());
-		List<ProblemListItemResponse> items = mapListItems(pageData.content(), typeItemsByProblemId, includePreviewUrl);
 
-		CursorPagedResponse.Cursor nextCursor = (pageData.nextLastId() == null)
-			? null
-			: new CursorPagedResponse.Cursor(pageData.nextLastId(), pageData.nextLastCreatedAt());
-
-		return CursorPagedResponse.of(items, pageData.hasNext(), nextCursor, pageData.totalElements());
+		if (!includePreviewUrl) {
+			return base;
+		}
+		return scrollQueryService.attachPreviewUrls(base);
 	}
 
 	@Override
@@ -105,25 +101,6 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 	private void validatePagination(PageQuery pageQuery) {
 		requestValidator.validatePagination(pageQuery);
-	}
-
-	private void validateCursorPagination(ProblemListCondition condition, CursorQuery cursorQuery) {
-		// size validation은 기존 validator(MAX_SIZE=50)를 재사용한다.
-		requestValidator.validatePagination(new PageQuery(0, cursorQuery.size()));
-
-		boolean hasLastId = cursorQuery.lastId() != null;
-		boolean hasLastCreatedAt = cursorQuery.lastCreatedAt() != null;
-		if (hasLastId != hasLastCreatedAt) {
-			throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
-		}
-
-		// RECENT/OLDEST 외 정렬은 커서 기반을 지원하지 않는다.
-		if (condition.sort() != null) {
-			switch (condition.sort()) {
-				case RECENT, OLDEST -> {}
-				default -> throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
-			}
-		}
 	}
 
 	private Map<Long, List<CurriculumItemResponse>> loadTypeItemsByProblemId(PageResult<ProblemListRow> pageData) {
