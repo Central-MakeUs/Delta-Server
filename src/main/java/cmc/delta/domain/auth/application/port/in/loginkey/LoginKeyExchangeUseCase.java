@@ -10,13 +10,7 @@ import java.time.Duration;
  */
 public interface LoginKeyExchangeUseCase {
 
-	/**
-	 * Save loginKey payload with TTL.
-	 */
 	void save(String loginKey, SocialLoginData data, TokenIssuer.IssuedTokens tokens, Duration ttl);
 
-	/**
-	 * Consume loginKey and return stored payload or null when missing.
-	 */
 	RedisLoginKeyStore.Stored exchange(String loginKey);
 }

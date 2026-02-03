@@ -111,7 +111,6 @@ public class AppleOAuthClient {
 			throw new IllegalStateException("apple private key is empty");
 		}
 
-		// env에서 "\n" 문자열로 넣었을 때 실제 개행으로 복구
 		pem = pem.replace("\\n", "\n");
 
 		// BEGIN/END가 본문에 붙어서 들어오는 케이스 보정
