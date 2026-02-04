@@ -114,9 +114,12 @@ Follow Spotless output; do not hand-format around it.
 - Prioritize readability: clear naming, short methods, and single responsibility per class/method.
 - Apply SOLID principles consistently; avoid code smells and dead code.
 - Use clear, meaningful variable and method names.
+- Do not use `var`; use explicit types.
+- Replace magic numbers/strings with named constants (including 0/1) when used in code.
 - Minimize duplication; prefer small, cohesive helpers over repeated logic.
 - Keep classes focused on a single responsibility; avoid doing multiple unrelated things in one class.
 - Keep methods focused on a single task; split when a method does too much.
+- Prefer method names and flow that read like sentences.
 - Keep cohesion high and coupling low when refactoring; avoid over-engineering.
 - Maintain current project style/structure and package boundaries.
 - Ensure packages are properly organized; avoid dumping code into unrelated packages.
