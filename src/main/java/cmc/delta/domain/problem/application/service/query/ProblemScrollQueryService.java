@@ -50,39 +50,29 @@ public class ProblemScrollQueryService {
 			cursorQuery);
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData.content());
 		List<ProblemListItemResponse> items = mapListItemsNoPreview(pageData.content(), typeItemsByProblemId);
-
-		CursorPagedResponse.Cursor nextCursor = (pageData.nextLastId() == null)
-			? null
-			: new CursorPagedResponse.Cursor(pageData.nextLastId(), pageData.nextLastCreatedAt());
-
-		return CursorPagedResponse.of(items, pageData.hasNext(), nextCursor, pageData.totalElements());
+		return CursorPagedResponse.of(
+			items,
+			pageData.hasNext(),
+			buildNextCursor(pageData),
+			pageData.totalElements());
 	}
 
 	public CursorPagedResponse<ProblemListItemResponse> attachPreviewUrls(
-		CursorPagedResponse<ProblemListItemResponse> base) {
-		List<String> storageKeys = extractMissingPreviewKeys(base.content());
-		if (storageKeys.isEmpty()) {
-			return base;
+		CursorPagedResponse<ProblemListItemResponse> response) {
+		Map<String, String> previewUrls = loadPreviewUrls(response.content());
+		if (previewUrls.isEmpty()) {
+			return response;
 		}
-		Map<String, String> previewUrls = storagePort.issueReadUrls(storageKeys);
-		List<ProblemListItemResponse> withPreview = base.content().stream()
-			.map(item -> attachPreviewUrl(item, previewUrls))
-			.toList();
+		List<ProblemListItemResponse> withPreview = applyPreviewUrls(response.content(), previewUrls);
 
-		return CursorPagedResponse.of(withPreview, base.hasNext(), base.nextCursor(), base.totalElements());
+		return CursorPagedResponse.of(withPreview, response.hasNext(), response.nextCursor(), response.totalElements());
 	}
 
 	private ProblemListItemResponse attachPreviewUrl(
 		ProblemListItemResponse item,
 		Map<String, String> previewUrls) {
 		ProblemListItemResponse.PreviewImageResponse preview = item.previewImage();
-		if (preview == null) {
-			return item;
-		}
-		if (preview.storageKey() == null || preview.storageKey().isBlank()) {
-			return item;
-		}
-		if (preview.viewUrl() != null) {
+		if (!needsPreviewUrl(preview)) {
 			return item;
 		}
 
@@ -94,26 +84,38 @@ public class ProblemScrollQueryService {
 			preview.assetId(),
 			preview.storageKey(),
 			viewUrl);
-
-		return new ProblemListItemResponse(
-			item.problemId(),
-			item.subject(),
-			item.unit(),
-			item.types(),
-			nextPreview,
-			item.isCompleted(),
-			item.createdAt());
+		return item.withTypesAndPreview(item.types(), nextPreview);
 	}
 
 	private List<String> extractMissingPreviewKeys(List<ProblemListItemResponse> items) {
 		return items.stream()
 			.map(ProblemListItemResponse::previewImage)
-			.filter(preview -> preview != null
-				&& preview.viewUrl() == null
-				&& preview.storageKey() != null
-				&& !preview.storageKey().isBlank())
+			.filter(this::needsPreviewUrl)
 			.map(ProblemListItemResponse.PreviewImageResponse::storageKey)
 			.toList();
+	}
+
+	private Map<String, String> loadPreviewUrls(List<ProblemListItemResponse> items) {
+		List<String> storageKeys = extractMissingPreviewKeys(items);
+		if (storageKeys.isEmpty()) {
+			return Map.of();
+		}
+		return storagePort.issueReadUrls(storageKeys);
+	}
+
+	private List<ProblemListItemResponse> applyPreviewUrls(
+		List<ProblemListItemResponse> items,
+		Map<String, String> previewUrls) {
+		return items.stream()
+			.map(item -> attachPreviewUrl(item, previewUrls))
+			.toList();
+	}
+
+	private CursorPagedResponse.Cursor buildNextCursor(CursorPageResult<ProblemListRow> pageData) {
+		if (pageData.nextLastId() == null) {
+			return null;
+		}
+		return new CursorPagedResponse.Cursor(pageData.nextLastId(), pageData.nextLastCreatedAt());
 	}
 
 	private void validateCursorPagination(ProblemListCondition condition, CursorQuery cursorQuery) {
@@ -163,13 +165,14 @@ public class ProblemScrollQueryService {
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId) {
 		ProblemListItemResponse base = problemListMapper.toResponse(row, null);
 		List<CurriculumItemResponse> types = typeItemsByProblemId.getOrDefault(base.problemId(), List.of());
-		return new ProblemListItemResponse(
-			base.problemId(),
-			base.subject(),
-			base.unit(),
-			types,
-			base.previewImage(),
-			base.isCompleted(),
-			base.createdAt());
+		return base.withTypesAndPreview(types, base.previewImage());
 	}
+
+	private boolean needsPreviewUrl(ProblemListItemResponse.PreviewImageResponse preview) {
+		return preview != null
+			&& preview.viewUrl() == null
+			&& preview.storageKey() != null
+			&& !preview.storageKey().isBlank();
+	}
+
 }

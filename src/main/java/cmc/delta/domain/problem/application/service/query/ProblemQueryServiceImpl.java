@@ -54,12 +54,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId = loadTypeItemsByProblemId(pageData);
 		List<ProblemListItemResponse> items = mapListItems(pageData, typeItemsByProblemId);
 
-		return PagedResponse.of(
-			items,
-			pageData.page(),
-			pageData.size(),
-			pageData.totalElements(),
-			pageData.totalPages());
+		return buildPagedResponse(pageData, items);
 	}
 
 	@Override
@@ -76,15 +71,15 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		ProblemListCondition condition,
 		CursorQuery cursorQuery,
 		boolean includePreviewUrl) {
-		CursorPagedResponse<ProblemListItemResponse> base = scrollQueryService.getMyProblemCardListCursorBase(
+		CursorPagedResponse<ProblemListItemResponse> response = scrollQueryService.getMyProblemCardListCursorBase(
 			userId,
 			condition,
 			cursorQuery);
 
 		if (!includePreviewUrl) {
-			return base;
+			return response;
 		}
-		return scrollQueryService.attachPreviewUrls(base);
+		return scrollQueryService.attachPreviewUrls(response);
 	}
 
 	@Override
@@ -134,10 +129,8 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		List<ProblemListRow> rows,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
 		boolean includePreviewUrl) {
-		Map<String, String> previewUrls = includePreviewUrl ? loadPreviewUrls(rows) : Map.of();
-		return rows.stream()
-			.map(row -> toListItem(row, typeItemsByProblemId, previewUrls))
-			.toList();
+		Map<String, String> previewUrls = loadPreviewUrls(rows, includePreviewUrl);
+		return mapRowsToListItems(rows, typeItemsByProblemId, previewUrls);
 	}
 
 	private ProblemListItemResponse toListItem(
@@ -148,21 +141,26 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
 
 		List<CurriculumItemResponse> types = typeItemsByProblemId.getOrDefault(base.problemId(), List.of());
-		return new ProblemListItemResponse(
-			base.problemId(),
-			base.subject(),
-			base.unit(),
-			types,
-			base.previewImage(),
-			base.isCompleted(),
-			base.createdAt());
+		return base.withTypesAndPreview(types, base.previewImage());
 	}
 
-	private Map<String, String> loadPreviewUrls(List<ProblemListRow> rows) {
+	private Map<String, String> loadPreviewUrls(List<ProblemListRow> rows, boolean includePreviewUrl) {
+		if (!includePreviewUrl) {
+			return Map.of();
+		}
 		List<String> storageKeys = rows.stream()
 			.map(ProblemListRow::storageKey)
 			.toList();
 		return storagePort.issueReadUrls(storageKeys);
+	}
+
+	private List<ProblemListItemResponse> mapRowsToListItems(
+		List<ProblemListRow> rows,
+		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
+		Map<String, String> previewUrls) {
+		return rows.stream()
+			.map(row -> toListItem(row, typeItemsByProblemId, previewUrls))
+			.toList();
 	}
 
 	private List<CurriculumItemResponse> loadTypeItems(Long problemId) {
@@ -189,5 +187,16 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.completed(),
 			base.completedAt(),
 			base.createdAt());
+	}
+
+	private PagedResponse<ProblemListItemResponse> buildPagedResponse(
+		PageResult<ProblemListRow> pageData,
+		List<ProblemListItemResponse> items) {
+		return PagedResponse.of(
+			items,
+			pageData.page(),
+			pageData.size(),
+			pageData.totalElements(),
+			pageData.totalPages());
 	}
 }
