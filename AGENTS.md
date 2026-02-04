@@ -126,6 +126,14 @@ Follow Spotless output; do not hand-format around it.
 - Avoid inner constants classes if they add visual noise; use them only when a file has too many constants to scan.
 - Use enums for true value sets with behavior or type safety; avoid enums for simple string/number constants.
 - Extract shared constants to a dedicated *Constants class only when used across multiple files.
+- Avoid comments unless necessary; if needed, keep them short and in Korean.
+- Avoid methods with many parameters; prefer 3 or fewer when possible.
+- If a method needs 3+ related parameters, group them into a command/record parameter object.
+- If behavior belongs to a domain object, move the method to that object to reduce parameter count.
+- Use builders/factories when construction requires many inputs and readability suffers.
+- Exception: framework/callback signatures that cannot be changed are acceptable.
+- Use custom exception classes (and ErrorCode) instead of throwing RuntimeException or generic exceptions directly.
+- Prefer readable, domain-specific exceptions that wrap ErrorCode for clarity.
 - Keep cohesion high and coupling low when refactoring; avoid over-engineering.
 - Maintain current project style/structure and package boundaries.
 - Ensure packages are properly organized; avoid dumping code into unrelated packages.
