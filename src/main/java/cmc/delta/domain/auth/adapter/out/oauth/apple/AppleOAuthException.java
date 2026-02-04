@@ -117,4 +117,12 @@ public class AppleOAuthException extends BusinessException {
 			"애플 client_secret 생성 실패: " + causeName,
 			cause);
 	}
+
+	public static AppleOAuthException privateKeyEmpty() {
+		return new AppleOAuthException(ErrorCode.INTERNAL_ERROR, "애플 private key가 비어있습니다.", null);
+	}
+
+	public static AppleOAuthException privateKeyInvalidBase64(Throwable cause) {
+		return new AppleOAuthException(ErrorCode.INTERNAL_ERROR, "애플 private key base64가 올바르지 않습니다.", cause);
+	}
 }

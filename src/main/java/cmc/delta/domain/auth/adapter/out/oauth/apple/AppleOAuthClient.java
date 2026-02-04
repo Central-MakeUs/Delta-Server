@@ -108,7 +108,7 @@ public class AppleOAuthClient {
 
 	private PrivateKey loadPrivateKeyFromPem(String pem) throws Exception {
 		if (!StringUtils.hasText(pem)) {
-			throw new IllegalStateException("apple private key is empty");
+			throw AppleOAuthException.privateKeyEmpty();
 		}
 
 		pem = pem.replace("\\n", "\n");
@@ -126,7 +126,7 @@ public class AppleOAuthClient {
 		try {
 			der = Base64.getDecoder().decode(normalized);
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("invalid base64 in apple private key", e);
+			throw AppleOAuthException.privateKeyInvalidBase64(e);
 		}
 
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
