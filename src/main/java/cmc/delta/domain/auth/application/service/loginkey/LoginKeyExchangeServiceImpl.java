@@ -1,6 +1,6 @@
 package cmc.delta.domain.auth.application.service.loginkey;
 
-import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
+import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.loginkey.LoginKeyExchangeUseCase;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;

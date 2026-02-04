@@ -1,6 +1,6 @@
 package cmc.delta.domain.auth.application.port.in.loginkey;
 
-import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
+import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import java.time.Duration;

@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
-import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
+import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.exception.SocialAuthException;
 import cmc.delta.domain.auth.application.port.in.loginkey.LoginKeyExchangeUseCase;
 import cmc.delta.domain.auth.application.support.FrontendDefaults;

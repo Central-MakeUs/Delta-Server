@@ -2,7 +2,7 @@ package cmc.delta.domain.auth.adapter.in.web;
 
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
-import cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore;
+import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.service.social.SocialAuthService;
