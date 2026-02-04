@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
+import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
@@ -84,7 +85,7 @@ class SocialAuthControllerWebMvcTest {
 	void apple_exchange_ok() throws Exception {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(this.socialAuthService.consumeLoginKey("key"))
-			.thenReturn(new cmc.delta.domain.auth.adapter.out.oauth.redis.RedisLoginKeyStore.Stored(
+			.thenReturn(new RedisLoginKeyStore.Stored(
 				new SocialLoginData("e@e.com", "nick", false), tokens));
 
 		mvc.perform(post("/api/v1/auth/apple/exchange")
