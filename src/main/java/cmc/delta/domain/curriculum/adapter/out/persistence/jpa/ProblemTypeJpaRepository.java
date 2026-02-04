@@ -44,6 +44,26 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 	Long userId, @Param("typeId")
 	String typeId);
 
+	@Query("""
+		select t
+		from ProblemType t
+		where t.custom = true
+		  and t.createdByUser.id = :userId
+		  and t.name = :name
+		""")
+	Optional<ProblemType> findOwnedCustomByUserIdAndName(@Param("userId")
+	Long userId, @Param("name")
+	String name);
+
+	// 사용자 소유의 동일 이름 커스텀 유형 존재 여부를 boolean 으로 조회
+	@Query("""
+		select case when (count(t) > 0) then true else false end
+		from ProblemType t
+		where t.custom = true
+		  and t.createdByUser.id = :userId
+		  and t.name = :name
+		""")
+
 	boolean existsByCreatedByUserIdAndCustomTrueAndName(Long userId, String name);
 
 	@Query("""

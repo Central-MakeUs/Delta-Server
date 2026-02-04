@@ -11,6 +11,7 @@ import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongA
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
+import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateRequestValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
@@ -41,6 +42,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	private final ProblemCreateAssembler assembler;
 	private final ProblemCreateMapper mapper;
 	private final ProblemUpdateRequestValidator updateRequestValidator;
+	private final ProblemScrollCacheEpochStore scrollCacheEpochStore;
 
 	private final Clock clock;
 
@@ -49,45 +51,75 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	public ProblemCreateResponse createWrongAnswerCard(Long currentUserId, CreateWrongAnswerCardCommand command) {
 		requestValidator.validate(command);
 
-		ProblemScan scan = scanValidator.getOwnedScan(currentUserId, command.scanId());
-		scanValidator.validateScanIsAiDone(scan);
-		scanValidator.validateProblemNotAlreadyCreated(command.scanId());
-
+		ProblemScan scan = loadValidatedScan(currentUserId, command.scanId());
 		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
-
-		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(currentUserId, command.finalTypeIds());
-		if (finalTypes == null || finalTypes.isEmpty()) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST);
-		}
-
-		ProblemType primaryType = finalTypes.get(0);
-
+		List<ProblemType> finalTypes = loadFinalTypesOrThrow(currentUserId, command.finalTypeIds());
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
-		newProblem.replaceTypes(finalTypes);
-
+		Problem newProblem = assembleProblem(userRef, scan, finalUnit, finalTypes, command);
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
-
+		bumpScrollCache(currentUserId);
 		return mapper.toResponse(savedProblem);
 	}
 
 	@Override
 	@Transactional
 	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
-		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, currentUserId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
-
-		problem.complete(solutionText, LocalDateTime.now(clock));
+		Problem problem = loadProblemOrThrow(problemId, currentUserId);
+		completeProblem(problem, solutionText);
+		bumpScrollCache(currentUserId);
 	}
 
 	@Override
 	@Transactional
 	public void updateWrongAnswerCard(Long userId, Long problemId, UpdateWrongAnswerCardCommand command) {
-		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, userId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
+		Problem problem = loadProblemOrThrow(problemId, userId);
+		ProblemUpdateCommand updateCommand = updateRequestValidator.validateAndNormalize(problem, command);
+		applyUpdate(problem, updateCommand);
+		bumpScrollCache(userId);
+	}
 
-		ProblemUpdateCommand cmd = updateRequestValidator.validateAndNormalize(problem, command);
-		problem.applyUpdate(cmd);
+	private ProblemScan loadValidatedScan(Long userId, Long scanId) {
+		ProblemScan scan = scanValidator.getOwnedScan(userId, scanId);
+		scanValidator.validateScanIsAiDone(scan);
+		scanValidator.validateProblemNotAlreadyCreated(scanId);
+		return scan;
+	}
+
+	private List<ProblemType> loadFinalTypesOrThrow(Long userId, List<String> finalTypeIds) {
+		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(userId, finalTypeIds);
+		if (finalTypes == null || finalTypes.isEmpty()) {
+			throw new ProblemException(ErrorCode.INVALID_REQUEST);
+		}
+		return finalTypes;
+	}
+
+	private Problem assembleProblem(
+		User userRef,
+		ProblemScan scan,
+		Unit finalUnit,
+		List<ProblemType> finalTypes,
+		CreateWrongAnswerCardCommand command) {
+		ProblemType primaryType = finalTypes.get(0);
+		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
+		newProblem.replaceTypes(finalTypes);
+		return newProblem;
+	}
+
+	private Problem loadProblemOrThrow(Long problemId, Long userId) {
+		return problemRepositoryPort.findByIdAndUserId(problemId, userId)
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
+	}
+
+	private void applyUpdate(Problem problem, ProblemUpdateCommand updateCommand) {
+		problem.applyUpdate(updateCommand);
+	}
+
+	private void completeProblem(Problem problem, String solutionText) {
+		problem.complete(solutionText, LocalDateTime.now(clock));
+	}
+
+	private void bumpScrollCache(Long userId) {
+		scrollCacheEpochStore.bumpAfterCommit(userId);
 	}
 }

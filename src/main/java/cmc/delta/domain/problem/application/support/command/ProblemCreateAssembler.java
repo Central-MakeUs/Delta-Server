@@ -5,6 +5,7 @@ import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
+import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
@@ -27,9 +28,9 @@ public class ProblemCreateAssembler {
 		Unit finalUnit,
 		ProblemType finalType,
 		CreateWrongAnswerCardCommand command) {
-		RenderMode renderMode = extractRenderMode(scan);
-		String problemMarkdown = extractProblemMarkdown(scan);
-
+		RenderMode renderMode = requireRenderMode(scan);
+		String problemMarkdown = resolveProblemMarkdown(scan);
+		ProblemCreateValues values = buildCreateValues(command);
 		return Problem.create(
 			userRef,
 			scan,
@@ -37,13 +38,13 @@ public class ProblemCreateAssembler {
 			finalType,
 			renderMode,
 			problemMarkdown,
-			command.answerFormat(),
-			command.answerValue(),
-			command.answerChoiceNo(),
-			command.solutionText());
+			values.answerFormat(),
+			values.answerValue(),
+			values.answerChoiceNo(),
+			values.solutionText());
 	}
 
-	private RenderMode extractRenderMode(ProblemScan scan) {
+	private RenderMode requireRenderMode(ProblemScan scan) {
 		RenderMode renderMode = scan.getRenderMode();
 		if (renderMode == null) {
 			throw new ProblemStateException(ErrorCode.PROBLEM_SCAN_RENDER_MODE_MISSING);
@@ -51,17 +52,29 @@ public class ProblemCreateAssembler {
 		return renderMode;
 	}
 
-	private String extractProblemMarkdown(ProblemScan scan) {
+	private String resolveProblemMarkdown(ProblemScan scan) {
 		String ocrText = scan.getOcrPlainText();
 		if (ocrText == null) {
 			return FALLBACK_PROBLEM_MARKDOWN;
 		}
-
-		String trimmed = ocrText.trim();
-		if (trimmed.isEmpty()) {
+		if (ocrText.trim().isEmpty()) {
 			return FALLBACK_PROBLEM_MARKDOWN;
 		}
-
 		return ocrText;
+	}
+
+	private ProblemCreateValues buildCreateValues(CreateWrongAnswerCardCommand command) {
+		return new ProblemCreateValues(
+			command.answerFormat(),
+			command.answerValue(),
+			command.answerChoiceNo(),
+			command.solutionText());
+	}
+
+	private record ProblemCreateValues(
+		AnswerFormat answerFormat,
+		String answerValue,
+		Integer answerChoiceNo,
+		String solutionText) {
 	}
 }

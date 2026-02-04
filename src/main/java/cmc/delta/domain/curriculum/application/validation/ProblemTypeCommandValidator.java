@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 public class ProblemTypeCommandValidator {
 
 	private static final int MAX_NAME_LEN = 100;
+	private static final int MIN_SORT_ORDER = 1;
 
 	private final ProblemTypeRepositoryPort problemTypeRepositoryPort;
 
@@ -41,7 +42,7 @@ public class ProblemTypeCommandValidator {
 	public void validateSortOrder(Integer sortOrder) {
 		if (sortOrder == null)
 			return;
-		if (sortOrder.intValue() < 1) {
+		if (sortOrder.intValue() < MIN_SORT_ORDER) {
 			throw ProblemTypeException.invalid("sortOrder는 1 이상이어야 합니다.");
 		}
 	}

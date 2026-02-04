@@ -108,6 +108,39 @@ Follow Spotless output; do not hand-format around it.
   - Validators: `*Validator`
   - Properties/config: `*Properties`, `*Config`
 
+## Additional Clean Code Preferences
+
+- Follow Hexagonal architecture strictly; keep ports/adapters boundaries clear.
+- Prioritize readability: clear naming, short methods, and single responsibility per class/method.
+- Apply SOLID principles consistently; avoid code smells and dead code.
+- Use clear, meaningful variable and method names.
+- Do not use `var`; use explicit types.
+- Replace magic numbers/strings with named constants (including 0/1) when used in code.
+- Minimize duplication; prefer small, cohesive helpers over repeated logic.
+- Keep classes focused on a single responsibility; avoid doing multiple unrelated things in one class.
+- Keep methods focused on a single task; split when a method does too much.
+- Prefer method names and flow that read like sentences.
+- Consider appropriate design patterns when they improve clarity or maintainability.
+- Consolidate similar classes/usages when responsibilities overlap and it reduces duplication.
+- Prefer file-level `private static final` constants for readability in most cases.
+- Avoid inner constants classes if they add visual noise; use them only when a file has too many constants to scan.
+- Use enums for true value sets with behavior or type safety; avoid enums for simple string/number constants.
+- Extract shared constants to a dedicated *Constants class only when used across multiple files.
+- Avoid comments unless necessary; if needed, keep them short and in Korean.
+- Avoid methods with many parameters; prefer 3 or fewer when possible.
+- If a method needs 3+ related parameters, group them into a command/record parameter object.
+- If behavior belongs to a domain object, move the method to that object to reduce parameter count.
+- Use builders/factories when construction requires many inputs and readability suffers.
+- Exception: framework/callback signatures that cannot be changed are acceptable.
+- Use custom exception classes (and ErrorCode) instead of throwing RuntimeException or generic exceptions directly.
+- Prefer readable, domain-specific exceptions that wrap ErrorCode for clarity.
+- Avoid fully-qualified class names in code; prefer imports for readability.
+- Keep cohesion high and coupling low when refactoring; avoid over-engineering.
+- Maintain current project style/structure and package boundaries.
+- Ensure packages are properly organized; avoid dumping code into unrelated packages.
+- Ensure behavior stays correct; refactors must not change functionality.
+- Consider performance impact; avoid regressions.
+
 ## Error Handling + API Responses
 
 - Throw `BusinessException` (or subtype) with an `ErrorCode` for domain/business failures.

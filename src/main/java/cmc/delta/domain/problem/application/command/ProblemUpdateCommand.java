@@ -6,4 +6,8 @@ public record ProblemUpdateCommand(
 	String solutionText,
 	boolean hasAnswerChange,
 	boolean hasSolutionChange) {
+
+	public boolean hasNoUpdates() {
+		return !hasAnswerChange && !hasSolutionChange;
+	}
 }

@@ -16,7 +16,9 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,8 +42,10 @@ public class ProblemScanServiceImpl implements ScanCommandUseCase {
 		UploadFile file = command.file();
 		uploadValidator.validateFileNotEmpty(file);
 
-		ScanImageUploadPort.UploadResult uploaded = scanImageUploadPort.uploadImage(file,
-			ProblemScanStoragePaths.ORIGINAL_DIR);
+		String datePath = LocalDate.now(clock).format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+		String directory = ProblemScanStoragePaths.ORIGINAL_DIR + "/" + datePath + "/" + userId;
+
+		ScanImageUploadPort.UploadResult uploaded = scanImageUploadPort.uploadImage(file, directory);
 
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScan scan = scanRepositoryPort.save(ProblemScan.uploaded(userRef));

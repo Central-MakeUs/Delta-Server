@@ -65,6 +65,8 @@ public enum ErrorCode {
 	PROBLEM_FINAL_UNIT_MUST_BE_CHILD(HttpStatus.BAD_REQUEST, "PROB_004", "단원은 과목이 아닌 하위 단원을 선택해야 합니다.", LogLevel.INFO),
 	PROBLEM_FINAL_UNIT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_005", "선택한 단원을 찾을 수 없습니다.", LogLevel.INFO),
 	PROBLEM_FINAL_TYPE_NOT_FOUND(HttpStatus.BAD_REQUEST, "PROB_006", "선택한 유형을 찾을 수 없습니다.", LogLevel.INFO),
+	// 커스텀 유형 중복(이미 존재함)
+	TYPE_ALREADY_EXISTS(HttpStatus.CONFLICT, "REQ_002", "이미 추가된 유형입니다.", LogLevel.INFO),
 	PROBLEM_SCAN_NOT_READY(HttpStatus.BAD_REQUEST, "PROB_007", "AI 분석이 완료된 스캔만 오답카드를 생성할 수 있습니다.", LogLevel.INFO),
 	PROBLEM_ALREADY_CREATED(HttpStatus.CONFLICT, "PROB_008", "이미 해당 스캔으로 생성된 오답카드가 있습니다.", LogLevel.WARN),
 	PROBLEM_SCAN_RENDER_MODE_MISSING(HttpStatus.BAD_REQUEST, "PROB_009", "스캔 렌더 모드가 누락되었습니다.", LogLevel.INFO),

@@ -50,4 +50,8 @@ public final class InMemoryProblemScanRepositoryPort implements ProblemScanRepos
 			throw new IllegalStateException("scan not found id=" + id);
 		return s;
 	}
+
+	public java.util.List<ProblemScan> getAll() {
+		return new java.util.ArrayList<>(store.values());
+	}
 }

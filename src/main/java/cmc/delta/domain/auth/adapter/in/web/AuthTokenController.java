@@ -6,6 +6,7 @@ import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
+import cmc.delta.global.api.response.SuccessCode;
 import cmc.delta.global.config.security.principal.CurrentUser;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
@@ -38,7 +39,7 @@ public class AuthTokenController {
 		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.reissue(refreshToken);
 		tokenHeaderWriter.write(response, tokens);
 
-		return ApiResponses.success(200);
+        return ApiResponses.success(SuccessCode.OK);
 	}
 
 	@Operation(summary = "로그아웃")
@@ -52,6 +53,6 @@ public class AuthTokenController {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
 		tokenCommandUseCase.invalidateAll(principal.userId(), accessToken);
 
-		return ApiResponses.success(200);
+        return ApiResponses.success(SuccessCode.OK);
 	}
 }

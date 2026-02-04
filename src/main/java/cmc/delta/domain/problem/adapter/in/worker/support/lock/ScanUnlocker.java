@@ -21,10 +21,14 @@ public class ScanUnlocker {
 
 	public void unlockBestEffort(Long scanId, String lockOwner, String lockToken) {
 		try {
-			workerTransactionTemplate
-				.executeWithoutResult(status -> scanWorkRepository.unlock(scanId, lockOwner, lockToken));
+			unlock(scanId, lockOwner, lockToken);
 		} catch (Exception unlockException) {
 			log.debug("best-effort unlock failed scanId={} lockOwner={}", scanId, lockOwner, unlockException);
 		}
+	}
+
+	private void unlock(Long scanId, String lockOwner, String lockToken) {
+		workerTransactionTemplate.executeWithoutResult(
+			status -> scanWorkRepository.unlock(scanId, lockOwner, lockToken));
 	}
 }

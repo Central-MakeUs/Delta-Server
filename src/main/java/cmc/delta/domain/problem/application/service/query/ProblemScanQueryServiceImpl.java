@@ -47,14 +47,12 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 
 		summaryValidator.validateHasOriginalAsset(row);
 
-		String viewUrl = storagePort.issueReadUrl(row.getStorageKey());
-		SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
-
-		List<CurriculumItemResponse> types = scanTypePredictionReader.findByScanId(scanId).stream()
-			.map(v -> new CurriculumItemResponse(v.typeId(), v.typeName()))
-			.toList();
-
-		return summaryMapper.toSummaryResponse(row, viewUrl, subject, types);
+		ScanSummaryContext context = buildSummaryContext(row, scanId);
+		return summaryMapper.toSummaryResponse(
+			row,
+			context.viewUrl(),
+			context.subject(),
+			context.types());
 	}
 
 	@Override
@@ -63,25 +61,57 @@ public class ProblemScanQueryServiceImpl implements ProblemScanQueryUseCase {
 			.orElseThrow(this::scanNotFound);
 
 		detailValidator.validateOriginalAsset(p);
+		ScanDetailContext context = buildDetailContext(p, scanId);
+		ProblemScanDetailResponse.AiClassification ai = detailMapper.toAiClassification(
+			p,
+			context.subject(),
+			context.predictedTypes());
+		return detailMapper.toDetailResponse(p, context.viewUrl(), ai);
+	}
 
-		String viewUrl = storagePort.issueReadUrl(p.getStorageKey());
-		SubjectInfo subject = subjectResolver.resolveByUnitId(p.getPredictedUnitId());
+	private ScanSummaryContext buildSummaryContext(ScanListRow row, Long scanId) {
+		String viewUrl = storagePort.issueReadUrl(row.getStorageKey());
+		SubjectInfo subject = subjectResolver.resolveByUnitId(row.getUnitId());
+		List<CurriculumItemResponse> types = loadPredictedTypeItems(scanId);
+		return new ScanSummaryContext(viewUrl, subject, types);
+	}
 
-		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes = scanTypePredictionReader
-			.findByScanId(scanId).stream()
+	private ScanDetailContext buildDetailContext(ScanDetailProjection projection, Long scanId) {
+		String viewUrl = storagePort.issueReadUrl(projection.getStorageKey());
+		SubjectInfo subject = subjectResolver.resolveByUnitId(projection.getPredictedUnitId());
+		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes = loadPredictedTypeDetails(scanId);
+		return new ScanDetailContext(viewUrl, subject, predictedTypes);
+	}
+
+	private List<CurriculumItemResponse> loadPredictedTypeItems(Long scanId) {
+		return scanTypePredictionReader.findByScanId(scanId).stream()
+			.map(v -> new CurriculumItemResponse(v.typeId(), v.typeName()))
+			.toList();
+	}
+
+	private List<ProblemScanDetailResponse.PredictedTypeResponse> loadPredictedTypeDetails(Long scanId) {
+		return scanTypePredictionReader.findByScanId(scanId).stream()
 			.map(v -> new ProblemScanDetailResponse.PredictedTypeResponse(
 				v.typeId(),
 				v.typeName(),
 				v.rankNo(),
 				v.confidence()))
 			.toList();
-
-		ProblemScanDetailResponse.AiClassification ai = detailMapper.toAiClassification(p, subject, predictedTypes);
-
-		return detailMapper.toDetailResponse(p, viewUrl, ai);
 	}
 
 	private ProblemException scanNotFound() {
 		return new ProblemException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);
+	}
+
+	private record ScanSummaryContext(
+		String viewUrl,
+		SubjectInfo subject,
+		List<CurriculumItemResponse> types) {
+	}
+
+	private record ScanDetailContext(
+		String viewUrl,
+		SubjectInfo subject,
+		List<ProblemScanDetailResponse.PredictedTypeResponse> predictedTypes) {
 	}
 }

@@ -13,7 +13,8 @@ public interface ProblemQueryPort {
 
 	PageResult<ProblemListRow> findMyProblemList(Long userId, ProblemListCondition condition, PageQuery pageQuery);
 
-	CursorPageResult<ProblemListRow> findMyProblemListCursor(Long userId, ProblemListCondition condition, CursorQuery cursorQuery);
+	CursorPageResult<ProblemListRow> findMyProblemListCursor(Long userId, ProblemListCondition condition,
+		CursorQuery cursorQuery);
 
 	Optional<ProblemDetailRow> findMyProblemDetail(Long userId, Long problemId);
 }

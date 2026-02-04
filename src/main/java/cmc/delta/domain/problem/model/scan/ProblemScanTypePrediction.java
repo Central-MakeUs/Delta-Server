@@ -37,6 +37,10 @@ public class ProblemScanTypePrediction {
 	private BigDecimal confidence;
 
 	public ProblemScanTypePrediction(ProblemScan scan, ProblemType type, int rankNo, BigDecimal confidence) {
+		initialize(scan, type, rankNo, confidence);
+	}
+
+	private void initialize(ProblemScan scan, ProblemType type, int rankNo, BigDecimal confidence) {
 		this.scan = scan;
 		this.type = type;
 		this.rankNo = rankNo;

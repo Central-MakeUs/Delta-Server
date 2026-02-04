@@ -43,7 +43,7 @@ public class ProblemScanDetailMapper {
 			p.getPredictedTypeName(),
 			p.getConfidence(),
 			p.getNeedsReview(),
-			predictedTypes == null ? List.of() : predictedTypes,
+			resolvePredictedTypes(predictedTypes),
 			p.getAiUnitCandidatesJson(),
 			p.getAiTypeCandidatesJson(),
 			p.getAiDraftJson());
@@ -59,5 +59,9 @@ public class ProblemScanDetailMapper {
 
 	private String enumName(Enum<?> value) {
 		return value == null ? null : value.name();
+	}
+
+	private List<PredictedTypeResponse> resolvePredictedTypes(List<PredictedTypeResponse> predictedTypes) {
+		return predictedTypes == null ? List.of() : predictedTypes;
 	}
 }

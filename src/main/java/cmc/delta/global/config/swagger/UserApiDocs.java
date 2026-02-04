@@ -11,7 +11,7 @@ public final class UserApiDocs {
 		- 카카오 로그인 직후 생성된 유저(UserStatus = ONBOARDING_REQUIRED)가 호출합니다.
 
 		요청 필드:
-		- name: 사용자 실명
+		- nickname: 사용자 닉네임
 		- birthDate: 생년월일 (YYYY-MM-DD)
 		- termsAgreed: 필수 약관 동의 여부 (true 필수)
 

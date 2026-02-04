@@ -257,10 +257,29 @@ public final class ProblemApiDocs {
 		- 요청 바디:
 		  {"name":"서술형"}
 		- 응답 바디 예시:
+		  성공:
 		  {
 		    "success": true,
 		    "code": "OK",
 		    "data": {"id":"T_C_7f2c...","name":"서술형","custom":true,"active":true,"sortOrder":7}
+		  }
+
+		  실패(중복 - 활성):
+		  HTTP 409
+		  {
+		    "status": 409,
+		    "code": "REQ_002",
+		    "data": null,
+		    "message": "이미 추가된 유형입니다."
+		  }
+
+		  실패(중복 - 비활성, 복구 가능):
+		  HTTP 409
+		  {
+		    "status": 409,
+		    "code": "REQ_002",
+		    "data": { "existingTypeId": "T_C_ebc069..." },
+		    "message": "이미 추가된 유형입니다."
 		  }
 		""";
 
@@ -314,5 +333,23 @@ public final class ProblemApiDocs {
 		예시(복구):
 		- 요청 바디:
 		  {"active":true}
+		""";
+
+	public static final String MONTHLY_PROGRESS = """
+		월별 오답 현황(등록/완료)을 조회합니다.
+
+		집계 기준:
+		- 해당 월에 '생성된' 오답카드 전체를 대상으로 합니다. (createdAt 기준)
+		- totalCount: 해당 월에 등록된 오답카드 총 개수
+		- solvedCount: 해당 월 등록 카드 중 '오답 완료(SOLVED)' 상태 개수
+		- unsolvedCount: 해당 월 등록 카드 중 '오답 미완료(UNSOLVED)' 상태 개수
+
+		입력(Query):
+		- year: 조회할 연도 (4자리, 필수) 예) 2026
+		- month: 조회할 월 (1~12, 필수) 예) 1
+
+		응답:
+		- yearMonth: 조회한 연월 (YYYY-MM)
+		- totalCount, solvedCount, unsolvedCount
 		""";
 }

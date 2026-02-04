@@ -31,4 +31,14 @@ public class ProblemUnitTag {
 	@Column(name = "is_primary", nullable = false)
 	private boolean primary;
 
+	public ProblemUnitTag(Problem problem, Unit unit, boolean primary) {
+		initialize(problem, unit, primary);
+	}
+
+	private void initialize(Problem problem, Unit unit, boolean primary) {
+		this.problem = problem;
+		this.unit = unit;
+		this.primary = primary;
+		this.id = new ProblemUnitTagId(problem.getId(), unit.getId());
+	}
 }

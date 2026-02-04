@@ -21,6 +21,10 @@ public record MyProblemScrollRequest(
 	LocalDateTime lastCreatedAt,
 	Integer size,
 	Boolean includePreviewUrl) {
+
+	private static final int DEFAULT_SIZE = 20;
+	private static final int MAX_SIZE = 50;
+
 	public MyProblemScrollRequest {
 		// sort/status 기본값
 		if (sort == null)
@@ -29,9 +33,9 @@ public record MyProblemScrollRequest(
 			status = ProblemStatusFilter.ALL;
 
 		if (size == null || size <= 0)
-			size = 20;
-		if (size > 50)
-			size = 50; // validator MAX_SIZE와 동일
+			size = DEFAULT_SIZE;
+		if (size > MAX_SIZE)
+			size = MAX_SIZE; // validator MAX_SIZE와 동일
 
 		// default true for backward compatibility
 		if (includePreviewUrl == null)

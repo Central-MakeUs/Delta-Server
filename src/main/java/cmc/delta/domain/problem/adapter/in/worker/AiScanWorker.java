@@ -105,8 +105,9 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
 		AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
 
-		if (!isOwned(scanId, lockOwner, lockToken))
+		if (!isOwned(scanId, lockOwner, lockToken)) {
 			return;
+		}
 
 		persistUseCase.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
 
@@ -126,8 +127,9 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
 		Optional<ProblemScan> optional = scanRepository.findById(scanId);
-		if (optional.isEmpty())
+		if (optional.isEmpty()) {
 			throw new ProblemScanNotFoundException(scanId);
+		}
 		return optional.get();
 	}
 }

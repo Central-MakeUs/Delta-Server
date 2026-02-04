@@ -97,8 +97,9 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
 		OcrResult ocrResult = ocrClient.recognize(originalBytes, buildFilename(scanId));
 
-		if (!isOwned(scanId, lockOwner, lockToken))
+		if (!isOwned(scanId, lockOwner, lockToken)) {
 			return;
+		}
 
 		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, batchNow);
 		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);

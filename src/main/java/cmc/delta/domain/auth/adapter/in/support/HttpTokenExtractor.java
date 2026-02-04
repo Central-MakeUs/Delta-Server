@@ -19,11 +19,11 @@ public class HttpTokenExtractor {
 		return refreshToken.trim();
 	}
 
-	public String extractAccessToken(HttpServletRequest request) {
-		String authorization = request.getHeader(AUTHORIZATION_HEADER);
-		if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
-			throw new TokenException(ErrorCode.TOKEN_REQUIRED);
-		}
-		return authorization.substring(BEARER_PREFIX.length()).trim();
-	}
+    public String extractAccessToken(HttpServletRequest request) {
+        String authorization = request.getHeader(AUTHORIZATION_HEADER);
+        if (!StringUtils.hasText(authorization) || !authorization.startsWith(BEARER_PREFIX)) {
+            throw new TokenException(ErrorCode.TOKEN_REQUIRED);
+        }
+        return authorization.substring(BEARER_PREFIX.length()).trim();
+    }
 }

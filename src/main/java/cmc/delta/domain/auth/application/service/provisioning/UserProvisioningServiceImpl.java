@@ -5,8 +5,8 @@ import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUs
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
 import cmc.delta.domain.auth.application.validation.SocialUserProvisionValidator;
 import cmc.delta.domain.auth.model.SocialAccount;
-import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.application.exception.UserException;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -65,7 +65,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 		String email = command.email();
 		String nickname = command.nickname();
 
-		if (StringUtils.hasText(email) || StringUtils.hasText(nickname)) {
+		if (shouldSyncProfile(email, nickname)) {
 			user.syncProfile(email, nickname);
 		}
 
@@ -81,5 +81,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 			throw UserException.userWithdrawn();
 		}
 		return user;
+	}
+
+	private boolean shouldSyncProfile(String email, String nickname) {
+		return StringUtils.hasText(email) || StringUtils.hasText(nickname);
 	}
 }

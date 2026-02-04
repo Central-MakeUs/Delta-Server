@@ -95,6 +95,7 @@ public class SecurityConfig {
 		CorsConfiguration api = new CorsConfiguration();
 		api.setAllowCredentials(true);
 		api.setAllowedOriginPatterns(List.of(
+			"https://dev.deltasemo.cloud",
 			"https://deltasemo.cloud",
 			"http://localhost:*"));
 		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
@@ -104,5 +105,4 @@ public class SecurityConfig {
 		source.registerCorsConfiguration("/**", api);
 		return source;
 	}
-
 }

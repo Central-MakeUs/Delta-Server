@@ -1,17 +1,22 @@
 package cmc.delta.domain.auth.adapter.out.oauth.token.redis;
 
-import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import java.time.Duration;
 import java.util.List;
+
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Component;
+
+import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
+import cmc.delta.domain.auth.application.support.TokenConstants;
 
 /** Redis에 Refresh 토큰 해시를 TTL로 저장하고 rotate를 원자 처리한다. */
 @Component
 public class RedisRefreshTokenStore implements RefreshTokenStore {
 
 	private static final String KEY_PREFIX = "rt:";
+	private static final long ROTATE_RESULT_ROTATED = 1L;
+	private static final long ROTATE_RESULT_NOT_FOUND = 0L;
 
 	private final StringRedisTemplate redis;
 	private final DefaultRedisScript<Long> rotateScript;
@@ -24,8 +29,9 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 	@Override
 	public void refreshSave(Long userId, String sessionId, String refreshTokenHash, Duration ttl) {
 		String key = key(userId, sessionId);
-		if (invalid(key, refreshTokenHash, ttl))
+		if (invalid(key, refreshTokenHash, ttl)) {
 			return;
+		}
 
 		redis.opsForValue().set(key, refreshTokenHash, ttl);
 	}
@@ -34,19 +40,14 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 	public RotationResult refreshRotate(
 		Long userId, String sessionId, String expectedHash, String newHash, Duration ttl) {
 		String key = key(userId, sessionId);
-		if (invalid(key, expectedHash, ttl) || newHash == null || newHash.isBlank())
+		if (invalid(key, expectedHash, ttl) || newHash == null || newHash.isBlank()) {
 			return RotationResult.MISMATCH;
+		}
 
 		Long result = redis.execute(
 			rotateScript, List.of(key), expectedHash, newHash, String.valueOf(ttl.toMillis()));
 
-		if (result == null)
-			return RotationResult.MISMATCH;
-		if (result == 1L)
-			return RotationResult.ROTATED;
-		if (result == 0L)
-			return RotationResult.NOT_FOUND;
-		return RotationResult.MISMATCH;
+		return mapRotateResult(result);
 	}
 
 	@Override
@@ -55,16 +56,38 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 	}
 
 	private String key(Long userId, String sessionId) {
-		String sid = (sessionId == null || sessionId.isBlank()) ? "default" : sessionId;
+		String sid = normalizeSessionId(sessionId);
 		return KEY_PREFIX + userId + ":" + sid;
 	}
 
 	private boolean invalid(String key, String hash, Duration ttl) {
-		if (key == null || key.isBlank())
+		if (key == null || key.isBlank()) {
 			return true;
-		if (hash == null || hash.isBlank())
+		}
+		if (hash == null || hash.isBlank()) {
 			return true;
+		}
 		return ttl == null || ttl.isZero() || ttl.isNegative();
+	}
+
+	private String normalizeSessionId(String sessionId) {
+		if (sessionId == null || sessionId.isBlank()) {
+			return TokenConstants.DEFAULT_SESSION_ID.toLowerCase();
+		}
+		return sessionId;
+	}
+
+	private RotationResult mapRotateResult(Long result) {
+		if (result == null) {
+			return RotationResult.MISMATCH;
+		}
+		if (result == ROTATE_RESULT_ROTATED) {
+			return RotationResult.ROTATED;
+		}
+		if (result == ROTATE_RESULT_NOT_FOUND) {
+			return RotationResult.NOT_FOUND;
+		}
+		return RotationResult.MISMATCH;
 	}
 
 	private DefaultRedisScript<Long> buildRotateScript() {

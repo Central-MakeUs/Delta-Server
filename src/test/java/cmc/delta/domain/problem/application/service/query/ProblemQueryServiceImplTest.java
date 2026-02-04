@@ -20,6 +20,7 @@ import cmc.delta.global.api.response.PagedResponse;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.*;
 
 class ProblemQueryServiceImplTest {
@@ -28,6 +29,7 @@ class ProblemQueryServiceImplTest {
 	private ProblemQueryPort problemQueryPort;
 	private ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private StoragePort storagePort;
+	private ProblemScrollQueryService scrollQueryService;
 	private ProblemListMapper listMapper;
 	private ProblemDetailMapper detailMapper;
 
@@ -39,6 +41,7 @@ class ProblemQueryServiceImplTest {
 		problemQueryPort = mock(ProblemQueryPort.class);
 		problemTypeTagQueryPort = mock(ProblemTypeTagQueryPort.class);
 		storagePort = mock(StoragePort.class);
+		scrollQueryService = mock(ProblemScrollQueryService.class);
 		listMapper = mock(ProblemListMapper.class);
 		detailMapper = mock(ProblemDetailMapper.class);
 
@@ -47,6 +50,7 @@ class ProblemQueryServiceImplTest {
 			problemQueryPort,
 			problemTypeTagQueryPort,
 			storagePort,
+			scrollQueryService,
 			listMapper,
 			detailMapper);
 	}
@@ -61,7 +65,8 @@ class ProblemQueryServiceImplTest {
 		ProblemListRow row = mock(ProblemListRow.class);
 		when(row.problemId()).thenReturn(1L);
 		when(row.storageKey()).thenReturn("s3/k.png");
-		when(storagePort.issueReadUrl("s3/k.png")).thenReturn("https://read/s3/k.png");
+		when(storagePort.issueReadUrls(List.of("s3/k.png")))
+			.thenReturn(Map.of("s3/k.png", "https://read/s3/k.png"));
 
 		when(problemQueryPort.findMyProblemList(eq(10L), eq(cond), eq(pageQuery)))
 			.thenReturn(new PageResult<>(List.of(row), 0, 10, 1, 1));
@@ -85,7 +90,7 @@ class ProblemQueryServiceImplTest {
 		assertThat(res).isNotNull();
 		assertThat(res.content()).hasSize(1);
 		assertThat(res.content().get(0).types()).isEmpty();
-		verify(storagePort).issueReadUrl("s3/k.png");
+		verify(storagePort).issueReadUrls(List.of("s3/k.png"));
 	}
 
 	@Test

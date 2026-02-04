@@ -34,6 +34,8 @@ public class GeminiAiClient implements AiClient {
 
 	private static final Map<String, Object> RESPONSE_SCHEMA = GeminiSchemaFactory.responseSchema();
 
+	private static final int DEFAULT_TEMPERATURE = 0;
+
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
 	private final RestClient geminiRestClient;

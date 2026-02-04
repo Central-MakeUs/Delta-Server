@@ -32,6 +32,8 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private UserStatus status;
 
+	// name column removed; keep for compatibility until DB migration
+	@Deprecated
 	@Column(name = "name", length = 50)
 	private String name;
 
@@ -62,9 +64,9 @@ public class User extends BaseTimeEntity {
 		this.status = UserStatus.WITHDRAWN;
 	}
 
-	public void updateProfileImage(String storageKey) {
-		this.profileImageStorageKey = normalize(storageKey);
-	}
+    public void updateProfileImage(String storageKey) {
+        this.profileImageStorageKey = normalize(storageKey);
+    }
 
 	public void clearProfileImage() {
 		this.profileImageStorageKey = null;
@@ -82,8 +84,8 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
-	public void completeOnboarding(String name, LocalDate birthDate, Instant agreedAt) {
-		this.name = normalize(name);
+	public void completeOnboarding(String nicknameOrName, LocalDate birthDate, Instant agreedAt) {
+		this.nickname = normalize(nicknameOrName);
 		this.birthDate = birthDate;
 
 		if (this.termsAgreedAt == null) {
@@ -93,6 +95,15 @@ public class User extends BaseTimeEntity {
 		if (this.status == UserStatus.ONBOARDING_REQUIRED) {
 			this.status = UserStatus.ACTIVE;
 		}
+	}
+
+	@Deprecated
+	public void updateName(String nickname) {
+		updateNickname(nickname);
+	}
+
+	public void updateNickname(String nickname) {
+		this.nickname = normalize(nickname);
 	}
 
 	private static String normalize(String value) {

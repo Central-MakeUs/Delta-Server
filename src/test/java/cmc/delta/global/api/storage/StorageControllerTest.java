@@ -71,7 +71,7 @@ class StorageControllerTest {
 	private static class FakeStorageService extends StorageService {
 
 		FakeStorageService() {
-			super(null, null, null, null);
+			super(null, null, null, null, null);
 		}
 
 		@Override

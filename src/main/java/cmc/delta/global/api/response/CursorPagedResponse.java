@@ -8,6 +8,7 @@ public record CursorPagedResponse<T>(
 	boolean hasNext,
 	Cursor nextCursor,
 	Long totalElements) {
+
 	public static <T> CursorPagedResponse<T> of(
 		List<T> content,
 		boolean hasNext,

@@ -1,14 +1,5 @@
 package cmc.delta.domain.problem.adapter.in.web.problem;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemScrollRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCompleteRequest;
@@ -36,6 +27,14 @@ import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "오답카드")
 @RestController
@@ -63,7 +62,8 @@ public class ProblemController {
 		UserPrincipal principal,
 		@RequestBody
 		ProblemCreateRequest request) {
-		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(), request.toCommand());
+		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(),
+			request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
@@ -85,7 +85,8 @@ public class ProblemController {
 		PageQuery pageQuery = new PageQuery(query.page(), query.size());
 		ProblemListCondition condition = conditionFactory.from(query);
 
-		PagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardList(principal.userId(), condition, pageQuery);
+		PagedResponse<ProblemListItemResponse> data = problemQueryUseCase.getMyProblemCardList(principal.userId(),
+			condition, pageQuery);
 
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

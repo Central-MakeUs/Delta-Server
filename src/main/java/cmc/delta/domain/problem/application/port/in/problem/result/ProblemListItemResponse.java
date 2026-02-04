@@ -12,6 +12,19 @@ public record ProblemListItemResponse(
 	PreviewImageResponse previewImage,
 	boolean isCompleted,
 	LocalDateTime createdAt) {
+	public ProblemListItemResponse withTypesAndPreview(
+		List<CurriculumItemResponse> types,
+		PreviewImageResponse previewImage) {
+		return new ProblemListItemResponse(
+			problemId,
+			subject,
+			unit,
+			types,
+			previewImage,
+			isCompleted,
+			createdAt);
+	}
+
 	public record PreviewImageResponse(
 		Long assetId,
 		String storageKey,
