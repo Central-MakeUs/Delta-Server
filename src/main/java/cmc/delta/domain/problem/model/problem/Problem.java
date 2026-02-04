@@ -29,6 +29,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Problem extends BaseTimeEntity {
 
+	private static final String ANSWER_FORMAT_REQUIRED_MESSAGE = "답변 형식이 설정되지 않았습니다.";
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -109,25 +111,17 @@ public class Problem extends BaseTimeEntity {
 	}
 
 	public void complete(String solutionText, java.time.LocalDateTime now) {
-		this.solutionText = solutionText;
-		if (this.completedAt == null) {
-			this.completedAt = now;
-		}
+		updateSolutionText(solutionText);
+		markCompletedAtIfEmpty(now);
 	}
 
 	public void updateAnswer(Integer answerChoiceNo, String answerValue) {
-		if (this.answerFormat == null) {
-			throw new IllegalStateException("답변 형식이 설정되지 않았습니다.");
-		}
-
-		if (this.answerFormat == cmc.delta.domain.problem.model.enums.AnswerFormat.CHOICE) {
-			this.answerChoiceNo = answerChoiceNo;
-			this.answerValue = null; // CHOICE면 value는 의미 없으니 정리
+		AnswerFormat format = requireAnswerFormat();
+		if (format == AnswerFormat.CHOICE) {
+			applyChoiceAnswer(answerChoiceNo);
 			return;
 		}
-
-		this.answerValue = answerValue;
-		this.answerChoiceNo = null; // 비-CHOICE면 choiceNo는 의미 없으니 정리
+		applyValueAnswer(answerValue);
 	}
 
 	public void updateSolutionText(String solutionText) {
@@ -154,6 +148,29 @@ public class Problem extends BaseTimeEntity {
 		}
 		if (cmd.hasSolutionChange()) {
 			updateSolutionText(cmd.solutionText());
+		}
+	}
+
+	private void applyChoiceAnswer(Integer answerChoiceNo) {
+		this.answerChoiceNo = answerChoiceNo;
+		this.answerValue = null;
+	}
+
+	private void applyValueAnswer(String answerValue) {
+		this.answerValue = answerValue;
+		this.answerChoiceNo = null;
+	}
+
+	private AnswerFormat requireAnswerFormat() {
+		if (this.answerFormat == null) {
+			throw new IllegalStateException(ANSWER_FORMAT_REQUIRED_MESSAGE);
+		}
+		return this.answerFormat;
+	}
+
+	private void markCompletedAtIfEmpty(LocalDateTime now) {
+		if (this.completedAt == null) {
+			this.completedAt = now;
 		}
 	}
 }
