@@ -24,34 +24,36 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 	@Override
 	public LoginResult loginKakao(String code) {
 		KakaoOAuthService.SocialUserInfo userInfo = kakaoOAuthService.fetchUserInfoByCode(code);
-		UserProvisioningUseCase.ProvisioningResult provisioned = userProvisioningUseCase.provisionSocialUser(
-			new SocialUserProvisionCommand(
-				SocialProvider.KAKAO,
-				userInfo.providerUserId(),
-				userInfo.email(),
-				userInfo.nickname()));
-		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(
-			AuthPrincipalFactory.principalOf(provisioned.userId()));
-		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(),
-			provisioned.isNewUser());
-		return new LoginResult(data, tokens);
+		return loginWithProvisionedUser(
+			SocialProvider.KAKAO,
+			userInfo.providerUserId(),
+			userInfo.email(),
+			userInfo.nickname());
 	}
 
 	@Override
 	public LoginResult loginApple(String code, String userJson) {
 		AppleOAuthService.AppleUserInfo apple = appleOAuthService.fetchUserInfoByCode(code, userJson);
 		String providerUserId = apple.providerUserId(); // sub (토큰의 sub 클레임)
+		return loginWithProvisionedUser(
+			SocialProvider.APPLE,
+			providerUserId,
+			apple.email(),
+			apple.nickname());
+	}
 
+	private LoginResult loginWithProvisionedUser(
+		SocialProvider provider,
+		String providerUserId,
+		String email,
+		String nickname) {
 		UserProvisioningUseCase.ProvisioningResult provisioned = userProvisioningUseCase.provisionSocialUser(
-			new SocialUserProvisionCommand(
-				SocialProvider.APPLE,
-				providerUserId,
-				apple.email(),
-				apple.nickname()));
-
+			new SocialUserProvisionCommand(provider, providerUserId, email, nickname));
 		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(
 			AuthPrincipalFactory.principalOf(provisioned.userId()));
-		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(),
+		SocialLoginData data = new SocialLoginData(
+			provisioned.email(),
+			provisioned.nickname(),
 			provisioned.isNewUser());
 		return new LoginResult(data, tokens);
 	}

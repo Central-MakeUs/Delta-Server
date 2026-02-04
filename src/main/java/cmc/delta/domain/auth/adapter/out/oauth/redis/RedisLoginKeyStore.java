@@ -32,10 +32,10 @@ public class RedisLoginKeyStore {
 	public void save(String loginKey, SocialLoginData data, TokenIssuer.IssuedTokens tokens, Duration ttl) {
 		try {
 			LoginKeyPayload payload = new LoginKeyPayload(data, tokens);
-            String json = objectMapper.writeValueAsString(payload);
-            redisTemplate.opsForValue().set(KEY_PREFIX + loginKey, json, ttl);
+			String json = objectMapper.writeValueAsString(payload);
+			redisTemplate.opsForValue().set(KEY_PREFIX + loginKey, json, ttl);
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw LoginKeyStoreException.saveFailed(e);
 		}
 	}
 
@@ -54,7 +54,7 @@ public class RedisLoginKeyStore {
 			LoginKeyPayload payload = objectMapper.readValue(json, LoginKeyPayload.class);
 			return new Stored(payload.data(), payload.tokens());
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw LoginKeyStoreException.readFailed(e);
 		}
 	}
 

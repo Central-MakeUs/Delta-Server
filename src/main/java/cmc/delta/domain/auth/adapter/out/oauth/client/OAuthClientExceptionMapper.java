@@ -13,26 +13,41 @@ public class OAuthClientExceptionMapper {
 
 	public RuntimeException mapHttpStatus(String providerName, String operation, HttpStatusCodeException e) {
 		int status = e.getStatusCode().value();
-
 		if (e.getStatusCode().is4xxClientError()) {
 			return new UnauthorizedException();
 		}
-		if (OAuthClientException.OP_TOKEN_EXCHANGE.equals(operation)) {
+		return mapByOperation(providerName, operation, status, e);
+	}
+
+	public RuntimeException mapTimeout(String providerName, String operation, ResourceAccessException e) {
+		if (isTokenExchange(operation)) {
+			return OAuthClientException.tokenExchangeTimeout(providerName, e);
+		}
+		if (isProfileFetch(operation)) {
+			return OAuthClientException.profileFetchTimeout(providerName, e);
+		}
+		return OAuthClientException.providerTimeoutFallback(providerName, operation, e);
+	}
+
+	private RuntimeException mapByOperation(
+		String providerName,
+		String operation,
+		int status,
+		HttpStatusCodeException e) {
+		if (isTokenExchange(operation)) {
 			return OAuthClientException.tokenExchangeError(providerName, status, e);
 		}
-		if (OAuthClientException.OP_PROFILE_FETCH.equals(operation)) {
+		if (isProfileFetch(operation)) {
 			return OAuthClientException.profileFetchError(providerName, status, e);
 		}
 		return OAuthClientException.providerErrorFallback(providerName, operation, status, e);
 	}
 
-	public RuntimeException mapTimeout(String providerName, String operation, ResourceAccessException e) {
-		if (OAuthClientException.OP_TOKEN_EXCHANGE.equals(operation)) {
-			return OAuthClientException.tokenExchangeTimeout(providerName, e);
-		}
-		if (OAuthClientException.OP_PROFILE_FETCH.equals(operation)) {
-			return OAuthClientException.profileFetchTimeout(providerName, e);
-		}
-		return OAuthClientException.providerTimeoutFallback(providerName, operation, e);
+	private boolean isTokenExchange(String operation) {
+		return OAuthClientException.OP_TOKEN_EXCHANGE.equals(operation);
+	}
+
+	private boolean isProfileFetch(String operation) {
+		return OAuthClientException.OP_PROFILE_FETCH.equals(operation);
 	}
 }

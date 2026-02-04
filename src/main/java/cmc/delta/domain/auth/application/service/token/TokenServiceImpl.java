@@ -39,52 +39,31 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 	@Override
 	public TokenIssuer.IssuedTokens issue(UserPrincipal principal) {
 		TokenIssuer.IssuedTokens tokens = tokenIssuer.issue(principal);
-
-		String refreshToken = requireText(tokens.refreshToken(), ISSUE_REFRESH_FAILED_MESSAGE);
+		String refreshToken = extractRefreshTokenOrThrow(tokens, ISSUE_REFRESH_FAILED_MESSAGE);
 		saveRefreshHash(principal.userId(), refreshToken);
-
 		return tokens;
 	}
 
 	@Override
 	public TokenIssuer.IssuedTokens reissue(String refreshToken) {
-		requireProvided(refreshToken, ErrorCode.REFRESH_TOKEN_REQUIRED);
+		validateRefreshProvided(refreshToken);
 
 		Long userId = tokenIssuer.extractUserIdFromRefreshToken(refreshToken);
 		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
 
 		TokenIssuer.IssuedTokens newTokens = tokenIssuer.issue(AuthPrincipalFactory.principalOf(userId));
-
-		String newRefreshToken = requireText(newTokens.refreshToken(), REISSUE_REFRESH_FAILED_MESSAGE);
+		String newRefreshToken = extractRefreshTokenOrThrow(newTokens, REISSUE_REFRESH_FAILED_MESSAGE);
 		String newHash = RefreshTokenHasher.sha256(newRefreshToken);
 
 		rotateRefreshOrThrow(userId, expectedHash, newHash);
-
 		return newTokens;
 	}
 
 	@Override
 	public void logout(long userId, String accessToken, String refreshToken) {
-		requireProvided(accessToken, ErrorCode.TOKEN_REQUIRED);
-		requireProvided(refreshToken, ErrorCode.REFRESH_TOKEN_REQUIRED);
-
-		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
-		RotationResult check = refreshTokenStore.refreshRotate(
-			userId,
-			DEFAULT_SESSION_ID,
-			expectedHash,
-			expectedHash,
-			DEFAULT_REFRESH_TTL);
-
-		if (check == RotationResult.MISMATCH) {
-			auditLogger.refreshMismatch(
-				userId,
-				DEFAULT_SESSION_ID,
-				ACTION_LOGOUT,
-				ErrorCode.INVALID_REFRESH_TOKEN.code());
-			throw new TokenException(ErrorCode.INVALID_REFRESH_TOKEN);
-		}
-
+		validateAccessProvided(accessToken);
+		validateRefreshProvided(refreshToken);
+		validateRefreshTokenMatchOrThrow(userId, refreshToken, ACTION_LOGOUT);
 		blacklistAccessIfPossible(userId, accessToken, true, ACTION_LOGOUT);
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
 	}
@@ -92,13 +71,11 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 	@Override
 	public void invalidateAll(long userId, String accessTokenOrNull) {
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
-
 		BlacklistResult br = blacklistAccessIfPossible(
 			userId,
 			accessTokenOrNull,
 			false,
 			ACTION_INVALIDATE_ALL);
-
 		auditLogger.invalidateAll(userId, DEFAULT_SESSION_ID, br.blacklisted(), br.ttlSeconds());
 	}
 
@@ -109,6 +86,24 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 			DEFAULT_SESSION_ID,
 			refreshHash,
 			DEFAULT_REFRESH_TTL);
+	}
+
+	private void validateRefreshTokenMatchOrThrow(long userId, String refreshToken, String action) {
+		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
+		RotationResult check = refreshTokenStore.refreshRotate(
+			userId,
+			DEFAULT_SESSION_ID,
+			expectedHash,
+			expectedHash,
+			DEFAULT_REFRESH_TTL);
+		if (check == RotationResult.MISMATCH) {
+			auditLogger.refreshMismatch(
+				userId,
+				DEFAULT_SESSION_ID,
+				action,
+				ErrorCode.INVALID_REFRESH_TOKEN.code());
+			throw new TokenException(ErrorCode.INVALID_REFRESH_TOKEN);
+		}
 	}
 
 	private void rotateRefreshOrThrow(long userId, String expectedHash, String newHash) {
@@ -149,11 +144,11 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 
 		} catch (RuntimeException e) {
 			// 토큰 원문/해시 절대 로그 금지. 예외 메시지도 최소화(클래스명만)
-				auditLogger.blacklistFailed(
-					userId,
-					DEFAULT_SESSION_ID,
-					action,
-					e.getClass().getSimpleName());
+			auditLogger.blacklistFailed(
+			userId,
+			DEFAULT_SESSION_ID,
+			action,
+			e.getClass().getSimpleName());
 			if (required)
 				throw e;
 			return BlacklistResult.notBlacklisted();
@@ -167,11 +162,23 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		}
 	}
 
+	private void validateRefreshProvided(String refreshToken) {
+		requireProvided(refreshToken, ErrorCode.REFRESH_TOKEN_REQUIRED);
+	}
+
+	private void validateAccessProvided(String accessToken) {
+		requireProvided(accessToken, ErrorCode.TOKEN_REQUIRED);
+	}
+
 	private String requireText(String value, String message) {
 		if (!StringUtils.hasText(value)) {
 			throw new TokenException(ErrorCode.INTERNAL_ERROR, message);
 		}
 		return value;
+	}
+
+	private String extractRefreshTokenOrThrow(TokenIssuer.IssuedTokens tokens, String message) {
+		return requireText(tokens.refreshToken(), message);
 	}
 
 	private record BlacklistResult(boolean blacklisted, long ttlSeconds) {
