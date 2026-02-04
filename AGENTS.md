@@ -121,6 +121,11 @@ Follow Spotless output; do not hand-format around it.
 - Keep methods focused on a single task; split when a method does too much.
 - Prefer method names and flow that read like sentences.
 - Consider appropriate design patterns when they improve clarity or maintainability.
+- Consolidate similar classes/usages when responsibilities overlap and it reduces duplication.
+- Prefer file-level `private static final` constants for readability in most cases.
+- Avoid inner constants classes if they add visual noise; use them only when a file has too many constants to scan.
+- Use enums for true value sets with behavior or type safety; avoid enums for simple string/number constants.
+- Extract shared constants to a dedicated *Constants class only when used across multiple files.
 - Keep cohesion high and coupling low when refactoring; avoid over-engineering.
 - Maintain current project style/structure and package boundaries.
 - Ensure packages are properly organized; avoid dumping code into unrelated packages.
