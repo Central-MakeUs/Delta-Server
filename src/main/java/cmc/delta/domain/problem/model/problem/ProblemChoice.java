@@ -30,4 +30,15 @@ public class ProblemChoice {
 	@Lob
 	@Column(nullable = false, columnDefinition = "MEDIUMTEXT")
 	private String text;
+
+	public ProblemChoice(Problem problem, int choiceNo, String label, String text) {
+		initialize(problem, choiceNo, label, text);
+	}
+
+	private void initialize(Problem problem, int choiceNo, String label, String text) {
+		this.problem = problem;
+		this.choiceNo = choiceNo;
+		this.label = label;
+		this.text = text;
+	}
 }

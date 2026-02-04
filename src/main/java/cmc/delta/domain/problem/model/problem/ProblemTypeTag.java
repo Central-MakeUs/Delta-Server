@@ -35,6 +35,10 @@ public class ProblemTypeTag {
 	}
 
 	void attachTo(Problem problem) {
+		initialize(problem);
+	}
+
+	private void initialize(Problem problem) {
 		this.problem = problem;
 		this.id = new ProblemTypeTagId(problem.getId(), type.getId());
 	}

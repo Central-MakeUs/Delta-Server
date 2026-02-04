@@ -17,6 +17,11 @@ public class ProblemUnitTagId implements Serializable {
 	@Column(name = "unit_id", length = 50, nullable = false)
 	private String unitId;
 
+	public ProblemUnitTagId(Long problemId, String unitId) {
+		this.problemId = problemId;
+		this.unitId = unitId;
+	}
+
 	public Long getProblemId() {
 		return problemId;
 	}
