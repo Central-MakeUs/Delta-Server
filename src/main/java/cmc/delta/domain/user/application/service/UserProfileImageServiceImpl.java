@@ -1,11 +1,11 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.UserProfileImageUseCase;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;
 import cmc.delta.domain.user.application.port.in.dto.UserProfileImageResult;
 import cmc.delta.domain.user.application.port.out.ProfileImageStoragePort;
+import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
@@ -25,7 +25,7 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 
 	private static final String PROFILE_DIR = "users/profile";
 
-	private final UserJpaRepository userRepository;
+	private final UserRepositoryPort userRepositoryPort;
 	private final ProfileImageStoragePort storagePort;
 
 	@Override
@@ -82,21 +82,40 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 	}
 
 	private User findActiveUser(Long userId) {
-		User user = userRepository.findById(userId)
-			.orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
-
-		if (user.isWithdrawn()) {
-			throw new UserException(ErrorCode.USER_WITHDRAWN);
-		}
+		User user = findUserOrThrow(userId);
+		ensureActiveUser(user);
 		return user;
 	}
 
-	private void deleteOldBestEffort(String oldKey, String newKey) {
-		if (oldKey == null)
-			return;
-		if (newKey != null && oldKey.equals(newKey))
-			return;
+	private User findUserOrThrow(Long userId) {
+		return userRepositoryPort.findById(userId)
+			.orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
+	}
 
+	private void ensureActiveUser(User user) {
+		if (user.isWithdrawn()) {
+			throw new UserException(ErrorCode.USER_WITHDRAWN);
+		}
+	}
+
+	private void deleteOldBestEffort(String oldKey, String newKey) {
+		if (!shouldDeleteOldKey(oldKey, newKey)) {
+			return;
+		}
+		tryDeleteOldKey(oldKey);
+	}
+
+	private boolean shouldDeleteOldKey(String oldKey, String newKey) {
+		if (oldKey == null) {
+			return false;
+		}
+		if (newKey == null) {
+			return true;
+		}
+		return !oldKey.equals(newKey);
+	}
+
+	private void tryDeleteOldKey(String oldKey) {
 		try {
 			storagePort.deleteImage(oldKey);
 		} catch (Exception e) {

@@ -33,8 +33,9 @@ public class UserController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@GetMapping("/me")
-	public ApiResponse<UserMeData> getMyProfile(@CurrentUser
-	UserPrincipal principal) {
+	public ApiResponse<UserMeData> getMyProfile(
+		@CurrentUser
+		UserPrincipal principal) {
 		UserMeData data = userUseCase.getMyProfile(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
@@ -84,8 +85,9 @@ public class UserController {
 		ErrorCode.USER_WITHDRAWN
 	})
 	@PostMapping("/withdrawal")
-	public ApiResponse<Void> withdrawMyAccount(@CurrentUser
-	UserPrincipal principal) {
+	public ApiResponse<Void> withdrawMyAccount(
+		@CurrentUser
+		UserPrincipal principal) {
 		userUseCase.withdrawAccount(principal.userId());
 		return ApiResponses.success(SuccessCode.OK);
 	}
