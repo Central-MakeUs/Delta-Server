@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SocialAuthService {
 
+	private static final String INVALID_LOGIN_KEY_REASON = "invalid_or_expired_login_key";
+
 	private final LoginKeyExchangeUseCase loginKeyExchangeUseCase;
 	private final FrontendProperties frontendProperties;
 
@@ -25,18 +27,23 @@ public class SocialAuthService {
 		String loginKey = UUID.randomUUID().toString();
 		loginKeyExchangeUseCase.save(loginKey, result.data(), result.tokens(), ttl);
 
-        String base = frontendProperties.baseUrl() != null && !frontendProperties.baseUrl().isBlank()
-            ? frontendProperties.baseUrl()
-            : FrontendDefaults.LOCALHOST_BASE_URL;
-
-        return base + FrontendDefaults.APPLE_CALLBACK_PATH + loginKey;
-    }
+		String base = resolveFrontendBaseUrl();
+		return base + FrontendDefaults.APPLE_CALLBACK_PATH + loginKey;
+	}
 
 	public RedisLoginKeyStore.Stored consumeLoginKey(String loginKey) {
 		RedisLoginKeyStore.Stored stored = loginKeyExchangeUseCase.exchange(loginKey);
 		if (stored == null) {
-			throw SocialAuthException.invalidRequest("invalid_or_expired_login_key");
+			throw SocialAuthException.invalidRequest(INVALID_LOGIN_KEY_REASON);
 		}
 		return stored;
+	}
+
+	private String resolveFrontendBaseUrl() {
+		String baseUrl = frontendProperties.baseUrl();
+		if (baseUrl == null || baseUrl.isBlank()) {
+			return FrontendDefaults.LOCALHOST_BASE_URL;
+		}
+		return baseUrl;
 	}
 }

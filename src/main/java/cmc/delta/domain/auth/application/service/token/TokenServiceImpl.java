@@ -11,7 +11,7 @@ import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore.RotationResult;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.support.AuthRoleDefaults;
+import cmc.delta.domain.auth.application.support.AuthPrincipalFactory;
 import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.domain.auth.application.support.TokenConstants;
 import cmc.delta.global.config.security.principal.UserPrincipal;
@@ -23,8 +23,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TokenServiceImpl implements TokenCommandUseCase {
 
-    private static final String DEFAULT_SESSION_ID = TokenConstants.DEFAULT_SESSION_ID;
-    private static final Duration DEFAULT_REFRESH_TTL = TokenConstants.DEFAULT_REFRESH_TTL;
+	private static final String DEFAULT_SESSION_ID = TokenConstants.DEFAULT_SESSION_ID;
+	private static final Duration DEFAULT_REFRESH_TTL = TokenConstants.DEFAULT_REFRESH_TTL;
+	private static final long ZERO_TTL_SECONDS = 0L;
+	private static final String ACTION_LOGOUT = "logout";
+	private static final String ACTION_INVALIDATE_ALL = "invalidateAll";
+	private static final String ISSUE_REFRESH_FAILED_MESSAGE = "리프레시 토큰 발급에 실패했습니다.";
+	private static final String REISSUE_REFRESH_FAILED_MESSAGE = "리프레시 토큰 재발급에 실패했습니다.";
 
 	private final TokenIssuer tokenIssuer;
 	private final RefreshTokenStore refreshTokenStore;
@@ -35,7 +40,7 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 	public TokenIssuer.IssuedTokens issue(UserPrincipal principal) {
 		TokenIssuer.IssuedTokens tokens = tokenIssuer.issue(principal);
 
-		String refreshToken = requireText(tokens.refreshToken(), "리프레시 토큰 발급에 실패했습니다.");
+		String refreshToken = requireText(tokens.refreshToken(), ISSUE_REFRESH_FAILED_MESSAGE);
 		saveRefreshHash(principal.userId(), refreshToken);
 
 		return tokens;
@@ -48,9 +53,9 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		Long userId = tokenIssuer.extractUserIdFromRefreshToken(refreshToken);
 		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
 
-		TokenIssuer.IssuedTokens newTokens = tokenIssuer.issue(principalOf(userId));
+		TokenIssuer.IssuedTokens newTokens = tokenIssuer.issue(AuthPrincipalFactory.principalOf(userId));
 
-		String newRefreshToken = requireText(newTokens.refreshToken(), "리프레시 토큰 재발급에 실패했습니다.");
+		String newRefreshToken = requireText(newTokens.refreshToken(), REISSUE_REFRESH_FAILED_MESSAGE);
 		String newHash = RefreshTokenHasher.sha256(newRefreshToken);
 
 		rotateRefreshOrThrow(userId, expectedHash, newHash);
@@ -65,14 +70,22 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 
 		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
 		RotationResult check = refreshTokenStore.refreshRotate(
-			userId, DEFAULT_SESSION_ID, expectedHash, expectedHash, DEFAULT_REFRESH_TTL);
+			userId,
+			DEFAULT_SESSION_ID,
+			expectedHash,
+			expectedHash,
+			DEFAULT_REFRESH_TTL);
 
 		if (check == RotationResult.MISMATCH) {
-			auditLogger.refreshMismatch(userId, DEFAULT_SESSION_ID, "logout", ErrorCode.INVALID_REFRESH_TOKEN.code());
+			auditLogger.refreshMismatch(
+				userId,
+				DEFAULT_SESSION_ID,
+				ACTION_LOGOUT,
+				ErrorCode.INVALID_REFRESH_TOKEN.code());
 			throw new TokenException(ErrorCode.INVALID_REFRESH_TOKEN);
 		}
 
-		blacklistAccessIfPossible(userId, accessToken, true, "logout");
+		blacklistAccessIfPossible(userId, accessToken, true, ACTION_LOGOUT);
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
 	}
 
@@ -80,23 +93,38 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 	public void invalidateAll(long userId, String accessTokenOrNull) {
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
 
-		BlacklistResult br = blacklistAccessIfPossible(userId, accessTokenOrNull, false, "invalidateAll");
+		BlacklistResult br = blacklistAccessIfPossible(
+			userId,
+			accessTokenOrNull,
+			false,
+			ACTION_INVALIDATE_ALL);
 
 		auditLogger.invalidateAll(userId, DEFAULT_SESSION_ID, br.blacklisted(), br.ttlSeconds());
 	}
 
 	private void saveRefreshHash(long userId, String refreshToken) {
 		String refreshHash = RefreshTokenHasher.sha256(refreshToken);
-		refreshTokenStore.refreshSave(userId, DEFAULT_SESSION_ID, refreshHash, DEFAULT_REFRESH_TTL);
+		refreshTokenStore.refreshSave(
+			userId,
+			DEFAULT_SESSION_ID,
+			refreshHash,
+			DEFAULT_REFRESH_TTL);
 	}
 
 	private void rotateRefreshOrThrow(long userId, String expectedHash, String newHash) {
 		RotationResult result = refreshTokenStore.refreshRotate(
-			userId, DEFAULT_SESSION_ID, expectedHash, newHash, DEFAULT_REFRESH_TTL);
+			userId,
+			DEFAULT_SESSION_ID,
+			expectedHash,
+			newHash,
+			DEFAULT_REFRESH_TTL);
 
 		if (result != RotationResult.ROTATED) {
 			auditLogger.reissueFailed(
-				userId, DEFAULT_SESSION_ID, result.name(), ErrorCode.INVALID_REFRESH_TOKEN.code());
+				userId,
+				DEFAULT_SESSION_ID,
+				result.name(),
+				ErrorCode.INVALID_REFRESH_TOKEN.code());
 			throw new TokenException(ErrorCode.INVALID_REFRESH_TOKEN);
 		}
 	}
@@ -121,16 +149,17 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 
 		} catch (RuntimeException e) {
 			// 토큰 원문/해시 절대 로그 금지. 예외 메시지도 최소화(클래스명만)
-			auditLogger.blacklistFailed(userId, DEFAULT_SESSION_ID, action, e.getClass().getSimpleName());
+				auditLogger.blacklistFailed(
+					userId,
+					DEFAULT_SESSION_ID,
+					action,
+					e.getClass().getSimpleName());
 			if (required)
 				throw e;
 			return BlacklistResult.notBlacklisted();
 		}
 	}
 
-	private UserPrincipal principalOf(long userId) {
-		return new UserPrincipal(userId, AuthRoleDefaults.DEFAULT_ROLE_FOR_DEV);
-	}
 
 	private void requireProvided(String value, ErrorCode errorCode) {
 		if (!StringUtils.hasText(value)) {
@@ -151,7 +180,7 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		}
 
 		static BlacklistResult notBlacklisted() {
-			return new BlacklistResult(false, 0L);
+			return new BlacklistResult(false, ZERO_TTL_SECONDS);
 		}
 	}
 }

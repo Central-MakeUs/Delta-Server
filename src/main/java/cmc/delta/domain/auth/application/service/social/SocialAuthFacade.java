@@ -6,9 +6,8 @@ import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCas
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.support.AuthRoleDefaults;
+import cmc.delta.domain.auth.application.support.AuthPrincipalFactory;
 import cmc.delta.domain.auth.model.SocialProvider;
-import cmc.delta.global.config.security.principal.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -31,7 +30,8 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 				userInfo.providerUserId(),
 				userInfo.email(),
 				userInfo.nickname()));
-        TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
+		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(
+			AuthPrincipalFactory.principalOf(provisioned.userId()));
 		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(),
 			provisioned.isNewUser());
 		return new LoginResult(data, tokens);
@@ -49,13 +49,11 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 				apple.email(),
 				apple.nickname()));
 
-		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(principalOf(provisioned.userId()));
+		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.issue(
+			AuthPrincipalFactory.principalOf(provisioned.userId()));
 		SocialLoginData data = new SocialLoginData(provisioned.email(), provisioned.nickname(),
 			provisioned.isNewUser());
 		return new LoginResult(data, tokens);
 	}
 
-	private UserPrincipal principalOf(long userId) {
-		return new UserPrincipal(userId, AuthRoleDefaults.DEFAULT_ROLE_FOR_DEV);
-	}
 }

@@ -65,9 +65,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 		String email = command.email();
 		String nickname = command.nickname();
 
-        if (StringUtils.hasText(email) || StringUtils.hasText(nickname)) {
-            user.syncProfile(email, nickname);
-        }
+		if (shouldSyncProfile(email, nickname)) {
+			user.syncProfile(email, nickname);
+		}
 
 		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
 	}
@@ -81,5 +81,9 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 			throw UserException.userWithdrawn();
 		}
 		return user;
+	}
+
+	private boolean shouldSyncProfile(String email, String nickname) {
+		return StringUtils.hasText(email) || StringUtils.hasText(nickname);
 	}
 }
