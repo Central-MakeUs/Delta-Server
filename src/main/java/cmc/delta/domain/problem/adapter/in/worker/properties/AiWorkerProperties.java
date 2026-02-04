@@ -9,9 +9,17 @@ public record AiWorkerProperties(
 	long lockLeaseSeconds,
 	int concurrency,
 	int backlogLogMinutes) {
+	private static final int MIN_BACKLOG_LOG_MINUTES = 1;
+	private static final int DEFAULT_BACKLOG_LOG_MINUTES = 5;
+
 	public AiWorkerProperties {
-		if (backlogLogMinutes <= 0) {
-			backlogLogMinutes = 5;
+		backlogLogMinutes = normalizeBacklogLogMinutes(backlogLogMinutes);
+	}
+
+	private int normalizeBacklogLogMinutes(int value) {
+		if (value < MIN_BACKLOG_LOG_MINUTES) {
+			return DEFAULT_BACKLOG_LOG_MINUTES;
 		}
+		return value;
 	}
 }

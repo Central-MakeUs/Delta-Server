@@ -12,6 +12,10 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Configuration
 public class WorkerInfraConfig {
 
+	private static final int ZERO_QUEUE_CAPACITY = 0;
+	private static final String OCR_THREAD_PREFIX = "ocr-worker-";
+	private static final String AI_THREAD_PREFIX = "ai-worker-";
+
 	@Bean
 	public TransactionTemplate workerTxTemplate(PlatformTransactionManager txManager) {
 		return new TransactionTemplate(txManager);
@@ -19,25 +23,22 @@ public class WorkerInfraConfig {
 
 	@Bean(name = "ocrExecutor")
 	public ThreadPoolTaskExecutor ocrExecutor(OcrWorkerProperties props) {
-		ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
-		ex.setCorePoolSize(props.concurrency());
-		ex.setMaxPoolSize(props.concurrency());
-		ex.setQueueCapacity(0);
-		ex.setThreadNamePrefix("ocr-worker-");
-		ex.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy()); // 과부하 시 현재 쓰레드 처리
-		ex.initialize();
-		return ex;
+		return buildExecutor(props.concurrency(), OCR_THREAD_PREFIX);
 	}
 
 	@Bean(name = "aiExecutor")
 	public ThreadPoolTaskExecutor aiExecutor(AiWorkerProperties props) {
-		ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
-		ex.setCorePoolSize(props.concurrency());
-		ex.setMaxPoolSize(props.concurrency());
-		ex.setQueueCapacity(0);
-		ex.setThreadNamePrefix("ai-worker-");
-		ex.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-		ex.initialize();
-		return ex;
+		return buildExecutor(props.concurrency(), AI_THREAD_PREFIX);
+	}
+
+	private ThreadPoolTaskExecutor buildExecutor(int concurrency, String threadPrefix) {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		executor.setCorePoolSize(concurrency);
+		executor.setMaxPoolSize(concurrency);
+		executor.setQueueCapacity(ZERO_QUEUE_CAPACITY);
+		executor.setThreadNamePrefix(threadPrefix);
+		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		executor.initialize();
+		return executor;
 	}
 }
