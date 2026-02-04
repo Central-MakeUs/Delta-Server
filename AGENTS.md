@@ -120,6 +120,7 @@ Follow Spotless output; do not hand-format around it.
 - Keep classes focused on a single responsibility; avoid doing multiple unrelated things in one class.
 - Keep methods focused on a single task; split when a method does too much.
 - Prefer method names and flow that read like sentences.
+- Consider appropriate design patterns when they improve clarity or maintainability.
 - Keep cohesion high and coupling low when refactoring; avoid over-engineering.
 - Maintain current project style/structure and package boundaries.
 - Ensure packages are properly organized; avoid dumping code into unrelated packages.
