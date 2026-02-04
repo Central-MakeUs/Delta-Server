@@ -10,6 +10,11 @@ public abstract class AbstractHttpFailureDecider {
 
 	private static final long DEFAULT_RATE_LIMIT_DELAY_SECONDS = 180L;
 	private static final long MIN_RATE_LIMIT_DELAY_SECONDS = 60L;
+	private static final long ZERO = 0L;
+	private static final int HTTP_STATUS_4XX_START = 400;
+	private static final int HTTP_STATUS_5XX_START = 500;
+	private static final int HTTP_STATUS_TOO_MANY_REQUESTS = HttpStatus.TOO_MANY_REQUESTS.value();
+	private static final String RETRY_AFTER_HEADER = "Retry-After";
 
 	public final FailureDecision decide(Exception exception) {
 		if (exception instanceof ProblemScanWorkerException workerException) {
@@ -23,15 +28,15 @@ public abstract class AbstractHttpFailureDecider {
 		if (exception instanceof RestClientResponseException rest) {
 			int statusCode = rest.getRawStatusCode();
 
-			if (statusCode == HttpStatus.TOO_MANY_REQUESTS.value()) {
+			if (statusCode == HTTP_STATUS_TOO_MANY_REQUESTS) {
 				Long retryAfterSeconds = extractRetryAfterSeconds(rest);
 				Long delaySeconds = computeRateLimitDelaySeconds(retryAfterSeconds);
 				return new FailureDecision(rateLimitReason(), true, delaySeconds);
 			}
-			if (statusCode >= 500) {
+			if (statusCode >= HTTP_STATUS_5XX_START) {
 				return FailureDecision.retryable(client5xxReason());
 			}
-			if (statusCode >= 400) {
+			if (statusCode >= HTTP_STATUS_4XX_START) {
 				return FailureDecision.nonRetryable(client4xxReason());
 			}
 		}
@@ -51,12 +56,14 @@ public abstract class AbstractHttpFailureDecider {
 
 	private Long extractRetryAfterSeconds(RestClientResponseException rest) {
 		HttpHeaders headers = rest.getResponseHeaders();
-		if (headers == null)
+		if (headers == null) {
 			return null;
+		}
 
-		String retryAfterValue = headers.getFirst("Retry-After");
-		if (retryAfterValue == null || retryAfterValue.isBlank())
+		String retryAfterValue = headers.getFirst(RETRY_AFTER_HEADER);
+		if (retryAfterValue == null || retryAfterValue.isBlank()) {
 			return null;
+		}
 
 		try {
 			return Long.parseLong(retryAfterValue.trim());
@@ -66,7 +73,7 @@ public abstract class AbstractHttpFailureDecider {
 	}
 
 	private Long computeRateLimitDelaySeconds(Long retryAfterSeconds) {
-		if (retryAfterSeconds == null || retryAfterSeconds <= 0) {
+		if (retryAfterSeconds == null || retryAfterSeconds <= ZERO) {
 			return DEFAULT_RATE_LIMIT_DELAY_SECONDS;
 		}
 		return Math.max(retryAfterSeconds, MIN_RATE_LIMIT_DELAY_SECONDS);

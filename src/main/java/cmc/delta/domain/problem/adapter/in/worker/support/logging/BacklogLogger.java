@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class BacklogLogger {
 
+	private static final long MIN_INTERVAL_MINUTES = 1L;
+
 	private final ConcurrentHashMap<String, LocalDateTime> lastLoggedAtByKey;
 
 	public BacklogLogger() {
@@ -23,7 +25,7 @@ public class BacklogLogger {
 		LongSupplier backlogSupplier,
 		LongConsumer logAction) {
 		LocalDateTime lastLoggedAt = lastLoggedAtByKey.get(key);
-		Duration interval = Duration.ofMinutes(Math.max(1, intervalMinutes));
+		Duration interval = resolveInterval(intervalMinutes);
 
 		if (lastLoggedAt != null && now.isBefore(lastLoggedAt.plus(interval))) {
 			return;
@@ -32,5 +34,10 @@ public class BacklogLogger {
 		long backlog = backlogSupplier.getAsLong();
 		logAction.accept(backlog);
 		lastLoggedAtByKey.put(key, now);
+	}
+
+	private Duration resolveInterval(long intervalMinutes) {
+		long minutes = Math.max(MIN_INTERVAL_MINUTES, intervalMinutes);
+		return Duration.ofMinutes(minutes);
 	}
 }
