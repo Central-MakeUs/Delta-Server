@@ -134,6 +134,7 @@ Follow Spotless output; do not hand-format around it.
 - Exception: framework/callback signatures that cannot be changed are acceptable.
 - Use custom exception classes (and ErrorCode) instead of throwing RuntimeException or generic exceptions directly.
 - Prefer readable, domain-specific exceptions that wrap ErrorCode for clarity.
+- Avoid fully-qualified class names in code; prefer imports for readability.
 - Keep cohesion high and coupling low when refactoring; avoid over-engineering.
 - Maintain current project style/structure and package boundaries.
 - Ensure packages are properly organized; avoid dumping code into unrelated packages.
