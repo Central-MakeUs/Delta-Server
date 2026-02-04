@@ -31,6 +31,10 @@ import org.hibernate.type.SqlTypes;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProblemScan extends BaseTimeEntity {
 
+	private static final int ZERO = 0;
+	private static final boolean DEFAULT_HAS_FIGURE = false;
+	private static final boolean DEFAULT_NEEDS_REVIEW = false;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -149,11 +153,11 @@ public class ProblemScan extends BaseTimeEntity {
 		ProblemScan s = new ProblemScan();
 		s.user = user;
 		s.status = ScanStatus.UPLOADED;
-		s.hasFigure = false;
+		s.hasFigure = DEFAULT_HAS_FIGURE;
 		s.renderMode = RenderMode.LATEX;
-		s.needsReview = false;
-		s.ocrAttemptCount = 0;
-		s.aiAttemptCount = 0;
+		s.needsReview = DEFAULT_NEEDS_REVIEW;
+		s.ocrAttemptCount = ZERO;
+		s.aiAttemptCount = ZERO;
 		return s;
 	}
 
@@ -165,13 +169,8 @@ public class ProblemScan extends BaseTimeEntity {
 	 * OCR 단계는 OCR 필드만 변경한다.
 	 */
 	public void markOcrSucceeded(String plainText, String rawJson, LocalDateTime completedAt) {
-		this.ocrPlainText = plainText;
-		this.ocrRawJson = rawJson;
-		this.ocrCompletedAt = completedAt;
-		this.status = ScanStatus.OCR_DONE;
-
-		clearFailureAndRetry();
-		this.ocrAttemptCount = 0;
+		applyOcrResult(plainText, rawJson, completedAt);
+		markOcrDone();
 	}
 
 	/**
@@ -186,30 +185,17 @@ public class ProblemScan extends BaseTimeEntity {
 		String aiTypeCandidatesJson,
 		String aiDraftJson,
 		LocalDateTime completedAt) {
-		this.predictedUnit = predictedUnit;
-		this.predictedType = predictedType;
-		this.confidence = confidence;
-		this.needsReview = needsReview;
-
-		this.aiUnitCandidatesJson = aiUnitCandidatesJson;
-		this.aiTypeCandidatesJson = aiTypeCandidatesJson;
-		this.aiDraftJson = aiDraftJson;
-
-		this.aiCompletedAt = completedAt;
-		this.status = ScanStatus.AI_DONE;
-
-		clearFailureAndRetry();
-		this.aiAttemptCount = 0;
+		applyAiClassification(predictedUnit, predictedType, confidence, needsReview);
+		applyAiArtifacts(aiUnitCandidatesJson, aiTypeCandidatesJson, aiDraftJson);
+		markAiDone(completedAt);
 	}
 
 	public void markOcrFailed(String reason) {
-		this.failReason = reason;
-		this.ocrAttemptCount += 1;
+		markFailedAttempt(reason, AttemptTarget.OCR);
 	}
 
 	public void markAiFailed(String reason) {
-		this.failReason = reason;
-		this.aiAttemptCount += 1;
+		markFailedAttempt(reason, AttemptTarget.AI);
 	}
 
 	public void scheduleNextRetryForOcr(LocalDateTime now) {
@@ -218,7 +204,7 @@ public class ProblemScan extends BaseTimeEntity {
 	}
 
 	public void scheduleNextRetryForOcr(LocalDateTime now, long delaySeconds) {
-		if (this.ocrAttemptCount >= OCR_MAX_ATTEMPTS) {
+		if (shouldStopRetrying(this.ocrAttemptCount, OCR_MAX_ATTEMPTS)) {
 			failTerminal(this.failReason);
 			return;
 		}
@@ -226,7 +212,7 @@ public class ProblemScan extends BaseTimeEntity {
 	}
 
 	public void scheduleNextRetryForAi(LocalDateTime now) {
-		if (this.aiAttemptCount >= AI_MAX_ATTEMPTS) {
+		if (shouldStopRetrying(this.aiAttemptCount, AI_MAX_ATTEMPTS)) {
 			failTerminal(this.failReason);
 			return;
 		}
@@ -236,30 +222,18 @@ public class ProblemScan extends BaseTimeEntity {
 	}
 
 	public void retryFailed(LocalDateTime now) {
-		this.failReason = null;
+		clearLock();
 		this.nextRetryAt = now;
-		this.lockedAt = null;
-		this.lockOwner = null;
-		this.lockToken = null;
-
-		boolean hasOcr = this.ocrPlainText != null && !this.ocrPlainText.isBlank();
-		if (hasOcr) {
-			this.aiAttemptCount = 0;
-			this.status = ScanStatus.OCR_DONE;
-			return;
-		}
-
-		this.ocrAttemptCount = 0;
-		this.status = ScanStatus.UPLOADED;
+		this.failReason = null;
+		resetAttemptsByOcrState();
 	}
 
 	public void markAiRateLimited(String reason) {
-		this.failReason = reason;
-		this.aiAttemptCount += 1;
+		markFailedAttempt(reason, AttemptTarget.AI);
 	}
 
 	public void scheduleNextRetryForAi(LocalDateTime now, long delaySeconds) {
-		if (this.aiAttemptCount >= AI_MAX_RATE_LIMIT_ATTEMPTS) {
+		if (shouldStopRetrying(this.aiAttemptCount, AI_MAX_RATE_LIMIT_ATTEMPTS)) {
 			failTerminal(this.failReason);
 			return;
 		}
@@ -276,7 +250,7 @@ public class ProblemScan extends BaseTimeEntity {
 	}
 
 	private void scheduleRetry(LocalDateTime now, long delaySeconds, ScanStatus nextStatus) {
-		this.nextRetryAt = now.plusSeconds(Math.max(0, delaySeconds));
+		this.nextRetryAt = now.plusSeconds(Math.max(ZERO, delaySeconds));
 		this.status = nextStatus;
 	}
 
@@ -284,5 +258,82 @@ public class ProblemScan extends BaseTimeEntity {
 		this.failReason = reason;
 		this.status = ScanStatus.FAILED;
 		this.nextRetryAt = null;
+	}
+
+	private void applyOcrResult(String plainText, String rawJson, LocalDateTime completedAt) {
+		this.ocrPlainText = plainText;
+		this.ocrRawJson = rawJson;
+		this.ocrCompletedAt = completedAt;
+	}
+
+	private void markOcrDone() {
+		this.status = ScanStatus.OCR_DONE;
+		clearFailureAndRetry();
+		this.ocrAttemptCount = ZERO;
+	}
+
+	private void applyAiClassification(
+		Unit predictedUnit,
+		ProblemType predictedType,
+		BigDecimal confidence,
+		boolean needsReview) {
+		this.predictedUnit = predictedUnit;
+		this.predictedType = predictedType;
+		this.confidence = confidence;
+		this.needsReview = needsReview;
+	}
+
+	private void applyAiArtifacts(
+		String aiUnitCandidatesJson,
+		String aiTypeCandidatesJson,
+		String aiDraftJson) {
+		this.aiUnitCandidatesJson = aiUnitCandidatesJson;
+		this.aiTypeCandidatesJson = aiTypeCandidatesJson;
+		this.aiDraftJson = aiDraftJson;
+	}
+
+	private void markAiDone(LocalDateTime completedAt) {
+		this.aiCompletedAt = completedAt;
+		this.status = ScanStatus.AI_DONE;
+		clearFailureAndRetry();
+		this.aiAttemptCount = ZERO;
+	}
+
+	private void markFailedAttempt(String reason, AttemptTarget target) {
+		this.failReason = reason;
+		if (target == AttemptTarget.OCR) {
+			this.ocrAttemptCount += 1;
+			return;
+		}
+		this.aiAttemptCount += 1;
+	}
+
+	private boolean shouldStopRetrying(int attemptCount, int maxAttempts) {
+		return attemptCount >= maxAttempts;
+	}
+
+	private void clearLock() {
+		this.lockedAt = null;
+		this.lockOwner = null;
+		this.lockToken = null;
+	}
+
+	private void resetAttemptsByOcrState() {
+		if (hasOcrResult()) {
+			this.aiAttemptCount = ZERO;
+			this.status = ScanStatus.OCR_DONE;
+			return;
+		}
+		this.ocrAttemptCount = ZERO;
+		this.status = ScanStatus.UPLOADED;
+	}
+
+	private boolean hasOcrResult() {
+		return this.ocrPlainText != null && !this.ocrPlainText.isBlank();
+	}
+
+	private enum AttemptTarget {
+		OCR,
+		AI
 	}
 }
