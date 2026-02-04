@@ -1,58 +1,65 @@
 package cmc.delta.domain.user.application.validator;
 
-import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
-import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
-import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
-import cmc.delta.domain.user.application.exception.UserException;
+import java.time.Clock;
 import java.time.LocalDate;
+
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
+import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
+import cmc.delta.domain.user.application.exception.UserException;
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class UserValidator {
 
+	private final Clock clock;
+
 	public void validateProvision(SocialUserProvisionCommand command) {
-		if (command == null || command.provider() == null) {
-			throw UserException.invalidRequest();
-		}
-		if (!StringUtils.hasText(command.providerUserId())) {
-			throw UserException.invalidRequest();
-		}
+		requireNotNull(command);
+		requireNotNull(command.provider());
+		requireText(command.providerUserId());
 	}
 
 	public void validate(UserOnboardingRequest request) {
-		if (request == null) {
-			throw UserException.invalidRequest();
-		}
-		if (!StringUtils.hasText(request.nickname())) {
-			throw UserException.invalidRequest();
-		}
+		requireNotNull(request);
+		requireText(request.nickname());
 		LocalDate birthDate = request.birthDate();
-		if (birthDate == null) {
-			throw UserException.invalidRequest();
-		}
+		requireNotNull(birthDate);
 		// 미래 생년월일 방지 (원치 않으면 제거)
-        if (birthDate.isAfter(LocalDate.now())) {
-            throw UserException.invalidRequest();
-        }
-		if (!request.termsAgreed()) {
-			throw UserException.invalidRequest();
-		}
+		require(!birthDate.isAfter(LocalDate.now(clock)));
+		require(request.termsAgreed());
 	}
 
 	public void validate(UserNameUpdateRequest request) {
-		if (request == null) {
-			throw UserException.invalidRequest();
-		}
-		if (!StringUtils.hasText(request.name())) {
-			throw UserException.invalidRequest();
-		}
+		requireNotNull(request);
+		requireText(request.name());
+	}
+
+	public void validate(UserNicknameUpdateRequest request) {
+		requireNotNull(request);
+		requireText(request.nickname());
 	}
 
 	public void validateNickname(String nickname) {
-		if (!StringUtils.hasText(nickname)) {
+		requireText(nickname);
+	}
+
+	private void requireNotNull(Object value) {
+		require(value != null);
+	}
+
+	private void requireText(String value) {
+		require(StringUtils.hasText(value));
+	}
+
+	private void require(boolean condition) {
+		if (!condition) {
 			throw UserException.invalidRequest();
 		}
-		// optionally: length/char validation
 	}
 }

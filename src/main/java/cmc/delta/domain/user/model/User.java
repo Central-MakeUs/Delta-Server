@@ -97,7 +97,12 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
+	@Deprecated
 	public void updateName(String nickname) {
+		updateNickname(nickname);
+	}
+
+	public void updateNickname(String nickname) {
 		this.nickname = normalize(nickname);
 	}
 
