@@ -134,16 +134,17 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		List<ProblemListRow> rows,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
 		boolean includePreviewUrl) {
+		Map<String, String> previewUrls = includePreviewUrl ? loadPreviewUrls(rows) : Map.of();
 		return rows.stream()
-			.map(row -> toListItem(row, typeItemsByProblemId, includePreviewUrl))
+			.map(row -> toListItem(row, typeItemsByProblemId, previewUrls))
 			.toList();
 	}
 
 	private ProblemListItemResponse toListItem(
 		ProblemListRow row,
 		Map<Long, List<CurriculumItemResponse>> typeItemsByProblemId,
-		boolean includePreviewUrl) {
-		String previewUrl = includePreviewUrl ? storagePort.issueReadUrl(row.storageKey()) : null;
+		Map<String, String> previewUrls) {
+		String previewUrl = previewUrls.get(row.storageKey());
 		ProblemListItemResponse base = problemListMapper.toResponse(row, previewUrl);
 
 		List<CurriculumItemResponse> types = typeItemsByProblemId.getOrDefault(base.problemId(), List.of());
@@ -155,6 +156,13 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.previewImage(),
 			base.isCompleted(),
 			base.createdAt());
+	}
+
+	private Map<String, String> loadPreviewUrls(List<ProblemListRow> rows) {
+		List<String> storageKeys = rows.stream()
+			.map(ProblemListRow::storageKey)
+			.toList();
+		return storagePort.issueReadUrls(storageKeys);
 	}
 
 	private List<CurriculumItemResponse> loadTypeItems(Long problemId) {

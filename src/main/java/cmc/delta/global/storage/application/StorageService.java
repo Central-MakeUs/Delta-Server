@@ -10,7 +10,12 @@ import cmc.delta.global.storage.support.PresignedUrlCache;
 import cmc.delta.global.storage.support.StorageKeyGenerator;
 import cmc.delta.global.storage.support.StorageRequestValidator;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -118,6 +123,30 @@ public class StorageService {
 			storageKey, ttlSeconds, durationMs);
 
 		return new StoragePresignedGetData(url, ttlSeconds);
+	}
+
+	public Map<String, String> issueReadUrls(List<String> storageKeys, Integer ttlSecondsOrNull) {
+		if (storageKeys == null || storageKeys.isEmpty()) {
+			return Map.of();
+		}
+
+		long startedAt = System.nanoTime();
+		int ttlSeconds = validator.resolveTtlSeconds(ttlSecondsOrNull, properties.presignGetTtlSeconds());
+
+		Set<String> uniqueKeys = new LinkedHashSet<>(storageKeys);
+		Map<String, String> urls = new LinkedHashMap<>(uniqueKeys.size());
+		for (String storageKey : uniqueKeys) {
+			validator.validateStorageKey(storageKey);
+			String url = getOrCreateCachedPresignedGetUrl(storageKey, ttlSeconds);
+			urls.put(storageKey, url);
+		}
+
+		long durationMs = elapsedMs(startedAt);
+		log.debug(
+			"스토리지 조회 URL 일괄 발급 완료 count={} ttlSeconds={} durationMs={}",
+			urls.size(), ttlSeconds, durationMs);
+
+		return urls;
 	}
 
 	private String getOrCreateCachedPresignedGetUrl(String storageKey, int ttlSeconds) {

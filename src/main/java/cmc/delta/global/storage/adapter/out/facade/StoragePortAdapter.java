@@ -4,6 +4,8 @@ import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
 import cmc.delta.global.storage.application.StorageService;
 import cmc.delta.global.storage.port.out.StoragePort;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +20,11 @@ public class StoragePortAdapter implements StoragePort {
 	public String issueReadUrl(String storageKey) {
 		StoragePresignedGetData presigned = storageService.issueReadUrl(storageKey, null);
 		return presigned.url();
+	}
+
+	@Override
+	public Map<String, String> issueReadUrls(List<String> storageKeys) {
+		return storageService.issueReadUrls(storageKeys, null);
 	}
 
 	@Override

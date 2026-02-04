@@ -60,14 +60,21 @@ public class ProblemScrollQueryService {
 
 	public CursorPagedResponse<ProblemListItemResponse> attachPreviewUrls(
 		CursorPagedResponse<ProblemListItemResponse> base) {
+		List<String> storageKeys = extractMissingPreviewKeys(base.content());
+		if (storageKeys.isEmpty()) {
+			return base;
+		}
+		Map<String, String> previewUrls = storagePort.issueReadUrls(storageKeys);
 		List<ProblemListItemResponse> withPreview = base.content().stream()
-			.map(this::attachPreviewUrl)
+			.map(item -> attachPreviewUrl(item, previewUrls))
 			.toList();
 
 		return CursorPagedResponse.of(withPreview, base.hasNext(), base.nextCursor(), base.totalElements());
 	}
 
-	private ProblemListItemResponse attachPreviewUrl(ProblemListItemResponse item) {
+	private ProblemListItemResponse attachPreviewUrl(
+		ProblemListItemResponse item,
+		Map<String, String> previewUrls) {
 		ProblemListItemResponse.PreviewImageResponse preview = item.previewImage();
 		if (preview == null) {
 			return item;
@@ -79,7 +86,10 @@ public class ProblemScrollQueryService {
 			return item;
 		}
 
-		String viewUrl = storagePort.issueReadUrl(preview.storageKey());
+		String viewUrl = previewUrls.get(preview.storageKey());
+		if (viewUrl == null) {
+			return item;
+		}
 		ProblemListItemResponse.PreviewImageResponse nextPreview = new ProblemListItemResponse.PreviewImageResponse(
 			preview.assetId(),
 			preview.storageKey(),
@@ -93,6 +103,17 @@ public class ProblemScrollQueryService {
 			nextPreview,
 			item.isCompleted(),
 			item.createdAt());
+	}
+
+	private List<String> extractMissingPreviewKeys(List<ProblemListItemResponse> items) {
+		return items.stream()
+			.map(ProblemListItemResponse::previewImage)
+			.filter(preview -> preview != null
+				&& preview.viewUrl() == null
+				&& preview.storageKey() != null
+				&& !preview.storageKey().isBlank())
+			.map(ProblemListItemResponse.PreviewImageResponse::storageKey)
+			.toList();
 	}
 
 	private void validateCursorPagination(ProblemListCondition condition, CursorQuery cursorQuery) {

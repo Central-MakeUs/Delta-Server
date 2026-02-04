@@ -1,9 +1,13 @@
 package cmc.delta.global.storage.port.out;
 
+import java.util.List;
+import java.util.Map;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface StoragePort {
 	String issueReadUrl(String storageKey);
+
+	Map<String, String> issueReadUrls(List<String> storageKeys);
 
 	UploadResult uploadImage(MultipartFile file, String directory);
 
