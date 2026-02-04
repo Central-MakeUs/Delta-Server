@@ -48,17 +48,12 @@ public class AiScanPersister {
 		AiCurriculumResult aiResult,
 		LocalDateTime completedAt) {
 		workerTx.executeWithoutResult(tx -> inLockedTx(scanId, lockOwner, lockToken, scan -> {
-			Unit predictedUnit = findUnitOrNull(aiResult.predictedUnitId());
-			ProblemType predictedType = findProblemTypeOrNull(aiResult.predictedTypeId());
-
-			BigDecimal confidence = BigDecimal.valueOf(aiResult.confidence());
-			boolean needsReview = shouldNeedsReview(predictedUnit, predictedType, confidence);
-
+			AiPersistContext context = buildPersistContext(aiResult);
 			scan.markAiSucceeded(
-				predictedUnit,
-				predictedType,
-				confidence,
-				needsReview,
+				context.predictedUnit(),
+				context.predictedType(),
+				context.confidence(),
+				context.needsReview(),
 				aiResult.unitCandidatesJson(),
 				aiResult.typeCandidatesJson(),
 				aiResult.aiDraftJson(),
@@ -96,12 +91,14 @@ public class AiScanPersister {
 		String lockOwner,
 		String lockToken,
 		Consumer<ProblemScan> action) {
-		if (!isLockedByMe(scanId, lockOwner, lockToken))
+		if (!isLockedByMe(scanId, lockOwner, lockToken)) {
 			return;
+		}
 
 		ProblemScan scan = scanRepository.findById(scanId).orElse(null);
-		if (scan == null)
+		if (scan == null) {
 			return;
+		}
 
 		action.accept(scan);
 	}
@@ -116,30 +113,49 @@ public class AiScanPersister {
 		return retryAfter == null ? DEFAULT_RETRY_AFTER_SECONDS : retryAfter.longValue();
 	}
 
+	private AiPersistContext buildPersistContext(AiCurriculumResult aiResult) {
+		Unit predictedUnit = findUnitOrNull(aiResult.predictedUnitId());
+		ProblemType predictedType = findProblemTypeOrNull(aiResult.predictedTypeId());
+		BigDecimal confidence = BigDecimal.valueOf(aiResult.confidence());
+		boolean needsReview = shouldNeedsReview(predictedUnit, predictedType, confidence);
+		return new AiPersistContext(predictedUnit, predictedType, confidence, needsReview);
+	}
+
 	private Unit findUnitOrNull(String unitId) {
 		String normalized = normalizeIdOrNull(unitId);
-		if (normalized == null)
+		if (normalized == null) {
 			return null;
+		}
 		return unitRepository.findById(normalized).orElse(null);
 	}
 
 	private ProblemType findProblemTypeOrNull(String problemTypeId) {
 		String normalized = normalizeIdOrNull(problemTypeId);
-		if (normalized == null)
+		if (normalized == null) {
 			return null;
+		}
 		return problemTypeRepository.findById(normalized).orElse(null);
 	}
 
 	private String normalizeIdOrNull(String id) {
-		if (id == null)
+		if (id == null) {
 			return null;
+		}
 		String trimmed = id.trim();
 		return trimmed.isEmpty() ? null : trimmed;
 	}
 
 	private boolean shouldNeedsReview(Unit predictedUnit, ProblemType predictedType, BigDecimal confidence) {
-		if (predictedUnit == null || predictedType == null)
+		if (predictedUnit == null || predictedType == null) {
 			return true;
+		}
 		return confidence.compareTo(NEEDS_REVIEW_CONFIDENCE_THRESHOLD) < 0;
+	}
+
+	private record AiPersistContext(
+		Unit predictedUnit,
+		ProblemType predictedType,
+		BigDecimal confidence,
+		boolean needsReview) {
 	}
 }

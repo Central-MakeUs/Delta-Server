@@ -59,8 +59,9 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 
 	@Override
 	protected final void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
-		if (!isOwned(scanId, lockOwner, lockToken))
+		if (!isOwned(scanId, lockOwner, lockToken)) {
 			return;
+		}
 
 		try {
 			handleSuccess(scanId, lockOwner, lockToken, batchNow);
@@ -92,8 +93,9 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 	}
 
 	private boolean shouldSuppressStacktrace(Exception exception) {
-		if (!(exception instanceof RestClientResponseException rest))
+		if (!(exception instanceof RestClientResponseException rest)) {
 			return false;
+		}
 		return logPolicy.shouldSuppressStacktrace(rest);
 	}
 

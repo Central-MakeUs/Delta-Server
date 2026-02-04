@@ -14,6 +14,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Component
 public class OcrScanPersister {
 
+	private static final long DEFAULT_RETRY_AFTER_SECONDS = 180L;
+
 	private final TransactionTemplate workerTransactionTemplate;
 	private final ScanWorkRepository scanWorkRepository;
 	private final ScanRepository scanRepository;
@@ -33,7 +35,10 @@ public class OcrScanPersister {
 		String lockToken,
 		OcrResult ocrResult,
 		LocalDateTime completedAt) {
-		inWorkerTxIfLocked(scanId, lockOwner, lockToken,
+		inWorkerTxIfLocked(
+			scanId,
+			lockOwner,
+			lockToken,
 			scan -> scan.markOcrSucceeded(ocrResult.plainText(), ocrResult.rawJson(), completedAt));
 	}
 
@@ -52,12 +57,14 @@ public class OcrScanPersister {
 		String lockToken,
 		java.util.function.Consumer<ProblemScan> action) {
 		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken))
+			if (!isLockedByMe(scanId, lockOwner, lockToken)) {
 				return;
+			}
 
 			Optional<ProblemScan> optional = scanRepository.findById(scanId);
-			if (optional.isEmpty())
+			if (optional.isEmpty()) {
 				return;
+			}
 
 			action.accept(optional.get());
 		});
@@ -73,12 +80,16 @@ public class OcrScanPersister {
 		}
 
 		if (decision.reasonCode() == FailureReason.OCR_RATE_LIMIT) {
-			long delay = (decision.retryAfterSeconds() == null) ? 180L : decision.retryAfterSeconds().longValue();
-			scan.scheduleNextRetryForOcr(now, delay);
+			scan.scheduleNextRetryForOcr(now, resolveRetryAfterSeconds(decision));
 			return;
 		}
 
 		scan.scheduleNextRetryForOcr(now);
+	}
+
+	private long resolveRetryAfterSeconds(FailureDecision decision) {
+		Long retryAfter = decision.retryAfterSeconds();
+		return retryAfter == null ? DEFAULT_RETRY_AFTER_SECONDS : retryAfter.longValue();
 	}
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {

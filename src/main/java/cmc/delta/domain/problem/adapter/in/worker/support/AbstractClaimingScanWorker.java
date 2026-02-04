@@ -15,6 +15,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 public abstract class AbstractClaimingScanWorker {
 
+	private static final int NO_CLAIMED = 0;
+	private static final int LOCK_TOKEN_LENGTH = 24;
+	private static final int SUBSTRING_START = 0;
+	private static final long NO_LEASE_SECONDS = 0L;
+	private static final String UUID_HYPHEN = "-";
+	private static final String EMPTY = "";
+
 	private static final String MDC_TRACE_ID = "traceId";
 	private static final String MDC_WORKER = "worker";
 
@@ -23,7 +30,7 @@ public abstract class AbstractClaimingScanWorker {
 	private final Executor executor;
 	private final String workerName;
 
-	private volatile long lastLockLeaseSeconds = 0L;
+	private volatile long lastLockLeaseSeconds = NO_LEASE_SECONDS;
 
 	protected AbstractClaimingScanWorker(Clock clock, TransactionTemplate tx, Executor executor, String workerName) {
 		this.clock = Objects.requireNonNull(clock);
@@ -42,10 +49,7 @@ public abstract class AbstractClaimingScanWorker {
 
 	public final void runBatch(String lockOwner, int batchSize, long lockLeaseSeconds) {
 		this.lastLockLeaseSeconds = lockLeaseSeconds;
-
-		String traceId = UUID.randomUUID().toString().replace("-", "");
-		MDC.put(MDC_TRACE_ID, traceId);
-		MDC.put(MDC_WORKER, workerName);
+		applyMdc(createTraceId());
 
 		try {
 			LocalDateTime batchNow = now();
@@ -53,12 +57,7 @@ public abstract class AbstractClaimingScanWorker {
 			LocalDateTime lockedAt = batchNow;
 			String lockToken = createLockToken();
 
-			List<Long> ids = tx.execute(status -> {
-				int claimed = claim(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
-				if (claimed <= 0)
-					return List.of();
-				return findClaimedIds(lockOwner, lockToken, batchSize);
-			});
+			List<Long> ids = claimIds(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
 
 			if (ids == null || ids.isEmpty()) {
 				onNoCandidate(batchNow);
@@ -87,8 +86,7 @@ public abstract class AbstractClaimingScanWorker {
 			CompletableFuture.allOf(futures).join();
 
 		} finally {
-			MDC.remove(MDC_WORKER);
-			MDC.remove(MDC_TRACE_ID);
+			clearMdc();
 		}
 	}
 
@@ -108,7 +106,40 @@ public abstract class AbstractClaimingScanWorker {
 
 	protected abstract void processOne(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow);
 
+	private List<Long> claimIds(
+		LocalDateTime batchNow,
+		LocalDateTime staleBefore,
+		String lockOwner,
+		String lockToken,
+		LocalDateTime lockedAt,
+		int batchSize) {
+		return tx.execute(status -> {
+			int claimed = claim(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
+			if (claimed <= NO_CLAIMED) {
+				return List.of();
+			}
+			return findClaimedIds(lockOwner, lockToken, batchSize);
+		});
+	}
+
+	private void applyMdc(String traceId) {
+		MDC.put(MDC_TRACE_ID, traceId);
+		MDC.put(MDC_WORKER, workerName);
+	}
+
+	private void clearMdc() {
+		MDC.remove(MDC_WORKER);
+		MDC.remove(MDC_TRACE_ID);
+	}
+
+	private String createTraceId() {
+		return UUID.randomUUID().toString().replace(UUID_HYPHEN, EMPTY);
+	}
+
 	private String createLockToken() {
-		return UUID.randomUUID().toString().replace("-", "").substring(0, 24);
+		return UUID.randomUUID()
+			.toString()
+			.replace(UUID_HYPHEN, EMPTY)
+			.substring(SUBSTRING_START, LOCK_TOKEN_LENGTH);
 	}
 }
