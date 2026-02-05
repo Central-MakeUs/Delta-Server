@@ -12,9 +12,6 @@ spring:
     activate:
       on-profile: prod
 
-frontend:
-  base-url: ${FRONTEND_BASE_URL:https://semo-xi.vercel.app}
-
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${PROD_DB_URL}
@@ -29,6 +26,9 @@ frontend:
       ssl:
         enabled: false
       timeout: 2s
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL:https://semo-xi.vercel.app}
 
 storage:
   s3:
