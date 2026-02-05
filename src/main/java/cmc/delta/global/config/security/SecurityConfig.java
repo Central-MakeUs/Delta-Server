@@ -97,6 +97,7 @@ public class SecurityConfig {
 		api.setAllowedOriginPatterns(List.of(
 			"https://dev.deltasemo.cloud",
 			"https://deltasemo.cloud",
+			"https://semo-xi.vercel.app",
 			"http://localhost:*"));
 		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
