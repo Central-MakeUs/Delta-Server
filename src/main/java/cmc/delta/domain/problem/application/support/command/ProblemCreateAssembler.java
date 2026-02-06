@@ -3,8 +3,11 @@ package cmc.delta.domain.problem.application.support.command;
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
+import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
+import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
@@ -21,6 +24,7 @@ public class ProblemCreateAssembler {
 	private static final String FALLBACK_PROBLEM_MARKDOWN = "(문제 텍스트 없음)";
 
 	private final ProblemCreateScanValidator scanValidator;
+	private final AssetRepositoryPort assetRepositoryPort;
 
 	public Problem assemble(
 		User userRef,
@@ -30,10 +34,12 @@ public class ProblemCreateAssembler {
 		CreateWrongAnswerCardCommand command) {
 		RenderMode renderMode = requireRenderMode(scan);
 		String problemMarkdown = resolveProblemMarkdown(scan);
+		String originalStorageKey = loadOriginalStorageKey(scan);
 		ProblemCreateValues values = buildCreateValues(command);
 		return Problem.create(
 			userRef,
 			scan,
+			originalStorageKey,
 			finalUnit,
 			finalType,
 			renderMode,
@@ -42,6 +48,16 @@ public class ProblemCreateAssembler {
 			values.answerValue(),
 			values.answerChoiceNo(),
 			values.solutionText());
+	}
+
+	private String loadOriginalStorageKey(ProblemScan scan) {
+		Long scanId = scan.getId();
+		if (scanId == null) {
+			throw new ProblemStateException(ErrorCode.PROBLEM_SCAN_NOT_FOUND);
+		}
+		Asset original = assetRepositoryPort.findOriginalByScanId(scanId)
+			.orElseThrow(ProblemException::originalAssetNotFound);
+		return original.getStorageKey();
 	}
 
 	private RenderMode requireRenderMode(ProblemScan scan) {

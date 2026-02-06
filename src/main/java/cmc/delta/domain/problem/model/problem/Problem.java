@@ -43,6 +43,9 @@ public class Problem extends BaseTimeEntity {
 	@JoinColumn(name = "scan_id", nullable = false, unique = true)
 	private ProblemScan scan;
 
+	@Column(name = "original_storage_key", length = 255)
+	private String originalStorageKey;
+
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "final_unit_id", nullable = false)
 	private Unit finalUnit;
@@ -88,6 +91,7 @@ public class Problem extends BaseTimeEntity {
 	public static Problem create(
 		User user,
 		ProblemScan scan,
+		String originalStorageKey,
 		Unit finalUnit,
 		ProblemType finalType,
 		RenderMode renderMode,
@@ -99,6 +103,7 @@ public class Problem extends BaseTimeEntity {
 		Problem p = new Problem();
 		p.user = user;
 		p.scan = scan;
+		p.originalStorageKey = originalStorageKey;
 		p.finalUnit = finalUnit;
 		p.finalType = finalType;
 		p.renderMode = renderMode;
