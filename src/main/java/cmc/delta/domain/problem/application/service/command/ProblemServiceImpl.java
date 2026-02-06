@@ -9,8 +9,10 @@ import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCas
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
+import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
 import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateRequestValidator;
@@ -21,6 +23,7 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +37,8 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	private final ProblemRepositoryPort problemRepositoryPort;
 	private final UserRepositoryPort userRepositoryPort;
+	private final AssetRepositoryPort assetRepositoryPort;
+	private final StoragePort storagePort;
 
 	private final ProblemCreateRequestValidator requestValidator;
 	private final ProblemCreateScanValidator scanValidator;
@@ -56,7 +61,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		List<ProblemType> finalTypes = loadFinalTypesOrThrow(currentUserId, command.finalTypeIds());
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembleProblem(userRef, scan, finalUnit, finalTypes, command);
+		Problem newProblem = assembleProblem(currentUserId, userRef, scan, finalUnit, finalTypes, command);
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
 		bumpScrollCache(currentUserId);
 		return mapper.toResponse(savedProblem);
@@ -95,15 +100,28 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	}
 
 	private Problem assembleProblem(
+		Long userId,
 		User userRef,
 		ProblemScan scan,
 		Unit finalUnit,
 		List<ProblemType> finalTypes,
 		CreateWrongAnswerCardCommand command) {
 		ProblemType primaryType = finalTypes.get(0);
-		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
+		String destinationKey = copyOriginalToProblemStorage(userId, scan);
+		Problem newProblem = assembler.assemble(userRef, scan, destinationKey, finalUnit, primaryType, command);
 		newProblem.replaceTypes(finalTypes);
 		return newProblem;
+	}
+
+	private String copyOriginalToProblemStorage(Long userId, ProblemScan scan) {
+		if (scan.getId() == null) {
+			throw ProblemException.scanNotFound();
+		}
+		String sourceKey = assetRepositoryPort.findOriginalByScanId(scan.getId())
+			.orElseThrow(ProblemException::originalAssetNotFound)
+			.getStorageKey();
+		String directory = ProblemStoragePaths.buildOriginalDirectory(clock, userId);
+		return storagePort.copyImage(sourceKey, directory);
 	}
 
 	private Problem loadProblemOrThrow(Long problemId, Long userId) {

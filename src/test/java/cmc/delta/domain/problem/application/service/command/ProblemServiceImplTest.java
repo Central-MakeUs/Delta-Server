@@ -10,14 +10,17 @@ import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
 import cmc.delta.domain.problem.application.validation.command.*;
+import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +30,8 @@ class ProblemServiceImplTest {
 
 	private ProblemRepositoryPort problemRepositoryPort;
 	private UserRepositoryPort userRepositoryPort;
+	private AssetRepositoryPort assetRepositoryPort;
+	private StoragePort storagePort;
 
 	private ProblemCreateRequestValidator requestValidator;
 	private ProblemCreateScanValidator scanValidator;
@@ -45,6 +50,8 @@ class ProblemServiceImplTest {
 	void setUp() {
 		problemRepositoryPort = mock(ProblemRepositoryPort.class);
 		userRepositoryPort = mock(UserRepositoryPort.class);
+		assetRepositoryPort = mock(AssetRepositoryPort.class);
+		storagePort = mock(StoragePort.class);
 
 		requestValidator = mock(ProblemCreateRequestValidator.class);
 		scanValidator = mock(ProblemCreateScanValidator.class);
@@ -60,6 +67,8 @@ class ProblemServiceImplTest {
 		sut = new ProblemServiceImpl(
 			problemRepositoryPort,
 			userRepositoryPort,
+			assetRepositoryPort,
+			storagePort,
 			requestValidator,
 			scanValidator,
 			curriculumValidator,
@@ -117,6 +126,7 @@ class ProblemServiceImplTest {
 
 	private ProblemCreateResponse givenCreateFlowOk(long userId, CreateWrongAnswerCardCommand cmd) {
 		ProblemScan scan = mock(ProblemScan.class);
+		when(scan.getId()).thenReturn(1L);
 		Unit unit = mock(Unit.class);
 		ProblemType type = mock(ProblemType.class);
 		when(cmd.finalTypeIds()).thenReturn(java.util.List.of("T1"));
@@ -129,8 +139,13 @@ class ProblemServiceImplTest {
 		User userRef = mock(User.class);
 		when(userRepositoryPort.getReferenceById(userId)).thenReturn(userRef);
 
+		Asset original = mock(Asset.class);
+		when(original.getStorageKey()).thenReturn("s3/scan.png");
+		when(assetRepositoryPort.findOriginalByScanId(1L)).thenReturn(java.util.Optional.of(original));
+		when(storagePort.copyImage(eq("s3/scan.png"), anyString())).thenReturn("s3/problem.png");
+
 		Problem newProblem = mock(Problem.class);
-		when(assembler.assemble(userRef, scan, unit, type, cmd)).thenReturn(newProblem);
+		when(assembler.assemble(userRef, scan, "s3/problem.png", unit, type, cmd)).thenReturn(newProblem);
 
 		Problem saved = mock(Problem.class);
 		when(problemRepositoryPort.save(newProblem)).thenReturn(saved);
