@@ -12,6 +12,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.persistence.ScanPurgeP
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ class ScanPurgeWorkerTest {
 	private ScanLockGuard lockGuard;
 	private ScanUnlocker unlocker;
 	private ScanPurgePersister persister;
+	private ProblemRepositoryPort problemRepository;
 
 	private TestableScanPurgeWorker sut;
 
@@ -48,6 +50,7 @@ class ScanPurgeWorkerTest {
 		lockGuard = mock(ScanLockGuard.class);
 		unlocker = mock(ScanUnlocker.class);
 		persister = mock(ScanPurgePersister.class);
+		problemRepository = mock(ProblemRepositoryPort.class);
 
 		PurgeWorkerProperties props = new PurgeWorkerProperties(3600000L, 50, 60L, 1, 60, 3);
 
@@ -58,6 +61,7 @@ class ScanPurgeWorkerTest {
 			scanWorkRepository,
 			assetJpaRepository,
 			storagePort,
+			problemRepository,
 			props,
 			lockGuard,
 			unlocker,
@@ -73,6 +77,7 @@ class ScanPurgeWorkerTest {
 		LocalDateTime batchNow = LocalDateTime.of(2026, 2, 7, 10, 0);
 
 		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
+		when(problemRepository.existsByScanId(scanId)).thenReturn(false);
 
 		Asset a1 = mock(Asset.class);
 		Asset a2 = mock(Asset.class);
@@ -102,6 +107,7 @@ class ScanPurgeWorkerTest {
 		LocalDateTime batchNow = LocalDateTime.of(2026, 2, 7, 10, 0);
 
 		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, false);
+		when(problemRepository.existsByScanId(scanId)).thenReturn(false);
 
 		Asset a1 = mock(Asset.class);
 		when(a1.getStorageKey()).thenReturn("s3/k1");
@@ -124,6 +130,7 @@ class ScanPurgeWorkerTest {
 			ScanWorkRepository scanWorkRepository,
 			AssetJpaRepository assetJpaRepository,
 			StoragePort storagePort,
+			ProblemRepositoryPort problemRepository,
 			PurgeWorkerProperties properties,
 			ScanLockGuard lockGuard,
 			ScanUnlocker unlocker,
@@ -136,6 +143,7 @@ class ScanPurgeWorkerTest {
 				scanWorkRepository,
 				assetJpaRepository,
 				storagePort,
+				problemRepository,
 				properties,
 				lockGuard,
 				unlocker,
