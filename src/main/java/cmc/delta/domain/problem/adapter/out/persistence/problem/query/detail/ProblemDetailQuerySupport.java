@@ -5,9 +5,8 @@ import static com.querydsl.core.types.Projections.constructor;
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
-import cmc.delta.domain.problem.model.asset.QAsset;
-import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.problem.QProblem;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,6 @@ public class ProblemDetailQuerySupport {
 		QUnit unit = QUnit.unit;
 		QUnit subject = new QUnit("subject");
 		QProblemType type = QProblemType.problemType;
-		QAsset asset = QAsset.asset;
 
 		ProblemDetailRow row = queryFactory
 			.select(constructor(
@@ -40,8 +38,8 @@ public class ProblemDetailQuerySupport {
 				type.id,
 				type.name,
 
-				asset.id,
-				problem.originalStorageKey.coalesce(asset.storageKey),
+				Expressions.nullExpression(Long.class),
+				problem.originalStorageKey,
 
 				problem.answerFormat,
 				problem.answerChoiceNo,
@@ -54,9 +52,6 @@ public class ProblemDetailQuerySupport {
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
 			.join(problem.finalType, type)
-			.leftJoin(asset).on(
-				asset.scan.id.eq(problem.scan.id)
-					.and(asset.assetType.eq(AssetType.ORIGINAL)))
 			.where(
 				problem.user.id.eq(userId),
 				problem.id.eq(problemId))
