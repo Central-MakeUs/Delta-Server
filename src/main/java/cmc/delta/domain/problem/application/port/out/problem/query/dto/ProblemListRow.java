@@ -13,8 +13,6 @@ public record ProblemListRow(
 
 	String typeId,
 	String typeName,
-
-	Long assetId,
 	String storageKey,
 
 	LocalDateTime completedAt,

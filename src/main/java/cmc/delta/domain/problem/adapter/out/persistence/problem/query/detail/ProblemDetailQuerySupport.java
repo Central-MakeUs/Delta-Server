@@ -6,7 +6,6 @@ import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.model.problem.QProblem;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +36,6 @@ public class ProblemDetailQuerySupport {
 
 				type.id,
 				type.name,
-
-				Expressions.nullExpression(Long.class),
 				problem.originalStorageKey,
 
 				problem.answerFormat,

@@ -11,7 +11,6 @@ import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
@@ -123,7 +122,6 @@ public class ProblemListQuerySupport {
 				p.unit.name,
 				p.type.id,
 				p.type.name,
-				Expressions.nullExpression(Long.class),
 				p.problem.originalStorageKey,
 				p.problem.completedAt,
 				p.problem.createdAt))
