@@ -10,5 +10,7 @@ public interface ObjectStorage {
 
 	void delete(String storageKey);
 
+	void copy(String sourceStorageKey, String destinationStorageKey);
+
 	byte[] readBytes(String storageKey);
 }

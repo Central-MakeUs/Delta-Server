@@ -12,6 +12,7 @@ import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -101,6 +102,24 @@ public class S3ObjectStorage implements ObjectStorage {
 			s3Client.deleteObject(delete);
 
 			log.debug("S3 삭제 완료 storageKey={}", storageKey);
+			return null;
+		});
+	}
+
+	@Override
+	public void copy(String sourceStorageKey, String destinationStorageKey) {
+		validator.validateStorageKey(sourceStorageKey);
+		validator.validateStorageKey(destinationStorageKey);
+
+		execute("S3 복사", () -> {
+			CopyObjectRequest copy = CopyObjectRequest.builder()
+				.bucket(properties.bucket())
+				.copySource(properties.bucket() + "/" + sourceStorageKey)
+				.key(destinationStorageKey)
+				.build();
+
+			s3Client.copyObject(copy);
+			log.debug("S3 복사 완료 sourceKey={} destKey={}", sourceStorageKey, destinationStorageKey);
 			return null;
 		});
 	}

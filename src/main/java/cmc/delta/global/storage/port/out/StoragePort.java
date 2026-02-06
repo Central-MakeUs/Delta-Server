@@ -13,6 +13,8 @@ public interface StoragePort {
 
 	void deleteImage(String storageKey);
 
+	String copyImage(String sourceStorageKey, String directory);
+
 	record UploadResult(
 		String storageKey,
 		String viewUrl,

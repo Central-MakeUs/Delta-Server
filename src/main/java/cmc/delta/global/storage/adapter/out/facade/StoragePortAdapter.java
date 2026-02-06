@@ -43,4 +43,9 @@ public class StoragePortAdapter implements StoragePort {
 	public void deleteImage(String storageKey) {
 		storageService.deleteImage(storageKey);
 	}
+
+	@Override
+	public String copyImage(String sourceStorageKey, String directory) {
+		return storageService.copyImage(sourceStorageKey, directory);
+	}
 }
