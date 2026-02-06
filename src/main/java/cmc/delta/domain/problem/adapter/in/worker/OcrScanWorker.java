@@ -11,7 +11,9 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
+import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
@@ -95,7 +97,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		Asset originalAsset = validator.requireOriginalAsset(scanId);
 
 		byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
-		OcrResult ocrResult = ocrClient.recognize(originalBytes, buildFilename(scanId));
+		OcrResult ocrResult = recognizeOcrOrThrow(scanId, originalBytes);
 
 		if (!isOwned(scanId, lockOwner, lockToken)) {
 			return;
@@ -103,6 +105,14 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 
 		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, batchNow);
 		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
+	}
+
+	private OcrResult recognizeOcrOrThrow(Long scanId, byte[] originalBytes) {
+		try {
+			return ocrClient.recognize(originalBytes, buildFilename(scanId));
+		} catch (OcrTextNotDetectedException e) {
+			throw new OcrTextEmptyException(scanId);
+		}
 	}
 
 	@Override

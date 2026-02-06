@@ -21,7 +21,8 @@ public class ProblemScanSummaryMapper implements ProblemCurriculumItemSupport {
 			row.getScanId(),
 			row.getStatus(),
 			toOriginalImage(row, viewUrl),
-			toClassification(row, subject, types));
+			toClassification(row, subject, types),
+			row.getFailReason());
 	}
 
 	private ProblemScanSummaryResponse.OriginalImage toOriginalImage(ScanListRow row, String viewUrl) {
