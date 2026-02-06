@@ -7,7 +7,9 @@ import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
+import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
@@ -23,7 +25,9 @@ class ProblemCreateAssemblerTest {
 	@DisplayName("Problem assemble: renderMode가 null이면 PROBLEM_SCAN_RENDER_MODE_MISSING")
 	void assemble_whenRenderModeNull_thenThrows() {
 		// given
-		ProblemCreateAssembler sut = new ProblemCreateAssembler(mock(ProblemCreateScanValidator.class));
+		ProblemCreateAssembler sut = new ProblemCreateAssembler(
+			mock(ProblemCreateScanValidator.class),
+			mock(AssetRepositoryPort.class));
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getRenderMode()).thenReturn(null);
 
@@ -49,14 +53,25 @@ class ProblemCreateAssemblerTest {
 	@DisplayName("Problem assemble: OCR 텍스트가 null/blank면 fallback markdown을 사용")
 	void assemble_whenOcrTextNullOrBlank_thenFallbackMarkdown() {
 		// given
-		ProblemCreateAssembler sut = new ProblemCreateAssembler(mock(ProblemCreateScanValidator.class));
+		AssetRepositoryPort assetRepositoryPort = mock(AssetRepositoryPort.class);
+		ProblemCreateAssembler sut = new ProblemCreateAssembler(
+			mock(ProblemCreateScanValidator.class),
+			assetRepositoryPort);
 		ProblemScan scan1 = mock(ProblemScan.class);
+		when(scan1.getId()).thenReturn(1L);
 		when(scan1.getRenderMode()).thenReturn(RenderMode.LATEX);
 		when(scan1.getOcrPlainText()).thenReturn(null);
+		Asset a1 = mock(Asset.class);
+		when(a1.getStorageKey()).thenReturn("s3/k1");
+		when(assetRepositoryPort.findOriginalByScanId(1L)).thenReturn(java.util.Optional.of(a1));
 
 		ProblemScan scan2 = mock(ProblemScan.class);
+		when(scan2.getId()).thenReturn(2L);
 		when(scan2.getRenderMode()).thenReturn(RenderMode.LATEX);
 		when(scan2.getOcrPlainText()).thenReturn("   ");
+		Asset a2 = mock(Asset.class);
+		when(a2.getStorageKey()).thenReturn("s3/k2");
+		when(assetRepositoryPort.findOriginalByScanId(2L)).thenReturn(java.util.Optional.of(a2));
 
 		CreateWrongAnswerCardCommand cmd = new CreateWrongAnswerCardCommand(
 			1L,

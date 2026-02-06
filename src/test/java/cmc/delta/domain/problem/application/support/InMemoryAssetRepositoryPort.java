@@ -2,8 +2,10 @@ package cmc.delta.domain.problem.application.support;
 
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.model.enums.AssetType;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 public final class InMemoryAssetRepositoryPort implements AssetRepositoryPort {
@@ -18,6 +20,18 @@ public final class InMemoryAssetRepositoryPort implements AssetRepositoryPort {
 		}
 		store.put(asset.getId(), asset);
 		return asset;
+	}
+
+	@Override
+	public Optional<Asset> findOriginalByScanId(Long scanId) {
+		if (scanId == null) {
+			return Optional.empty();
+		}
+		return store.values().stream()
+			.filter(a -> a.getScan() != null && scanId.equals(a.getScan().getId()))
+			.filter(a -> a.getAssetType() == AssetType.ORIGINAL)
+			.filter(a -> a.getSlot() == 0)
+			.findFirst();
 	}
 
 	public int count() {
