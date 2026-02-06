@@ -14,6 +14,10 @@ import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.storage.port.out.StoragePort;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -27,13 +31,17 @@ class ProblemKeyBackfillWorkerTest {
 	void runOnce_backfillsKeyAndDetachesScan() {
 		// given
 		TransactionTemplate tx = WorkerTestTx.immediateTx();
+		Clock clock = Clock.fixed(Instant.parse("2026-02-07T00:00:00Z"), ZoneId.of("UTC"));
 		ProblemJpaRepository problemRepository = mock(ProblemJpaRepository.class);
 		AssetJpaRepository assetRepository = mock(AssetJpaRepository.class);
-		ProblemKeyBackfillWorker sut = new ProblemKeyBackfillWorker(tx, problemRepository, assetRepository);
+		StoragePort storagePort = mock(StoragePort.class);
+		ProblemKeyBackfillWorker sut = new ProblemKeyBackfillWorker(tx, clock, problemRepository, assetRepository,
+			storagePort);
 
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getId()).thenReturn(10L);
 		User user = mock(User.class);
+		when(user.getId()).thenReturn(8L);
 		Unit unit = mock(Unit.class);
 		ProblemType type = mock(ProblemType.class);
 		when(type.getId()).thenReturn("T1");
@@ -45,13 +53,14 @@ class ProblemKeyBackfillWorkerTest {
 		Asset a = mock(Asset.class);
 		when(a.getStorageKey()).thenReturn("s3/k1");
 		when(assetRepository.findOriginalByScanId(10L)).thenReturn(Optional.of(a));
+		when(storagePort.copyImage(eq("s3/k1"), anyString())).thenReturn("problem/k1");
 
 		// when
 		int processed = sut.runOnce(10);
 
 		// then
 		assertThat(processed).isEqualTo(1);
-		assertThat(p.getOriginalStorageKey()).isEqualTo("s3/k1");
+		assertThat(p.getOriginalStorageKey()).isEqualTo("problem/k1");
 		assertThat(p.getScan()).isNull();
 		verify(problemRepository).saveAndFlush(p);
 	}
@@ -61,13 +70,17 @@ class ProblemKeyBackfillWorkerTest {
 	void runOnce_whenAssetMissing_thenSkipsSave() {
 		// given
 		TransactionTemplate tx = WorkerTestTx.immediateTx();
+		Clock clock = Clock.fixed(Instant.parse("2026-02-07T00:00:00Z"), ZoneId.of("UTC"));
 		ProblemJpaRepository problemRepository = mock(ProblemJpaRepository.class);
 		AssetJpaRepository assetRepository = mock(AssetJpaRepository.class);
-		ProblemKeyBackfillWorker sut = new ProblemKeyBackfillWorker(tx, problemRepository, assetRepository);
+		StoragePort storagePort = mock(StoragePort.class);
+		ProblemKeyBackfillWorker sut = new ProblemKeyBackfillWorker(tx, clock, problemRepository, assetRepository,
+			storagePort);
 
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getId()).thenReturn(10L);
 		User user = mock(User.class);
+		when(user.getId()).thenReturn(8L);
 		Unit unit = mock(Unit.class);
 		ProblemType type = mock(ProblemType.class);
 		when(type.getId()).thenReturn("T1");

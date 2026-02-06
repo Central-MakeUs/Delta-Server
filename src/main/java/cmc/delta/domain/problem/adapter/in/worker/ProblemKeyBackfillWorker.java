@@ -4,6 +4,9 @@ import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository
 import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.problem.Problem;
+import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
+import cmc.delta.global.storage.port.out.StoragePort;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +21,20 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class ProblemKeyBackfillWorker {
 
 	private final TransactionTemplate workerTxTemplate;
+	private final Clock clock;
 	private final ProblemJpaRepository problemRepository;
 	private final AssetJpaRepository assetRepository;
+	private final StoragePort storagePort;
 
 	public int runOnce(int batchSize) {
 		return workerTxTemplate.execute(status -> {
 			List<Problem> candidates = problemRepository.findKeyBackfillCandidates(PageRequest.of(0, batchSize));
 			for (Problem p : candidates) {
-				backfillOne(p);
+				try {
+					backfillOne(p);
+				} catch (Exception e) {
+					log.warn("problem key backfill 실패 problemId={}", p.getId(), e);
+				}
 			}
 			return candidates.size();
 		});
@@ -44,8 +53,13 @@ public class ProblemKeyBackfillWorker {
 		if (original.isEmpty()) {
 			return;
 		}
-
-		p.attachOriginalStorageKeyIfEmpty(original.get().getStorageKey());
+		Long userId = (p.getUser() == null) ? null : p.getUser().getId();
+		if (userId == null) {
+			return;
+		}
+		String directory = ProblemStoragePaths.buildOriginalDirectory(clock, userId);
+		String destinationKey = storagePort.copyImage(original.get().getStorageKey(), directory);
+		p.attachOriginalStorageKeyIfEmpty(destinationKey);
 		p.detachScan();
 		problemRepository.saveAndFlush(p);
 		log.info("problem key backfill 완료 problemId={} scanId={}", p.getId(), scanId);
