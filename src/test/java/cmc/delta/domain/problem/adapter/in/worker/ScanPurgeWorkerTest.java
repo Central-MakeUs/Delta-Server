@@ -78,6 +78,7 @@ class ScanPurgeWorkerTest {
 
 		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
 		when(problemRepository.existsByScanId(scanId)).thenReturn(false);
+		when(problemRepository.existsByOriginalStorageKey(anyString())).thenReturn(false);
 
 		Asset a1 = mock(Asset.class);
 		Asset a2 = mock(Asset.class);
@@ -108,6 +109,7 @@ class ScanPurgeWorkerTest {
 
 		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, false);
 		when(problemRepository.existsByScanId(scanId)).thenReturn(false);
+		when(problemRepository.existsByOriginalStorageKey(anyString())).thenReturn(false);
 
 		Asset a1 = mock(Asset.class);
 		when(a1.getStorageKey()).thenReturn("s3/k1");
@@ -119,6 +121,30 @@ class ScanPurgeWorkerTest {
 		// then
 		verify(storagePort).deleteImage("s3/k1");
 		verify(persister, never()).purgeIfLocked(anyLong(), anyString(), anyString());
+		verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
+	}
+
+	@Test
+	@DisplayName("purge: storageKey가 오답카드에 참조되면 S3 삭제를 건너뛴다")
+	void purge_whenStorageKeyReferenced_thenSkipsS3Delete() {
+		// given
+		Long scanId = 9L;
+		LocalDateTime batchNow = LocalDateTime.of(2026, 2, 7, 10, 0);
+
+		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
+		when(problemRepository.existsByScanId(scanId)).thenReturn(false);
+		when(problemRepository.existsByOriginalStorageKey("s3/k1")).thenReturn(true);
+
+		Asset a1 = mock(Asset.class);
+		when(a1.getStorageKey()).thenReturn("s3/k1");
+		when(assetJpaRepository.findAllByScan_Id(scanId)).thenReturn(List.of(a1));
+
+		// when
+		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);
+
+		// then
+		verify(storagePort, never()).deleteImage(anyString());
+		verify(persister).purgeIfLocked(scanId, OWNER, TOKEN);
 		verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 	}
 
