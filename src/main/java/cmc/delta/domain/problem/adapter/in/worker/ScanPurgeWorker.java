@@ -124,6 +124,9 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		}
 		List<cmc.delta.domain.problem.model.asset.Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
 		for (cmc.delta.domain.problem.model.asset.Asset asset : assets) {
+			if (problemRepository.existsByOriginalStorageKey(asset.getStorageKey())) {
+				continue;
+			}
 			try {
 				storagePort.deleteImage(asset.getStorageKey());
 			} catch (Exception e) {
