@@ -41,7 +41,7 @@ public class ProblemDetailQuerySupport {
 				type.name,
 
 				asset.id,
-				asset.storageKey,
+				problem.originalStorageKey.coalesce(asset.storageKey),
 
 				problem.answerFormat,
 				problem.answerChoiceNo,
@@ -54,7 +54,7 @@ public class ProblemDetailQuerySupport {
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
 			.join(problem.finalType, type)
-			.join(asset).on(
+			.leftJoin(asset).on(
 				asset.scan.id.eq(problem.scan.id)
 					.and(asset.assetType.eq(AssetType.ORIGINAL)))
 			.where(

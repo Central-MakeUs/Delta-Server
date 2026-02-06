@@ -125,14 +125,14 @@ public class ProblemListQuerySupport {
 				p.type.id,
 				p.type.name,
 				p.asset.id,
-				p.asset.storageKey,
+				p.problem.originalStorageKey.coalesce(p.asset.storageKey),
 				p.problem.completedAt,
 				p.problem.createdAt))
 			.from(p.problem)
 			.join(p.problem.finalUnit, p.unit)
 			.leftJoin(p.unit.parent, p.subject)
 			.join(p.problem.finalType, p.type)
-			.join(p.asset).on(
+			.leftJoin(p.asset).on(
 				p.asset.scan.id.eq(p.problem.scan.id)
 					.and(p.asset.assetType.eq(AssetType.ORIGINAL)))
 			.where(where);
