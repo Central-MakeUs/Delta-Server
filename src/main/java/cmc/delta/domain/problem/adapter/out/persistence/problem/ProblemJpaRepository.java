@@ -9,11 +9,18 @@ public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, Prob
 
 	boolean existsByScan_Id(Long scanId);
 
+	Optional<Problem> findByScan_Id(Long scanId);
+
 	@Override
 	Optional<Problem> findByIdAndUserId(Long id, Long userId);
 
 	@Override
 	default boolean existsByScanId(Long scanId) {
 		return existsByScan_Id(scanId);
+	}
+
+	@Override
+	default Optional<Problem> findByScanId(Long scanId) {
+		return findByScan_Id(scanId);
 	}
 }

@@ -39,8 +39,8 @@ public class Problem extends BaseTimeEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@OneToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "scan_id", nullable = false, unique = true)
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "scan_id", unique = true)
 	private ProblemScan scan;
 
 	@Column(name = "original_storage_key", length = 255)
@@ -113,6 +113,20 @@ public class Problem extends BaseTimeEntity {
 		p.answerChoiceNo = answerChoiceNo;
 		p.solutionText = solutionText;
 		return p;
+	}
+
+	public void attachOriginalStorageKeyIfEmpty(String storageKey) {
+		if (storageKey == null || storageKey.isBlank()) {
+			return;
+		}
+		if (this.originalStorageKey != null && !this.originalStorageKey.isBlank()) {
+			return;
+		}
+		this.originalStorageKey = storageKey;
+	}
+
+	public void detachScan() {
+		this.scan = null;
 	}
 
 	public void complete(String solutionText, java.time.LocalDateTime now) {
