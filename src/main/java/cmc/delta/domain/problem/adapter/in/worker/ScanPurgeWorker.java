@@ -117,18 +117,15 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void purgeOne(Long scanId, String lockOwner, String lockToken) {
-		if (problemRepository.existsByScanId(scanId)) {
-			persister.purgeIfLocked(scanId, lockOwner, lockToken);
-			log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, 0);
-			return;
-		}
 		List<cmc.delta.domain.problem.model.asset.Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
+		int deletedCount = 0;
 		for (cmc.delta.domain.problem.model.asset.Asset asset : assets) {
 			if (problemRepository.existsByOriginalStorageKey(asset.getStorageKey())) {
 				continue;
 			}
 			try {
 				storagePort.deleteImage(asset.getStorageKey());
+				deletedCount += 1;
 			} catch (Exception e) {
 				log.warn("{} purge - S3 삭제 실패 scanId={} storageKey={}", IDENTITY.label(), scanId,
 					asset.getStorageKey(), e);
@@ -140,6 +137,6 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		}
 
 		persister.purgeIfLocked(scanId, lockOwner, lockToken);
-		log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, assets.size());
+		log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
 	}
 }
