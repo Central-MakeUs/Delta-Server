@@ -20,11 +20,6 @@ public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 		       lock_token = :lockToken
 		 where created_at < :cutoffCreatedAt
 		   and (locked_at is null or locked_at <= :staleBefore)
-		   and not exists (
-			select 1
-			  from problem p
-			 where p.scan_id = problem_scan.id
-		   )
 		 order by created_at asc, id asc
 		 limit :limit
 		""", nativeQuery = true)
@@ -63,11 +58,6 @@ public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 		  from problem_scan
 		 where created_at < :cutoffCreatedAt
 		   and (locked_at is null or locked_at <= :staleBefore)
-		   and not exists (
-			select 1
-			  from problem p
-			 where p.scan_id = problem_scan.id
-		   )
 		""", nativeQuery = true)
 	long countPurgeBacklog(
 		@Param("cutoffCreatedAt")

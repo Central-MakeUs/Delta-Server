@@ -9,6 +9,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.ScanPurgePersister;
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 	private final ScanWorkRepository scanWorkRepository;
 	private final AssetJpaRepository assetJpaRepository;
 	private final StoragePort storagePort;
+	private final ProblemRepositoryPort problemRepository;
 	private final PurgeWorkerProperties properties;
 
 	private final ScanLockGuard lockGuard;
@@ -46,6 +48,7 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		ScanWorkRepository scanWorkRepository,
 		AssetJpaRepository assetJpaRepository,
 		StoragePort storagePort,
+		ProblemRepositoryPort problemRepository,
 		PurgeWorkerProperties properties,
 		ScanLockGuard lockGuard,
 		ScanUnlocker unlocker,
@@ -55,6 +58,7 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		this.scanWorkRepository = Objects.requireNonNull(scanWorkRepository);
 		this.assetJpaRepository = Objects.requireNonNull(assetJpaRepository);
 		this.storagePort = Objects.requireNonNull(storagePort);
+		this.problemRepository = Objects.requireNonNull(problemRepository);
 		this.properties = Objects.requireNonNull(properties);
 		this.lockGuard = Objects.requireNonNull(lockGuard);
 		this.unlocker = Objects.requireNonNull(unlocker);
@@ -113,6 +117,11 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void purgeOne(Long scanId, String lockOwner, String lockToken) {
+		if (problemRepository.existsByScanId(scanId)) {
+			persister.purgeIfLocked(scanId, lockOwner, lockToken);
+			log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, 0);
+			return;
+		}
 		List<cmc.delta.domain.problem.model.asset.Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
 		for (cmc.delta.domain.problem.model.asset.Asset asset : assets) {
 			try {

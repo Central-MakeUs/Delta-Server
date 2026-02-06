@@ -5,6 +5,8 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.prediction.ProblemScanTypePredictionJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
+import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
@@ -40,10 +42,7 @@ public class ScanPurgePersister {
 			if (!isLockedByMe(scanId, lockOwner, lockToken)) {
 				return;
 			}
-
-			if (problemRepository.existsByScanId(scanId)) {
-				return;
-			}
+			detachProblemIfExists(scanId);
 
 			Optional<ProblemScan> optional = scanRepository.findById(scanId);
 			if (optional.isEmpty()) {
@@ -54,6 +53,25 @@ public class ScanPurgePersister {
 			assetJpaRepository.deleteAllByScan_Id(scanId);
 			scanRepository.deleteById(scanId);
 		});
+	}
+
+	private void detachProblemIfExists(Long scanId) {
+		Optional<Problem> optionalProblem = problemRepository.findByScanId(scanId);
+		if (optionalProblem.isEmpty()) {
+			return;
+		}
+
+		Problem problem = optionalProblem.get();
+		if (problem.getOriginalStorageKey() == null || problem.getOriginalStorageKey().isBlank()) {
+			Optional<Asset> original = assetJpaRepository.findOriginalByScanId(scanId);
+			if (original.isEmpty()) {
+				return;
+			}
+			problem.attachOriginalStorageKeyIfEmpty(original.get().getStorageKey());
+		}
+
+		problem.detachScan();
+		problemRepository.save(problem);
 	}
 
 	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
