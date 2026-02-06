@@ -116,7 +116,7 @@ class ProblemTest {
 		Unit unit = mock(Unit.class);
 		cmc.delta.domain.curriculum.model.ProblemType type = mock(cmc.delta.domain.curriculum.model.ProblemType.class);
 		when(type.getId()).thenReturn("T0");
-		return Problem.create(user, scan, unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
+		return Problem.create(user, scan, "s3/k.png", unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
 	}
 
 	private void setId(Problem p, long id) {

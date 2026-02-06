@@ -107,6 +107,6 @@ class ProblemUpdateRequestValidatorTest {
 		ProblemScan scan = mock(ProblemScan.class);
 		Unit unit = mock(Unit.class);
 		ProblemType type = mock(ProblemType.class);
-		return Problem.create(user, scan, unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
+		return Problem.create(user, scan, "s3/k.png", unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
 	}
 }
