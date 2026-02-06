@@ -81,7 +81,6 @@ public class ProblemScrollQueryService {
 			return item;
 		}
 		ProblemListItemResponse.PreviewImageResponse nextPreview = new ProblemListItemResponse.PreviewImageResponse(
-			preview.assetId(),
 			preview.storageKey(),
 			viewUrl);
 		return item.withTypesAndPreview(item.types(), nextPreview);

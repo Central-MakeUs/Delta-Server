@@ -21,6 +21,6 @@ public record ProblemDetailResponse(
 	LocalDateTime completedAt,
 
 	LocalDateTime createdAt) {
-	public record OriginalImageResponse(Long assetId, String viewUrl) {
+	public record OriginalImageResponse(String viewUrl) {
 	}
 }

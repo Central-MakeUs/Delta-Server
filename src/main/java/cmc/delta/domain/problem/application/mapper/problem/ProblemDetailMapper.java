@@ -22,7 +22,7 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 
 	@Mapping(target = "types", expression = "java(List.of())")
 
-	@Mapping(target = "originalImage", expression = "java(new ProblemDetailResponse.OriginalImageResponse(null, viewUrl))")
+	@Mapping(target = "originalImage", expression = "java(new ProblemDetailResponse.OriginalImageResponse(viewUrl))")
 	@Mapping(target = "completed", expression = "java(row.completedAt() != null)")
 	ProblemDetailResponse toResponse(ProblemDetailRow row, String viewUrl);
 }
