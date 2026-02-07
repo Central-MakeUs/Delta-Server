@@ -79,6 +79,14 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		bumpScrollCache(userId);
 	}
 
+	@Override
+	@Transactional
+	public void deleteWrongAnswerCard(Long currentUserId, Long problemId) {
+		Problem problem = loadProblemOrThrow(problemId, currentUserId);
+		problemRepositoryPort.delete(problem);
+		bumpScrollCache(currentUserId);
+	}
+
 	private ProblemScan loadValidatedScan(Long userId, Long scanId) {
 		ProblemScan scan = scanValidator.getOwnedScan(userId, scanId);
 		scanValidator.validateScanIsAiDone(scan);

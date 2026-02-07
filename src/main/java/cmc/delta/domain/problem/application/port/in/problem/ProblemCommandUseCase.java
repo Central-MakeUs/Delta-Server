@@ -11,4 +11,6 @@ public interface ProblemCommandUseCase {
 	void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText);
 
 	void updateWrongAnswerCard(Long currentUserId, Long problemId, UpdateWrongAnswerCardCommand request);
+
+	void deleteWrongAnswerCard(Long currentUserId, Long problemId);
 }

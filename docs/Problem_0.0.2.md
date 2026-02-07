@@ -243,6 +243,16 @@ curl -X POST "https://api.example.com/api/v1/problems" \
 
 ---
 
+### `DELETE /api/v1/problems/{problemId}`
+
+- 설명: 내 오답카드 삭제
+- 인증: Required
+- Path: `problemId`: Long
+- Response: `ApiResponse<Void>`
+- 오류: 401, 404
+
+---
+
 ## ProblemStats
 
 - `GET /api/v1/problems/stats/units` — 단원별 오답 통계

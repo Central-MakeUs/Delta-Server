@@ -156,6 +156,15 @@ public final class ProblemApiDocs {
 		- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
 		""";
 
+	public static final String DELETE_WRONG_ANSWER_CARD = """
+		내 오답카드를 삭제합니다.
+
+		동작:
+		- 본인 소유 오답카드만 삭제할 수 있습니다. (본인 소유가 아니면 404 처리)
+		- 오답카드에 연결된 태그/선택지(ProblemChoice, ProblemUnitTag, ProblemTypeTag)는 함께 삭제됩니다.
+		- 스캔(ProblemScan) 및 이미지(Asset)는 즉시 삭제하지 않습니다. (별도 purge 정책으로 정리)
+		""";
+
 	public static final String STATS_BY_UNIT = """
 		내 오답카드를 단원(Unit) 기준으로 집계합니다.
 

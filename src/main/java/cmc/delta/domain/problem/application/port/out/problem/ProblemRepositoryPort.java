@@ -11,5 +11,7 @@ public interface ProblemRepositoryPort {
 
 	Optional<Problem> findByIdAndUserId(Long id, Long userId);
 
+	void delete(Problem problem);
+
 	boolean existsByScanId(Long scanId);
 }
