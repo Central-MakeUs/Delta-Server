@@ -130,6 +130,20 @@ class ProblemControllerWebMvcTest {
 		verify(problemQueryUseCase).getMyProblemDetail(10L, 5L);
 	}
 
+	@Test
+	@DisplayName("DELETE /problems/{id}: pathvariable 바인딩 + usecase 호출")
+	void delete_ok_bindsPath() throws Exception {
+		// given
+		UserPrincipal principal = principal(10L);
+
+		// when & then
+		mvc.perform(delete("/api/v1/problems/{problemId}", 5L)
+			.requestAttr(ATTR, principal))
+			.andExpect(status().isOk());
+
+		verify(problemCommandUseCase).deleteWrongAnswerCard(10L, 5L);
+	}
+
 	private UserPrincipal principal(long userId) {
 		UserPrincipal p = mock(UserPrincipal.class);
 		when(p.userId()).thenReturn(userId);
