@@ -1,5 +1,15 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Executor;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import cmc.delta.domain.problem.adapter.in.worker.properties.PurgeWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.AbstractClaimingScanWorker;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
@@ -10,16 +20,9 @@ import cmc.delta.domain.problem.adapter.in.worker.support.persistence.ScanPurgeP
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
+import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.global.storage.port.out.StoragePort;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Component
@@ -117,9 +120,9 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 	}
 
 	private void purgeOne(Long scanId, String lockOwner, String lockToken) {
-		List<cmc.delta.domain.problem.model.asset.Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
+		List<Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
 		int deletedCount = 0;
-		for (cmc.delta.domain.problem.model.asset.Asset asset : assets) {
+		for (Asset asset : assets) {
 			if (problemRepository.existsByOriginalStorageKey(asset.getStorageKey())) {
 				continue;
 			}

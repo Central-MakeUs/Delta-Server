@@ -124,6 +124,20 @@ class ProblemServiceImplTest {
 		verify(p).applyUpdate(update);
 	}
 
+	@Test
+	@DisplayName("deleteWrongAnswerCard: delete가 호출된다")
+	void deleteWrongAnswerCard_success() {
+		// given
+		Problem p = givenProblemOwned(10L, 1L);
+
+		// when
+		sut.deleteWrongAnswerCard(10L, 1L);
+
+		// then
+		verify(problemRepositoryPort).delete(p);
+		verify(scrollCacheEpochStore).bumpAfterCommit(10L);
+	}
+
 	private ProblemCreateResponse givenCreateFlowOk(long userId, CreateWrongAnswerCardCommand cmd) {
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getId()).thenReturn(1L);

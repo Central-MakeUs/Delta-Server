@@ -6,6 +6,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.AbstractExternalCallSc
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.AiFailureDecider;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
@@ -102,10 +103,21 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		ProblemScan scan = loadScanOrThrow(scanId);
 		AiValidatedInput input = validator.validateAndNormalize(scanId, scan);
 
-		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText());
+		AiCurriculumPrompt prompt = promptBuilder.build(input.userId(), input.normalizedOcrText(), input.ocrSignals());
 		AiCurriculumResult aiResult = aiClient.classifyCurriculum(prompt);
 
 		if (!isOwned(scanId, lockOwner, lockToken)) {
+			return;
+		}
+
+		if (!aiResult.isMathProblem()) {
+			persistUseCase.persistAiFailed(
+				scanId,
+				lockOwner,
+				lockToken,
+				FailureDecision.nonRetryable(FailureReason.AI_NOT_MATH),
+				batchNow);
+			log.info("AI 판별 결과 수학문제 아님 scanId={} 상태=FAILED", scanId);
 			return;
 		}
 

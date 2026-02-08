@@ -73,8 +73,8 @@ public class Problem extends BaseTimeEntity {
 	private Integer answerChoiceNo;
 
 	@Lob
-	@Column(name = "solution_text", columnDefinition = "MEDIUMTEXT")
-	private String solutionText;
+	@Column(name = "memo_text", columnDefinition = "MEDIUMTEXT")
+	private String memoText;
 
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
@@ -99,7 +99,7 @@ public class Problem extends BaseTimeEntity {
 		AnswerFormat answerFormat,
 		String answerValue,
 		Integer answerChoiceNo,
-		String solutionText) {
+		String memoText) {
 		Problem p = new Problem();
 		p.user = user;
 		p.scan = scan;
@@ -111,7 +111,7 @@ public class Problem extends BaseTimeEntity {
 		p.answerFormat = answerFormat;
 		p.answerValue = answerValue;
 		p.answerChoiceNo = answerChoiceNo;
-		p.solutionText = solutionText;
+		p.memoText = memoText;
 		return p;
 	}
 
@@ -129,8 +129,8 @@ public class Problem extends BaseTimeEntity {
 		this.scan = null;
 	}
 
-	public void complete(String solutionText, java.time.LocalDateTime now) {
-		updateSolutionText(solutionText);
+	public void complete(String memoText, java.time.LocalDateTime now) {
+		updateMemoText(memoText);
 		markCompletedAtIfEmpty(now);
 	}
 
@@ -143,8 +143,8 @@ public class Problem extends BaseTimeEntity {
 		applyValueAnswer(answerValue);
 	}
 
-	public void updateSolutionText(String solutionText) {
-		this.solutionText = solutionText;
+	public void updateMemoText(String memoText) {
+		this.memoText = memoText;
 	}
 
 	public void replaceTypes(java.util.List<ProblemType> types) {
@@ -165,8 +165,8 @@ public class Problem extends BaseTimeEntity {
 		if (cmd.hasAnswerChange()) {
 			updateAnswer(cmd.answerChoiceNo(), cmd.answerValue());
 		}
-		if (cmd.hasSolutionChange()) {
-			updateSolutionText(cmd.solutionText());
+		if (cmd.hasMemoChange()) {
+			updateMemoText(cmd.memoText());
 		}
 	}
 

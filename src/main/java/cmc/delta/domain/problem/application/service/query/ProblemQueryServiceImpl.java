@@ -183,7 +183,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			base.answerFormat(),
 			base.answerChoiceNo(),
 			base.answerValue(),
-			base.solutionText(),
+			base.memoText(),
 			base.completed(),
 			base.completedAt(),
 			base.createdAt());

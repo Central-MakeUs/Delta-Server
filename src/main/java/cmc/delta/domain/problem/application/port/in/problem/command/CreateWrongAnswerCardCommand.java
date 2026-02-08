@@ -10,5 +10,5 @@ public record CreateWrongAnswerCardCommand(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText) {
+	String memoText) {
 }

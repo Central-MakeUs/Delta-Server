@@ -13,7 +13,7 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 	@Mapping(target = "answerFormat", source = "row.answerFormat")
 	@Mapping(target = "answerChoiceNo", source = "row.answerChoiceNo")
 	@Mapping(target = "answerValue", source = "row.answerValue")
-	@Mapping(target = "solutionText", source = "row.solutionText")
+	@Mapping(target = "memoText", source = "row.memoText")
 	@Mapping(target = "completedAt", source = "row.completedAt")
 	@Mapping(target = "createdAt", source = "row.createdAt")
 

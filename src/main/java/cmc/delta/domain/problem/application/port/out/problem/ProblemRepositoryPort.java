@@ -13,6 +13,8 @@ public interface ProblemRepositoryPort {
 
 	Optional<Problem> findByScanId(Long scanId);
 
+	void delete(Problem problem);
+
 	boolean existsByOriginalStorageKey(String storageKey);
 
 	boolean existsByScanId(Long scanId);

@@ -41,7 +41,7 @@ public class ProblemDetailQuerySupport {
 				problem.answerFormat,
 				problem.answerChoiceNo,
 				problem.answerValue,
-				problem.solutionText,
+				problem.memoText,
 
 				problem.completedAt,
 				problem.createdAt))

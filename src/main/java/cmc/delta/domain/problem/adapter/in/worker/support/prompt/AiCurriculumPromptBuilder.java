@@ -5,6 +5,7 @@ import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +22,7 @@ public class AiCurriculumPromptBuilder {
 		this.problemTypeRepository = problemTypeRepository;
 	}
 
-	public AiCurriculumPrompt build(Long userId, String normalizedOcrText) {
+	public AiCurriculumPrompt build(Long userId, String normalizedOcrText, OcrSignalSummary ocrSignals) {
 		List<AiCurriculumPrompt.Option> subjectOptions = unitRepository.findAllRootUnitsActive()
 			.stream()
 			.map(this::toOption)
@@ -37,7 +38,7 @@ public class AiCurriculumPromptBuilder {
 			.map(this::toOption)
 			.toList();
 
-		return new AiCurriculumPrompt(normalizedOcrText, subjectOptions, unitOptions, typeOptions);
+		return new AiCurriculumPrompt(normalizedOcrText, ocrSignals, subjectOptions, unitOptions, typeOptions);
 	}
 
 	private AiCurriculumPrompt.Option toOption(Unit unit) {

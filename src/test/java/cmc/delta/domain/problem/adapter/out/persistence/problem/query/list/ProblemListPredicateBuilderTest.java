@@ -6,6 +6,7 @@ import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCon
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import com.querydsl.core.BooleanBuilder;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +19,7 @@ class ProblemListPredicateBuilderTest {
 	void buildMainWhere_alwaysHasUserId() {
 		// given
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), ProblemListSort.RECENT,
 			ProblemStatusFilter.ALL);
 
 		// when
@@ -33,9 +34,10 @@ class ProblemListPredicateBuilderTest {
 	void buildMainWhere_whenFiltersPresent_thenAddsConditions() {
 		// given
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition base = new ProblemListCondition(null, null, null, ProblemListSort.RECENT,
+		ProblemListCondition base = new ProblemListCondition(List.of(), List.of(), List.of(), ProblemListSort.RECENT,
 			ProblemStatusFilter.ALL);
-		ProblemListCondition cond = new ProblemListCondition("S1", "U1", "T1", ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of("S1"), List.of("U1"), List.of("T1"),
+			ProblemListSort.RECENT,
 			ProblemStatusFilter.ALL);
 
 		// when
@@ -53,7 +55,7 @@ class ProblemListPredicateBuilderTest {
 	void buildMainWhere_whenSolved_thenCompletedAtNotNull() {
 		// given
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), ProblemListSort.RECENT,
 			ProblemStatusFilter.SOLVED);
 
 		// when
@@ -68,7 +70,7 @@ class ProblemListPredicateBuilderTest {
 	void buildMainWhere_whenUnsolved_thenCompletedAtNull() {
 		// given
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(null, null, null, ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), ProblemListSort.RECENT,
 			ProblemStatusFilter.UNSOLVED);
 
 		// when
@@ -82,7 +84,7 @@ class ProblemListPredicateBuilderTest {
 	@DisplayName("문제 목록 count base where: status 조건은 의도적으로 제외")
 	void buildCountBaseWhere_excludesStatusFilter() {
 		// given
-		ProblemListCondition cond = new ProblemListCondition("S1", null, null, ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of("S1"), List.of(), List.of(), ProblemListSort.RECENT,
 			ProblemStatusFilter.SOLVED);
 
 		// when

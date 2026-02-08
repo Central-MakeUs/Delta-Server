@@ -8,6 +8,7 @@ import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,12 @@ class AiCurriculumPromptBuilderTest {
 			.thenReturn(List.of(new ProblemType("T1", "유형", 1, true, null, false)));
 
 		// when
-		AiCurriculumPrompt prompt = sut.build(10L, "ocr");
+		OcrSignalSummary signals = new OcrSignalSummary(1, 2, 0, 0);
+		AiCurriculumPrompt prompt = sut.build(10L, "ocr", signals);
 
 		// then
 		assertThat(prompt.ocrPlainText()).isEqualTo("ocr");
+		assertThat(prompt.ocrSignals()).isEqualTo(signals);
 		assertThat(prompt.subjects()).containsExactly(new AiCurriculumPrompt.Option("S1", "대단원"));
 		assertThat(prompt.units()).containsExactly(new AiCurriculumPrompt.Option("U1", "소단원"));
 		assertThat(prompt.types()).containsExactly(new AiCurriculumPrompt.Option("T1", "유형"));

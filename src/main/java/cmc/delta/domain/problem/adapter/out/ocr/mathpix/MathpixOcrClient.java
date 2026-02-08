@@ -84,6 +84,7 @@ public class MathpixOcrClient implements OcrClient {
 			LinkedHashMap<String, Object> options = new LinkedHashMap<>();
 			options.put("math_inline_delimiters", new String[] {"$", "$"});
 			options.put("rm_spaces", true);
+			options.put("include_line_data", true);
 			options.put("formats", new String[] {"text", "latex_styled"});
 			return objectMapper.writeValueAsString(options);
 		} catch (Exception e) {

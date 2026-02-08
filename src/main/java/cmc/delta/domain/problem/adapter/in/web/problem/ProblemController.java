@@ -27,6 +27,7 @@ import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -133,7 +134,7 @@ public class ProblemController {
 		Long problemId,
 		@RequestBody
 		ProblemCompleteRequest request) {
-		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
+		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.memoText());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 
@@ -174,6 +175,23 @@ public class ProblemController {
 		@RequestBody
 		ProblemUpdateRequest request) {
 		problemCommandUseCase.updateWrongAnswerCard(principal.userId(), problemId, request.toCommand());
+		return ApiResponses.success(SuccessCode.OK, null);
+	}
+
+	@Operation(summary = "오답카드 삭제", description = ProblemApiDocs.DELETE_WRONG_ANSWER_CARD)
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_NOT_FOUND,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@DeleteMapping("/{problemId}")
+	public ApiResponse<Void> deleteWrongAnswerCard(
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId) {
+		problemCommandUseCase.deleteWrongAnswerCard(principal.userId(), problemId);
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 }

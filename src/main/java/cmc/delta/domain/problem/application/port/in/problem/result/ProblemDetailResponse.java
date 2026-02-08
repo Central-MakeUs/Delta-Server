@@ -15,7 +15,7 @@ public record ProblemDetailResponse(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText,
+	String memoText,
 
 	boolean completed,
 	LocalDateTime completedAt,
