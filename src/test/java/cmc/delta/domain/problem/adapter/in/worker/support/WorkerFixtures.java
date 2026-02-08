@@ -39,12 +39,14 @@ public final class WorkerFixtures {
 	public static OcrResult ocrResult(String plain, String raw) {
 		OcrResult r = mock(OcrResult.class);
 		when(r.plainText()).thenReturn(plain);
+		when(r.latexStyled()).thenReturn(null);
 		when(r.rawJson()).thenReturn(raw);
 		return r;
 	}
 
 	public static AiCurriculumResult aiResult(String unitId, String typeId, double conf) {
 		AiCurriculumResult r = mock(AiCurriculumResult.class);
+		when(r.isMathProblem()).thenReturn(true);
 		when(r.predictedUnitId()).thenReturn(unitId);
 		when(r.predictedTypeId()).thenReturn(typeId);
 		when(r.confidence()).thenReturn(conf);
