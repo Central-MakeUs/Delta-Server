@@ -22,9 +22,13 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.*;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 class ProblemServiceImplTest {
 
@@ -79,6 +83,13 @@ class ProblemServiceImplTest {
 			fixedClock);
 	}
 
+	@AfterEach
+	void tearDown() {
+		if (TransactionSynchronizationManager.isSynchronizationActive()) {
+			TransactionSynchronizationManager.clearSynchronization();
+		}
+	}
+
 	@Test
 	@DisplayName("createWrongAnswerCard: 성공 시 mapper 응답을 반환한다")
 	void createWrongAnswerCard_success() {
@@ -125,10 +136,13 @@ class ProblemServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("deleteWrongAnswerCard: delete가 호출된다")
+	@DisplayName("deleteWrongAnswerCard: delete 후 afterCommit에서 이미지 삭제를 시도한다")
 	void deleteWrongAnswerCard_success() {
 		// given
 		Problem p = givenProblemOwned(10L, 1L);
+		when(p.getOriginalStorageKey()).thenReturn("s3/problem.png");
+		when(problemRepositoryPort.existsByOriginalStorageKey("s3/problem.png")).thenReturn(false);
+		TransactionSynchronizationManager.initSynchronization();
 
 		// when
 		sut.deleteWrongAnswerCard(10L, 1L);
@@ -136,6 +150,25 @@ class ProblemServiceImplTest {
 		// then
 		verify(problemRepositoryPort).delete(p);
 		verify(scrollCacheEpochStore).bumpAfterCommit(10L);
+		triggerAfterCommit();
+		verify(storagePort).deleteImage("s3/problem.png");
+	}
+
+	@Test
+	@DisplayName("deleteWrongAnswerCard: 다른 문제에서 참조중이면 이미지를 삭제하지 않는다")
+	void deleteWrongAnswerCard_whenOtherProblemUsesImage_thenSkipDelete() {
+		// given
+		Problem p = givenProblemOwned(10L, 1L);
+		when(p.getOriginalStorageKey()).thenReturn("s3/problem.png");
+		when(problemRepositoryPort.existsByOriginalStorageKey("s3/problem.png")).thenReturn(true);
+		TransactionSynchronizationManager.initSynchronization();
+
+		// when
+		sut.deleteWrongAnswerCard(10L, 1L);
+		triggerAfterCommit();
+
+		// then
+		verify(storagePort, never()).deleteImage(anyString());
 	}
 
 	private ProblemCreateResponse givenCreateFlowOk(long userId, CreateWrongAnswerCardCommand cmd) {
@@ -174,5 +207,12 @@ class ProblemServiceImplTest {
 		Problem p = mock(Problem.class);
 		when(problemRepositoryPort.findByIdAndUserId(problemId, userId)).thenReturn(java.util.Optional.of(p));
 		return p;
+	}
+
+	private void triggerAfterCommit() {
+		List<TransactionSynchronization> syncs = TransactionSynchronizationManager.getSynchronizations();
+		for (TransactionSynchronization sync : syncs) {
+			sync.afterCommit();
+		}
 	}
 }

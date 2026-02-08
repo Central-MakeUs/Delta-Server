@@ -28,9 +28,13 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProblemServiceImpl implements ProblemCommandUseCase {
@@ -88,7 +92,9 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Transactional
 	public void deleteWrongAnswerCard(Long currentUserId, Long problemId) {
 		Problem problem = loadProblemOrThrow(problemId, currentUserId);
+		String originalStorageKey = problem.getOriginalStorageKey();
 		problemRepositoryPort.delete(problem);
+		scheduleOriginalImageDeletion(originalStorageKey);
 		bumpScrollCache(currentUserId);
 	}
 
@@ -147,5 +153,33 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	private void bumpScrollCache(Long userId) {
 		scrollCacheEpochStore.bumpAfterCommit(userId);
+	}
+
+	private void scheduleOriginalImageDeletion(String storageKey) {
+		if (storageKey == null || storageKey.isBlank()) {
+			return;
+		}
+		Runnable deleteTask = () -> deleteOriginalImageBestEffort(storageKey);
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			deleteTask.run();
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				deleteTask.run();
+			}
+		});
+	}
+
+	private void deleteOriginalImageBestEffort(String storageKey) {
+		try {
+			if (problemRepositoryPort.existsByOriginalStorageKey(storageKey)) {
+				return;
+			}
+			storagePort.deleteImage(storageKey);
+		} catch (Exception e) {
+			log.warn("오답카드 원본 이미지 삭제 실패 storageKey={}", storageKey, e);
+		}
 	}
 }
