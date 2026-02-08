@@ -40,8 +40,8 @@ public class UserServiceImpl implements UserUseCase {
 	@Override
 	public void withdrawAccount(Long userId) {
 		User user = loadUser(userId);
-		deleteUser(user);
-		logUserDeleted(userId);
+		withdrawUser(user);
+		logUserWithdrawn(userId);
 	}
 
 	@Override
@@ -110,12 +110,15 @@ public class UserServiceImpl implements UserUseCase {
 		userRepositoryPort.save(user);
 	}
 
-	private void deleteUser(User user) {
-		userRepositoryPort.delete(user);
+	private void withdrawUser(User user) {
+		if (!user.isWithdrawn()) {
+			user.withdraw();
+		}
+		userRepositoryPort.save(user);
 	}
 
-	private void logUserDeleted(Long userId) {
-		log.info("event=user.delete userId={} result=success", userId);
+	private void logUserWithdrawn(Long userId) {
+		log.info("event=user.withdraw userId={} result=success", userId);
 	}
 
 	private void logOnboardingCompleted(long userId) {

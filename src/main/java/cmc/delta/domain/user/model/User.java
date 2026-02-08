@@ -1,11 +1,20 @@
 package cmc.delta.domain.user.model;
 
-import cmc.delta.domain.user.model.enums.UserStatus;
-import cmc.delta.global.persistence.BaseTimeEntity;
-import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import cmc.delta.domain.user.model.enums.UserStatus;
+import cmc.delta.global.persistence.BaseTimeEntity;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,7 +41,6 @@ public class User extends BaseTimeEntity {
 	@Column(name = "status", nullable = false)
 	private UserStatus status;
 
-	// name column removed; keep for compatibility until DB migration
 	@Deprecated
 	@Column(name = "name", length = 50)
 	private String name;
@@ -45,6 +53,9 @@ public class User extends BaseTimeEntity {
 
 	@Column(name = "profile_image_storage_key", length = 512)
 	private String profileImageStorageKey;
+
+	@Column(name = "withdrawn_at")
+	private Instant withdrawnAt;
 
 	private User(String email, String nickname, UserStatus status) {
 		this.email = normalize(email);
@@ -62,7 +73,11 @@ public class User extends BaseTimeEntity {
 
 	public void withdraw() {
 		this.status = UserStatus.WITHDRAWN;
+		if (this.withdrawnAt == null) {
+			this.withdrawnAt = Instant.now();
+		}
 	}
+
 
     public void updateProfileImage(String storageKey) {
         this.profileImageStorageKey = normalize(storageKey);
