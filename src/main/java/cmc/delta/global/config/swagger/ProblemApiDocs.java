@@ -123,7 +123,7 @@ public final class ProblemApiDocs {
 		  - TEXT/NUMBER/EXPRESSION: 단답/숫자/수식 텍스트 (answerValue 사용)
 
 		- answerChoiceNo/answerValue: 저장된 정답 값(없으면 null)
-		- solutionText: 저장된 풀이 텍스트(없으면 null)
+		- memoText: 저장된 메모 텍스트(없으면 null)
 
 		- completed: 오답 완료 여부 (completedAt != null)
 		- completedAt: 오답 완료 처리 시각(완료 전이면 null)
@@ -142,12 +142,12 @@ public final class ProblemApiDocs {
 		""";
 
 	public static final String UPDATE_WRONG_ANSWER_CARD = """
-		오답카드의 정답/풀이를 수정합니다.
+		오답카드의 정답/메모를 수정합니다.
 
 		수정 가능 필드:
 		- answerChoiceNo: 객관식 정답 번호 (answerFormat=CHOICE 인 문제에 사용)
 		- answerValue: 단답/서술/숫자/수식 정답 값 (answerFormat!=CHOICE 인 문제에 사용)
-		- solutionText: 풀이 텍스트
+		- memoText: 메모 텍스트
 
 		주의:
 		- 문제의 answerFormat(정답 형식)에 따라 유효한 필드가 다릅니다.

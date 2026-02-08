@@ -153,7 +153,7 @@ curl -X POST "https://api.example.com/api/v1/problem-scans" \
   "answerFormat":"TEXT",
   "answerChoiceNo":null,
   "answerValue":"ans",
-  "solutionText":"sol"
+  "memoText":"sol"
 }
 ```
 
@@ -183,7 +183,7 @@ curl -X POST "https://api.example.com/api/v1/problem-scans" \
 curl -X POST "https://api.example.com/api/v1/problems" \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer {accessToken}" \
-  -d '{"scanId":123,"finalUnitId":"U1","finalTypeIds":["T1"],"answerFormat":"TEXT","answerValue":"ans","solutionText":"sol"}' -i
+-d '{"scanId":123,"finalUnitId":"U1","finalTypeIds":["T1"],"answerFormat":"TEXT","answerValue":"ans","memoText":"sol"}' -i
 ```
 
 ---
@@ -217,7 +217,7 @@ curl -X POST "https://api.example.com/api/v1/problems" \
 {
   "answerChoiceNo":3,
   "answerValue":null,
-  "solutionText":"sol"
+  "memoText":"sol"
 }
 ```
 
@@ -234,7 +234,7 @@ curl -X POST "https://api.example.com/api/v1/problems" \
 
 ```json
 {
-  "solutionText":"sol"
+  "memoText":"sol"
 }
 ```
 
