@@ -41,7 +41,7 @@ public class ProblemCreateAssembler {
 			values.answerFormat(),
 			values.answerValue(),
 			values.answerChoiceNo(),
-			values.solutionText());
+			values.memoText());
 	}
 
 	private RenderMode requireRenderMode(ProblemScan scan) {
@@ -68,13 +68,13 @@ public class ProblemCreateAssembler {
 			command.answerFormat(),
 			command.answerValue(),
 			command.answerChoiceNo(),
-			command.solutionText());
+			command.memoText());
 	}
 
 	private record ProblemCreateValues(
 		AnswerFormat answerFormat,
 		String answerValue,
 		Integer answerChoiceNo,
-		String solutionText) {
+		String memoText) {
 	}
 }

@@ -21,7 +21,7 @@ public record ProblemDetailRow(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText,
+	String memoText,
 
 	LocalDateTime completedAt,
 	LocalDateTime createdAt) {

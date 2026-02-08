@@ -67,7 +67,7 @@ class ProblemUpdateRequestValidatorTest {
 		assertThat(out.hasAnswerChange()).isTrue();
 		assertThat(out.answerChoiceNo()).isEqualTo(3);
 		assertThat(out.answerValue()).isNull();
-		assertThat(out.hasSolutionChange()).isFalse();
+		assertThat(out.hasMemoChange()).isFalse();
 	}
 
 	@Test
@@ -87,8 +87,8 @@ class ProblemUpdateRequestValidatorTest {
 	}
 
 	@Test
-	@DisplayName("오답노트 수정 검증: solutionText는 trimToNull 처리")
-	void validateAndNormalize_whenSolutionText_thenTrimsSolution() {
+	@DisplayName("오답노트 수정 검증: memoText는 trimToNull 처리")
+	void validateAndNormalize_whenMemoText_thenTrimsMemo() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.TEXT);
 		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, "  ");
@@ -97,8 +97,8 @@ class ProblemUpdateRequestValidatorTest {
 		ProblemUpdateCommand out = validator.validateAndNormalize(p, cmd);
 
 		// then
-		assertThat(out.hasSolutionChange()).isTrue();
-		assertThat(out.solutionText()).isNull();
+		assertThat(out.hasMemoChange()).isTrue();
+		assertThat(out.memoText()).isNull();
 		assertThat(out.hasAnswerChange()).isFalse();
 	}
 

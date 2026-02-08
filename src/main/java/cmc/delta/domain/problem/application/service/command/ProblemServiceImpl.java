@@ -64,9 +64,9 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	@Override
 	@Transactional
-	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
+	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String memoText) {
 		Problem problem = loadProblemOrThrow(problemId, currentUserId);
-		completeProblem(problem, solutionText);
+		completeProblem(problem, memoText);
 		bumpScrollCache(currentUserId);
 	}
 
@@ -123,8 +123,8 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		problem.applyUpdate(updateCommand);
 	}
 
-	private void completeProblem(Problem problem, String solutionText) {
-		problem.complete(solutionText, LocalDateTime.now(clock));
+	private void completeProblem(Problem problem, String memoText) {
+		problem.complete(memoText, LocalDateTime.now(clock));
 	}
 
 	private void bumpScrollCache(Long userId) {

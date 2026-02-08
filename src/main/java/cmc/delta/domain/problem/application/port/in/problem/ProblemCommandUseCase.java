@@ -8,7 +8,7 @@ public interface ProblemCommandUseCase {
 
 	ProblemCreateResponse createWrongAnswerCard(Long currentUserId, CreateWrongAnswerCardCommand request);
 
-	void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText);
+	void completeWrongAnswerCard(Long currentUserId, Long problemId, String memoText);
 
 	void updateWrongAnswerCard(Long currentUserId, Long problemId, UpdateWrongAnswerCardCommand request);
 

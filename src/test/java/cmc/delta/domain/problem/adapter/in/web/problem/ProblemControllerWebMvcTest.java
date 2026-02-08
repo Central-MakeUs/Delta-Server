@@ -100,7 +100,7 @@ class ProblemControllerWebMvcTest {
 	}
 
 	@Test
-	@DisplayName("POST /problems/{id}/complete: JSON 바인딩(solutionText) + usecase 호출")
+	@DisplayName("POST /problems/{id}/complete: JSON 바인딩(memoText) + usecase 호출")
 	void complete_ok_bindsBody() throws Exception {
 		// given
 		UserPrincipal principal = principal(10L);
@@ -109,7 +109,7 @@ class ProblemControllerWebMvcTest {
 		mvc.perform(post("/api/v1/problems/{problemId}/complete", 5L)
 			.requestAttr(ATTR, principal)
 			.contentType(MediaType.APPLICATION_JSON)
-			.content("{\"solutionText\":\"ans\"}"))
+			.content("{\"memoText\":\"ans\"}"))
 			.andExpect(status().isOk());
 
 		verify(problemCommandUseCase).completeWrongAnswerCard(10L, 5L, "ans");

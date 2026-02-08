@@ -134,7 +134,7 @@ public class ProblemController {
 		Long problemId,
 		@RequestBody
 		ProblemCompleteRequest request) {
-		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.solutionText());
+		problemCommandUseCase.completeWrongAnswerCard(principal.userId(), problemId, request.memoText());
 		return ApiResponses.success(SuccessCode.OK, null);
 	}
 
