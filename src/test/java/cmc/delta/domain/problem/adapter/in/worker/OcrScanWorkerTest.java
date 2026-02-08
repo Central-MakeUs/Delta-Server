@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
 import static cmc.delta.domain.problem.adapter.in.worker.support.WorkerFixtures.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -14,6 +15,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
@@ -24,6 +26,7 @@ import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -57,9 +60,9 @@ class OcrScanWorkerTest {
 		lockGuard = mock(ScanLockGuard.class);
 		unlocker = mock(ScanUnlocker.class);
 
-		failureDecider = mock(OcrFailureDecider.class);
+		failureDecider = new OcrFailureDecider();
 
-		sut = new TestableOcrScanWorker(
+			sut = new TestableOcrScanWorker(
 			Clock.systemDefaultZone(),
 			tx,
 			direct,
@@ -67,6 +70,8 @@ class OcrScanWorkerTest {
 			storageReader,
 			ocrClient,
 			new OcrWorkerProperties(2000L, 10, 30L, 1, 1),
+			new cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor(
+				new com.fasterxml.jackson.databind.ObjectMapper()),
 			lockGuard,
 			unlocker,
 			mock(BacklogLogger.class),
@@ -77,6 +82,35 @@ class OcrScanWorkerTest {
 	}
 
 	@Test
+	@DisplayName("OCR line_data에 code/pseudocode가 있으면 OCR_NOT_MATH로 실패 저장된다")
+	void codeLine_failsWithNotMath() {
+		// given
+		Long scanId = 3L;
+		LocalDateTime batchNow = LocalDateTime.of(2026, 1, 21, 10, 0);
+
+		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
+
+		Asset asset = asset("s3/key-3");
+		when(validator.requireOriginalAsset(scanId)).thenReturn(asset);
+		when(storageReader.readBytes("s3/key-3")).thenReturn(new byte[] {9});
+
+		String rawJson = "{\"text\":\"import x;\",\"line_data\":[{\"type\":\"code\"}]}";
+		OcrResult result = ocrResult("import x;", rawJson);
+		when(ocrClient.recognize(any(), anyString())).thenReturn(result);
+
+		// when
+		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);
+
+		// then
+		ArgumentCaptor<FailureDecision> decisionCaptor = ArgumentCaptor.forClass(FailureDecision.class);
+		verify(persister).persistOcrFailed(eq(scanId), eq(OWNER), eq(TOKEN), decisionCaptor.capture(), eq(batchNow));
+		FailureDecision decision = decisionCaptor.getValue();
+		assertThat(decision.reasonCode()).isEqualTo(FailureReason.OCR_NOT_MATH);
+		assertThat(decision.retryable()).isFalse();
+		verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
+		verify(persister, never()).persistOcrSucceeded(anyLong(), anyString(), anyString(), any(), any());
+	}
+
 	@DisplayName("성공: validator→storageReader→ocrClient→persistOcrSucceeded→unlock 순으로 수행된다")
 	void success_persistsAndUnlocks() {
 		// given
@@ -148,6 +182,7 @@ class OcrScanWorkerTest {
 			ObjectStorageReader storageReader,
 			OcrClient ocrClient,
 			OcrWorkerProperties properties,
+			cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor signalExtractor,
 			ScanLockGuard lockGuard,
 			ScanUnlocker unlocker,
 			BacklogLogger backlogLogger,
@@ -163,6 +198,7 @@ class OcrScanWorkerTest {
 				storageReader,
 				ocrClient,
 				properties,
+				signalExtractor,
 				lockGuard,
 				unlocker,
 				backlogLogger,
