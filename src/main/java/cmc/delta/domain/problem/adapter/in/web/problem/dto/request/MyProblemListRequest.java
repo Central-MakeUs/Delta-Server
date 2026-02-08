@@ -2,11 +2,12 @@ package cmc.delta.domain.problem.adapter.in.web.problem.dto.request;
 
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
+import java.util.List;
 
 public record MyProblemListRequest(
-	String subjectId,
-	String unitId,
-	String typeId,
+	List<String> subjectIds,
+	List<String> unitIds,
+	List<String> typeIds,
 	ProblemListSort sort,
 	ProblemStatusFilter status,
 	Integer page,

@@ -27,9 +27,9 @@ public final class ProblemApiDocs {
 		내 오답카드를 페이징 조회합니다.
 
 		필터(선택):
-		- subjectId: 과목(Unit) ID (부모 단원, parent_id = null) 예) U_COMMON_1
-		- unitId: 단원(Unit) ID (자식 단원, parent_id = subjectId) 예) U_C1_POLY
-		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+		- subjectIds: 과목(Unit) ID 목록 (부모 단원, parent_id = null)
+		- unitIds: 단원(Unit) ID 목록 (자식 단원)
+		- typeIds: 문제 유형(ProblemType) ID 목록
 
 		정렬(sort):
 		- RECENT: 최신순(기본)
@@ -69,9 +69,9 @@ public final class ProblemApiDocs {
 		- GET /api/v1/problems/scroll
 
 		필터(선택):
-		- subjectId: 과목(Unit) ID (부모 단원) 예) U_COMMON_1
-		- unitId: 단원(Unit) ID (자식 단원) 예) U_C1_POLY
-		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+		- subjectIds: 과목(Unit) ID 목록 (부모 단원)
+		- unitIds: 단원(Unit) ID 목록 (자식 단원)
+		- typeIds: 문제 유형(ProblemType) ID 목록
 
 		정렬(sort):
 		- RECENT: 최신순(기본)
