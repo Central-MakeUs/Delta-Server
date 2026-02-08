@@ -23,6 +23,15 @@ public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, Prob
 	""")
 	List<Problem> findKeyBackfillCandidates(Pageable pageable);
 
+	@Query("""
+		select p.originalStorageKey
+		  from Problem p
+		 where p.user.id = :userId
+		   and p.originalStorageKey is not null
+		   and p.originalStorageKey <> ''
+	""")
+	List<String> findOriginalStorageKeysByUserId(Long userId);
+
 	Optional<Problem> findByScan_Id(Long scanId);
 
 	@Override

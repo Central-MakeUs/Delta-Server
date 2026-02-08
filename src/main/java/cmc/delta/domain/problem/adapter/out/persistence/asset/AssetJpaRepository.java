@@ -5,12 +5,21 @@ import cmc.delta.domain.problem.model.enums.AssetType;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AssetJpaRepository extends JpaRepository<Asset, Long> {
 
 	Optional<Asset> findFirstByScan_IdAndAssetTypeAndSlot(Long scanId, AssetType assetType, int slot);
 
 	List<Asset> findAllByScan_Id(Long scanId);
+
+	@Query("""
+		select a.storageKey
+		  from Asset a
+		 where a.scan.user.id = :userId
+	""")
+	List<String> findStorageKeysByUserId(@Param("userId") Long userId);
 
 	void deleteAllByScan_Id(Long scanId);
 
