@@ -51,6 +51,24 @@ class ProblemListPredicateBuilderTest {
 	}
 
 	@Test
+	@DisplayName("문제 목록 where: typeIds 필터는 finalType 또는 typeTag(exists) 기준으로 적용됨")
+	void buildMainWhere_whenTypeIdsPresent_thenUsesTypeTagExists() {
+		// given
+		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of("T_ABS"),
+			ProblemListSort.RECENT,
+			ProblemStatusFilter.ALL);
+
+		// when
+		String expr = builder.buildMainWhere(10L, cond, p).getValue().toString();
+
+		// then
+		assertThat(expr)
+			.contains("problem.finalType.id")
+			.contains("exists");
+	}
+
+	@Test
 	@DisplayName("문제 목록 where: status=SOLVED면 completedAt is not null")
 	void buildMainWhere_whenSolved_thenCompletedAtNotNull() {
 		// given
@@ -93,5 +111,23 @@ class ProblemListPredicateBuilderTest {
 
 		// then
 		assertThat(where.getValue().toString()).doesNotContain("completedAt");
+	}
+
+	@Test
+	@DisplayName("문제 목록 count base where: typeIds 필터는 finalType 또는 typeTag(exists) 기준으로 적용됨")
+	void buildCountBaseWhere_whenTypeIdsPresent_thenUsesTypeTagExists() {
+		// given
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of("T_ABS"), ProblemListSort.RECENT,
+			ProblemStatusFilter.ALL);
+
+		// when
+		BooleanBuilder where = builder.buildCountBaseWhere(10L, cond,
+			cmc.delta.domain.problem.model.problem.QProblem.problem);
+		String expr = where.getValue().toString();
+
+		// then
+		assertThat(expr)
+			.contains("problem.finalType.id")
+			.contains("exists");
 	}
 }
