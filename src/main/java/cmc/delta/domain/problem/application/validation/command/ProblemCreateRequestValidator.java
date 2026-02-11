@@ -57,7 +57,10 @@ public class ProblemCreateRequestValidator {
 		requireAnswerFormat(answerFormat);
 
 		if (answerFormat == AnswerFormat.CHOICE) {
-			validateChoiceAnswer(command.answerChoiceNo());
+			Integer answerChoiceNo = command.answerChoiceNo();
+			if (answerChoiceNo != null) {
+				validateChoiceAnswer(answerChoiceNo);
+			}
 			return;
 		}
 	}

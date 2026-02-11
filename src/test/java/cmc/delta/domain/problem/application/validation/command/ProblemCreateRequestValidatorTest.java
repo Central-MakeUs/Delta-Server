@@ -137,8 +137,8 @@ class ProblemCreateRequestValidatorTest {
 	}
 
 	@Test
-	@DisplayName("오답노트 생성 검증: 객관식인데 answerChoiceNo가 null이면 INVALID_REQUEST")
-	void validate_whenChoiceAndAnswerChoiceNoNull_thenThrowsInvalidRequest() {
+	@DisplayName("오답노트 생성 검증: 객관식인데 answerChoiceNo가 null이어도 예외가 발생하지 않음")
+	void validate_whenChoiceAndAnswerChoiceNoNull_thenDoesNotThrow() {
 		// given
 		CreateWrongAnswerCardCommand cmd = new CreateWrongAnswerCardCommand(
 			1L,
@@ -149,13 +149,8 @@ class ProblemCreateRequestValidatorTest {
 			null,
 			null);
 
-		// when
-		ProblemValidationException ex = catchThrowableOfType(
-			() -> validator.validate(cmd),
-			ProblemValidationException.class);
-
-		// then
-		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.INVALID_REQUEST);
+		// when/then
+		assertThatCode(() -> validator.validate(cmd)).doesNotThrowAnyException();
 	}
 
 	@Test
