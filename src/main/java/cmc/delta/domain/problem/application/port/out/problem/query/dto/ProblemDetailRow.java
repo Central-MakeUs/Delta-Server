@@ -14,7 +14,6 @@ public record ProblemDetailRow(
 
 	String typeId,
 	String typeName,
-	Long assetId,
 	String storageKey,
 
 	AnswerFormat answerFormat,

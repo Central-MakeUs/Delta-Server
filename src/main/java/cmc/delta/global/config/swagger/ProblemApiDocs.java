@@ -115,7 +115,6 @@ public final class ProblemApiDocs {
 		  - type: 문제 유형(ProblemType)
 
 		- originalImage:
-		  - assetId: 원본 이미지 Asset ID
 		  - viewUrl: 원본 이미지 Presigned GET URL (만료 시간 존재)
 
 		- answerFormat: 정답 형식
