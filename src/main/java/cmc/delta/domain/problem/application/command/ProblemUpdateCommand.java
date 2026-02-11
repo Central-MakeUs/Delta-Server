@@ -3,11 +3,11 @@ package cmc.delta.domain.problem.application.command;
 public record ProblemUpdateCommand(
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText,
+	String memoText,
 	boolean hasAnswerChange,
-	boolean hasSolutionChange) {
+	boolean hasMemoChange) {
 
 	public boolean hasNoUpdates() {
-		return !hasAnswerChange && !hasSolutionChange;
+		return !hasAnswerChange && !hasMemoChange;
 	}
 }

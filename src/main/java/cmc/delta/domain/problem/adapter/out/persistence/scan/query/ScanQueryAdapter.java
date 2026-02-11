@@ -42,7 +42,8 @@ public class ScanQueryAdapter implements ScanQueryPort {
 				unit.name,
 				type.id,
 				type.name,
-				scan.needsReview))
+				scan.needsReview,
+				scan.failReason))
 			.from(scan)
 			.join(asset).on(
 				asset.scan.id.eq(scan.id)

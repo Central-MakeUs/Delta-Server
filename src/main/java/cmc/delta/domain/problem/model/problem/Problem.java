@@ -39,9 +39,12 @@ public class Problem extends BaseTimeEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
-	@OneToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "scan_id", nullable = false, unique = true)
+	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "scan_id", unique = true)
 	private ProblemScan scan;
+
+	@Column(name = "original_storage_key", length = 255)
+	private String originalStorageKey;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "final_unit_id", nullable = false)
@@ -70,8 +73,8 @@ public class Problem extends BaseTimeEntity {
 	private Integer answerChoiceNo;
 
 	@Lob
-	@Column(name = "solution_text", columnDefinition = "MEDIUMTEXT")
-	private String solutionText;
+	@Column(name = "memo_text", columnDefinition = "MEDIUMTEXT")
+	private String memoText;
 
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
@@ -88,6 +91,7 @@ public class Problem extends BaseTimeEntity {
 	public static Problem create(
 		User user,
 		ProblemScan scan,
+		String originalStorageKey,
 		Unit finalUnit,
 		ProblemType finalType,
 		RenderMode renderMode,
@@ -95,10 +99,11 @@ public class Problem extends BaseTimeEntity {
 		AnswerFormat answerFormat,
 		String answerValue,
 		Integer answerChoiceNo,
-		String solutionText) {
+		String memoText) {
 		Problem p = new Problem();
 		p.user = user;
 		p.scan = scan;
+		p.originalStorageKey = originalStorageKey;
 		p.finalUnit = finalUnit;
 		p.finalType = finalType;
 		p.renderMode = renderMode;
@@ -106,12 +111,26 @@ public class Problem extends BaseTimeEntity {
 		p.answerFormat = answerFormat;
 		p.answerValue = answerValue;
 		p.answerChoiceNo = answerChoiceNo;
-		p.solutionText = solutionText;
+		p.memoText = memoText;
 		return p;
 	}
 
-	public void complete(String solutionText, java.time.LocalDateTime now) {
-		updateSolutionText(solutionText);
+	public void attachOriginalStorageKeyIfEmpty(String storageKey) {
+		if (storageKey == null || storageKey.isBlank()) {
+			return;
+		}
+		if (this.originalStorageKey != null && !this.originalStorageKey.isBlank()) {
+			return;
+		}
+		this.originalStorageKey = storageKey;
+	}
+
+	public void detachScan() {
+		this.scan = null;
+	}
+
+	public void complete(String memoText, java.time.LocalDateTime now) {
+		updateMemoText(memoText);
 		markCompletedAtIfEmpty(now);
 	}
 
@@ -124,8 +143,8 @@ public class Problem extends BaseTimeEntity {
 		applyValueAnswer(answerValue);
 	}
 
-	public void updateSolutionText(String solutionText) {
-		this.solutionText = solutionText;
+	public void updateMemoText(String memoText) {
+		this.memoText = memoText;
 	}
 
 	public void replaceTypes(java.util.List<ProblemType> types) {
@@ -146,8 +165,8 @@ public class Problem extends BaseTimeEntity {
 		if (cmd.hasAnswerChange()) {
 			updateAnswer(cmd.answerChoiceNo(), cmd.answerValue());
 		}
-		if (cmd.hasSolutionChange()) {
-			updateSolutionText(cmd.solutionText());
+		if (cmd.hasMemoChange()) {
+			updateMemoText(cmd.memoText());
 		}
 	}
 

@@ -27,6 +27,7 @@ class ProblemScanQueryValidatorTest {
 			null,
 			null,
 			null,
+			null,
 			null);
 
 		// when

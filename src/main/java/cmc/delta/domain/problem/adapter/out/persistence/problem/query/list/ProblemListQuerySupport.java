@@ -8,8 +8,6 @@ import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCon
 import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
-import cmc.delta.domain.problem.model.asset.QAsset;
-import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import com.querydsl.core.BooleanBuilder;
@@ -124,17 +122,13 @@ public class ProblemListQuerySupport {
 				p.unit.name,
 				p.type.id,
 				p.type.name,
-				p.asset.id,
-				p.asset.storageKey,
+				p.problem.originalStorageKey,
 				p.problem.completedAt,
 				p.problem.createdAt))
 			.from(p.problem)
 			.join(p.problem.finalUnit, p.unit)
 			.leftJoin(p.unit.parent, p.subject)
 			.join(p.problem.finalType, p.type)
-			.join(p.asset).on(
-				p.asset.scan.id.eq(p.problem.scan.id)
-					.and(p.asset.assetType.eq(AssetType.ORIGINAL)))
 			.where(where);
 	}
 
@@ -156,14 +150,12 @@ public class ProblemListQuerySupport {
 		final QUnit unit;
 		final QUnit subject;
 		final QProblemType type;
-		final QAsset asset;
 
-		private Paths(QProblem problem, QUnit unit, QUnit subject, QProblemType type, QAsset asset) {
+		private Paths(QProblem problem, QUnit unit, QUnit subject, QProblemType type) {
 			this.problem = problem;
 			this.unit = unit;
 			this.subject = subject;
 			this.type = type;
-			this.asset = asset;
 		}
 
 		static Paths create() {
@@ -171,8 +163,7 @@ public class ProblemListQuerySupport {
 				QProblem.problem,
 				QUnit.unit,
 				new QUnit("subject"),
-				QProblemType.problemType,
-				QAsset.asset);
+				QProblemType.problemType);
 		}
 	}
 }

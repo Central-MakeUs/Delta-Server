@@ -25,6 +25,10 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 		"POST /api/v1/auth/logout",
 		"POST /api/v1/auth/reissue");
 
+	private static final Set<String> WITHDRAWN_ALLOWLIST = Set.of(
+		"POST /api/v1/users/withdrawal",
+		"POST /api/v1/auth/logout");
+
 	public OnboardingBlockFilter(UserStatusQuery userStatusQuery) {
 		this.userStatusQuery = userStatusQuery;
 	}
@@ -41,12 +45,20 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 			return;
 		}
 
+		UserStatus status = userStatusQuery.getStatus(principal.userId());
+		if (status == UserStatus.WITHDRAWN) {
+			if (isWithdrawnAllowed(request)) {
+				filterChain.doFilter(request, response);
+				return;
+			}
+			throw new JwtAuthenticationException(ErrorCode.USER_WITHDRAWN);
+		}
+
 		if (isAllowed(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
-		UserStatus status = userStatusQuery.getStatus(principal.userId());
 		if (status == UserStatus.ONBOARDING_REQUIRED) {
 			throw new JwtAuthenticationException(ErrorCode.USER_ONBOARDING_REQUIRED);
 		}
@@ -57,5 +69,10 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 	private boolean isAllowed(HttpServletRequest request) {
 		String key = request.getMethod() + " " + request.getRequestURI();
 		return ALLOWLIST.contains(key);
+	}
+
+	private boolean isWithdrawnAllowed(HttpServletRequest request) {
+		String key = request.getMethod() + " " + request.getRequestURI();
+		return WITHDRAWN_ALLOWLIST.contains(key);
 	}
 }

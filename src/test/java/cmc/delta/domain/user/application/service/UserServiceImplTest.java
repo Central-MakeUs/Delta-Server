@@ -23,7 +23,6 @@ import org.junit.jupiter.api.Test;
 class UserServiceImplTest {
 
 	private static final long USER_ID = 999L;
-	private static final int DELETE_CALLS = 1;
 	private static final String NICKNAME_KIM = "김철수";
 	private static final String NICKNAME_HONG = "홍길동";
 	private static final int YEAR_2000 = 2000;
@@ -85,15 +84,16 @@ class UserServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("회원 탈퇴: 유저가 있으면 delete가 호출되고 유저가 삭제됨")
-	void withdrawAccount_whenUserExists_thenDeletesUser() {
+	@DisplayName("회원 탈퇴: 유저가 있으면 WITHDRAWN으로 전환되고 하드 삭제는 하지 않음")
+	void withdrawAccount_whenUserExists_thenWithdrawsUser() {
 		User user = givenActiveUser();
 
 		userService.withdrawAccount(user.getId());
 
-		assertThat(userRepositoryPort.deleteCallCount()).isEqualTo(DELETE_CALLS);
-		assertThat(userRepositoryPort.deletedIds()).containsExactly(user.getId());
-		assertThat(userRepositoryPort.findById(user.getId())).isEmpty();
+		assertThat(userRepositoryPort.deleteCallCount()).isZero();
+		assertThat(userRepositoryPort.deletedIds()).isEmpty();
+		User updated = userRepositoryPort.getReferenceById(user.getId());
+		assertThat(updated.getStatus()).isEqualTo(UserStatus.WITHDRAWN);
 	}
 
 	@Test
@@ -107,16 +107,13 @@ class UserServiceImplTest {
 	}
 
 	@Test
-	@DisplayName("회원 탈퇴: 이미 삭제된 유저를 다시 탈퇴하면 USER_NOT_FOUND가 발생함(하드 삭제 정책)")
-	void withdrawAccount_whenAlreadyDeleted_thenThrowsUserNotFound() {
+	@DisplayName("회원 탈퇴: 이미 탈퇴한 유저라도 재호출하면 멱등으로 동작함")
+	void withdrawAccount_whenAlreadyWithdrawn_thenIdempotent() {
 		User user = givenActiveUser();
 		userService.withdrawAccount(user.getId());
-
-		BusinessException ex = catchThrowableOfType(
-			() -> userService.withdrawAccount(user.getId()),
-			BusinessException.class);
-
-		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.USER_NOT_FOUND);
+		userService.withdrawAccount(user.getId());
+		assertThat(userRepositoryPort.deleteCallCount()).isZero();
+		assertThat(userRepositoryPort.getReferenceById(user.getId()).getStatus()).isEqualTo(UserStatus.WITHDRAWN);
 	}
 
 	@Test

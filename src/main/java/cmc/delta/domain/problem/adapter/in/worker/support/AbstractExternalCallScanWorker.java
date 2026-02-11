@@ -5,6 +5,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
+import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executor;
@@ -79,6 +80,11 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 	}
 
 	private void logFailure(Long scanId, FailureDecision decision, Exception exception) {
+		if (exception instanceof ProblemScanWorkerException) {
+			log.warn("{} 처리 실패(비재시도) scanId={} reason={}", identity.label(), scanId,
+				logPolicy.reasonCode(decision));
+			return;
+		}
 		if (shouldSuppressStacktrace(exception)) {
 			RestClientResponseException rest = (RestClientResponseException)exception;
 			log.warn(

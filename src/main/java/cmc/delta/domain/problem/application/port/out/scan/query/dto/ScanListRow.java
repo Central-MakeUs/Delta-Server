@@ -18,6 +18,7 @@ public class ScanListRow {
 	private final String typeName;
 
 	private final Boolean needsReview;
+	private final String failReason;
 
 	public ScanListRow(
 		Long scanId,
@@ -29,7 +30,8 @@ public class ScanListRow {
 		String unitName,
 		String typeId,
 		String typeName,
-		Boolean needsReview) {
+		Boolean needsReview,
+		String failReason) {
 		this.scanId = scanId;
 		this.userId = userId;
 		this.status = status;
@@ -40,6 +42,7 @@ public class ScanListRow {
 		this.typeId = typeId;
 		this.typeName = typeName;
 		this.needsReview = needsReview;
+		this.failReason = failReason;
 	}
 
 	public Long getScanId() {
@@ -80,5 +83,9 @@ public class ScanListRow {
 
 	public Boolean getNeedsReview() {
 		return needsReview;
+	}
+
+	public String getFailReason() {
+		return failReason;
 	}
 }

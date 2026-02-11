@@ -14,14 +14,12 @@ public record ProblemDetailRow(
 
 	String typeId,
 	String typeName,
-
-	Long assetId,
 	String storageKey,
 
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText,
+	String memoText,
 
 	LocalDateTime completedAt,
 	LocalDateTime createdAt) {

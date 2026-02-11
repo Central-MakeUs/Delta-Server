@@ -7,6 +7,7 @@ CREATE TABLE users (
 	birth_date DATE NULL,
 	terms_agreed_at TIMESTAMP(6) NULL,
 	profile_image_storage_key VARCHAR(512) NULL,
+	withdrawn_at TIMESTAMP(6) NULL,
 	created_at DATETIME(6) NOT NULL,
 	updated_at DATETIME(6) NOT NULL,
 	PRIMARY KEY (id),

@@ -20,20 +20,20 @@ public class ProblemUpdateRequestValidator {
 		}
 
 		AnswerUpdate answerUpdate = resolveAnswerUpdate(problem, command, flags);
-		String normalizedSolutionText = normalizeSolutionText(command.solutionText());
+		String normalizedMemoText = normalizeMemoText(command.memoText());
 
 		return new ProblemUpdateCommand(
 			answerUpdate.answerChoiceNo(),
 			answerUpdate.answerValue(),
-			normalizedSolutionText,
+			normalizedMemoText,
 			flags.hasAnswerChange(),
-			flags.hasSolutionChange());
+			flags.hasMemoChange());
 	}
 
 	private UpdateChangeFlags readFlags(UpdateWrongAnswerCardCommand command) {
 		boolean hasAnswerChange = command.answerChoiceNo() != null || command.answerValue() != null;
-		boolean hasSolutionChange = command.solutionText() != null;
-		return new UpdateChangeFlags(hasAnswerChange, hasSolutionChange);
+		boolean hasMemoChange = command.memoText() != null;
+		return new UpdateChangeFlags(hasAnswerChange, hasMemoChange);
 	}
 
 	private AnswerUpdate resolveAnswerUpdate(
@@ -62,8 +62,8 @@ public class ProblemUpdateRequestValidator {
 		return trimToNull(answerValue);
 	}
 
-	private String normalizeSolutionText(String solutionText) {
-		return trimToNull(solutionText);
+	private String normalizeMemoText(String memoText) {
+		return trimToNull(memoText);
 	}
 
 	private String trimToNull(String v) {
@@ -74,9 +74,9 @@ public class ProblemUpdateRequestValidator {
 		return trimmed.isEmpty() ? null : trimmed;
 	}
 
-	private record UpdateChangeFlags(boolean hasAnswerChange, boolean hasSolutionChange) {
+	private record UpdateChangeFlags(boolean hasAnswerChange, boolean hasMemoChange) {
 		private boolean hasNoChanges() {
-			return !hasAnswerChange && !hasSolutionChange;
+			return !hasAnswerChange && !hasMemoChange;
 		}
 	}
 

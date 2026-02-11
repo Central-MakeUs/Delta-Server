@@ -15,12 +15,12 @@ public record ProblemDetailResponse(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText,
+	String memoText,
 
 	boolean completed,
 	LocalDateTime completedAt,
 
 	LocalDateTime createdAt) {
-	public record OriginalImageResponse(Long assetId, String viewUrl) {
+	public record OriginalImageResponse(String viewUrl) {
 	}
 }

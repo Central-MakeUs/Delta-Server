@@ -33,6 +33,15 @@ public class FakeObjectStorage implements ObjectStorage {
 		store.remove(storageKey);
 	}
 
+	@Override
+	public void copy(String sourceStorageKey, String destinationStorageKey) {
+		byte[] bytes = store.get(sourceStorageKey);
+		if (bytes == null) {
+			throw new IllegalStateException("OBJECT_NOT_FOUND");
+		}
+		store.put(destinationStorageKey, bytes);
+	}
+
 	public boolean exists(String storageKey) {
 		return store.containsKey(storageKey);
 	}

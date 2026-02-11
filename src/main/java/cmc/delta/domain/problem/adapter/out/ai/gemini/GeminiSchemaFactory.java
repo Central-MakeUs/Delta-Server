@@ -19,6 +19,7 @@ final class GeminiSchemaFactory {
 		return Map.of(
 			"type", "OBJECT",
 			"properties", Map.of(
+				"is_math_problem", Map.of("type", "BOOLEAN"),
 				"predicted_subject_id", Map.of("type", "STRING"),
 				"predicted_unit_id", Map.of("type", "STRING"),
 				"predicted_type_id", Map.of("type", "STRING"),
@@ -27,6 +28,7 @@ final class GeminiSchemaFactory {
 				"unit_candidates", candidateArraySchema,
 				"type_candidates", candidateArraySchema),
 			"required", List.of(
+				"is_math_problem",
 				"predicted_subject_id",
 				"predicted_unit_id",
 				"predicted_type_id",

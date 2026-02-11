@@ -9,8 +9,10 @@ import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCas
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
+import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
+import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
 import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateRequestValidator;
@@ -21,19 +23,26 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	private final ProblemRepositoryPort problemRepositoryPort;
 	private final UserRepositoryPort userRepositoryPort;
+	private final AssetRepositoryPort assetRepositoryPort;
+	private final StoragePort storagePort;
 
 	private final ProblemCreateRequestValidator requestValidator;
 	private final ProblemCreateScanValidator scanValidator;
@@ -56,7 +65,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		List<ProblemType> finalTypes = loadFinalTypesOrThrow(currentUserId, command.finalTypeIds());
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembleProblem(userRef, scan, finalUnit, finalTypes, command);
+		Problem newProblem = assembleProblem(currentUserId, userRef, scan, finalUnit, finalTypes, command);
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
 		bumpScrollCache(currentUserId);
 		return mapper.toResponse(savedProblem);
@@ -64,9 +73,9 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	@Override
 	@Transactional
-	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String solutionText) {
+	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String memoText) {
 		Problem problem = loadProblemOrThrow(problemId, currentUserId);
-		completeProblem(problem, solutionText);
+		completeProblem(problem, memoText);
 		bumpScrollCache(currentUserId);
 	}
 
@@ -77,6 +86,16 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		ProblemUpdateCommand updateCommand = updateRequestValidator.validateAndNormalize(problem, command);
 		applyUpdate(problem, updateCommand);
 		bumpScrollCache(userId);
+	}
+
+	@Override
+	@Transactional
+	public void deleteWrongAnswerCard(Long currentUserId, Long problemId) {
+		Problem problem = loadProblemOrThrow(problemId, currentUserId);
+		String originalStorageKey = problem.getOriginalStorageKey();
+		problemRepositoryPort.delete(problem);
+		scheduleOriginalImageDeletion(originalStorageKey);
+		bumpScrollCache(currentUserId);
 	}
 
 	private ProblemScan loadValidatedScan(Long userId, Long scanId) {
@@ -95,15 +114,28 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	}
 
 	private Problem assembleProblem(
+		Long userId,
 		User userRef,
 		ProblemScan scan,
 		Unit finalUnit,
 		List<ProblemType> finalTypes,
 		CreateWrongAnswerCardCommand command) {
 		ProblemType primaryType = finalTypes.get(0);
-		Problem newProblem = assembler.assemble(userRef, scan, finalUnit, primaryType, command);
+		String destinationKey = copyOriginalToProblemStorage(userId, scan);
+		Problem newProblem = assembler.assemble(userRef, scan, destinationKey, finalUnit, primaryType, command);
 		newProblem.replaceTypes(finalTypes);
 		return newProblem;
+	}
+
+	private String copyOriginalToProblemStorage(Long userId, ProblemScan scan) {
+		if (scan.getId() == null) {
+			throw ProblemException.scanNotFound();
+		}
+		String sourceKey = assetRepositoryPort.findOriginalByScanId(scan.getId())
+			.orElseThrow(ProblemException::originalAssetNotFound)
+			.getStorageKey();
+		String directory = ProblemStoragePaths.buildOriginalDirectory(clock, userId);
+		return storagePort.copyImage(sourceKey, directory);
 	}
 
 	private Problem loadProblemOrThrow(Long problemId, Long userId) {
@@ -115,11 +147,39 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		problem.applyUpdate(updateCommand);
 	}
 
-	private void completeProblem(Problem problem, String solutionText) {
-		problem.complete(solutionText, LocalDateTime.now(clock));
+	private void completeProblem(Problem problem, String memoText) {
+		problem.complete(memoText, LocalDateTime.now(clock));
 	}
 
 	private void bumpScrollCache(Long userId) {
 		scrollCacheEpochStore.bumpAfterCommit(userId);
+	}
+
+	private void scheduleOriginalImageDeletion(String storageKey) {
+		if (storageKey == null || storageKey.isBlank()) {
+			return;
+		}
+		Runnable deleteTask = () -> deleteOriginalImageBestEffort(storageKey);
+		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+			deleteTask.run();
+			return;
+		}
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+			@Override
+			public void afterCommit() {
+				deleteTask.run();
+			}
+		});
+	}
+
+	private void deleteOriginalImageBestEffort(String storageKey) {
+		try {
+			if (problemRepositoryPort.existsByOriginalStorageKey(storageKey)) {
+				return;
+			}
+			storagePort.deleteImage(storageKey);
+		} catch (Exception e) {
+			log.warn("오답카드 원본 이미지 삭제 실패 storageKey={}", storageKey, e);
+		}
 	}
 }

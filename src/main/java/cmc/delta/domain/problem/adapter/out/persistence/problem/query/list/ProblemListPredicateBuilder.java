@@ -3,7 +3,11 @@ package cmc.delta.domain.problem.adapter.out.persistence.problem.query.list;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import cmc.delta.domain.problem.model.problem.QProblem;
+import cmc.delta.domain.problem.model.problem.QProblemTypeTag;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,14 +22,14 @@ public class ProblemListPredicateBuilder {
 		BooleanBuilder where = new BooleanBuilder();
 		where.and(p.problem.user.id.eq(userId));
 
-		if (hasText(condition.unitId())) {
-			where.and(p.unit.id.eq(condition.unitId()));
+		if (hasAny(condition.subjectIds())) {
+			where.and(p.subject.id.in(condition.subjectIds()));
 		}
-		if (hasText(condition.typeId())) {
-			where.and(p.type.id.eq(condition.typeId()));
+		if (hasAny(condition.unitIds())) {
+			where.and(p.unit.id.in(condition.unitIds()));
 		}
-		if (hasText(condition.subjectId())) {
-			where.and(p.subject.id.eq(condition.subjectId()));
+		if (hasAny(condition.typeIds())) {
+			where.and(hasAnyType(condition, p.problem));
 		}
 
 		applyStatusFilter(where, condition.status(), p.problem);
@@ -36,14 +40,14 @@ public class ProblemListPredicateBuilder {
 		BooleanBuilder booleanBuilder = new BooleanBuilder();
 		booleanBuilder.and(p2.user.id.eq(userId));
 
-		if (hasText(condition.subjectId())) {
-			booleanBuilder.and(p2.finalUnit.parent.id.eq(condition.subjectId()));
+		if (hasAny(condition.subjectIds())) {
+			booleanBuilder.and(p2.finalUnit.parent.id.in(condition.subjectIds()));
 		}
-		if (hasText(condition.unitId())) {
-			booleanBuilder.and(p2.finalUnit.id.eq(condition.unitId()));
+		if (hasAny(condition.unitIds())) {
+			booleanBuilder.and(p2.finalUnit.id.in(condition.unitIds()));
 		}
-		if (hasText(condition.typeId())) {
-			booleanBuilder.and(p2.finalType.id.eq(condition.typeId()));
+		if (hasAny(condition.typeIds())) {
+			booleanBuilder.and(hasAnyType(condition, p2));
 		}
 
 		// 최다/최소 등록순은 완료 여부와 무관하게 계산하려면 status는 여기서 일부러 제외한다.
@@ -64,7 +68,23 @@ public class ProblemListPredicateBuilder {
 		}
 	}
 
-	private boolean hasText(String value) {
-		return value != null && !value.trim().isEmpty();
+	private BooleanExpression hasAnyType(ProblemListCondition condition, QProblem problem) {
+		List<String> typeIds = condition.typeIds();
+		return problem.finalType.id.in(typeIds)
+			.or(existsTypeTag(problem, typeIds));
+	}
+
+	private BooleanExpression existsTypeTag(QProblem problem, List<String> typeIds) {
+		QProblemTypeTag tag = QProblemTypeTag.problemTypeTag;
+		return JPAExpressions
+			.selectOne()
+			.from(tag)
+			.where(tag.problem.id.eq(problem.id)
+				.and(tag.type.id.in(typeIds)))
+			.exists();
+	}
+
+	private boolean hasAny(List<String> values) {
+		return values != null && !values.isEmpty();
 	}
 }

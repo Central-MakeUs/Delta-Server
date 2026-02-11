@@ -11,7 +11,7 @@ public record ProblemCreateRequest(
 	AnswerFormat answerFormat,
 	Integer answerChoiceNo,
 	String answerValue,
-	String solutionText) {
+	String memoText) {
 	public CreateWrongAnswerCardCommand toCommand() {
 		return new CreateWrongAnswerCardCommand(
 			scanId,
@@ -20,6 +20,6 @@ public record ProblemCreateRequest(
 			answerFormat,
 			answerChoiceNo,
 			answerValue,
-			solutionText);
+			memoText);
 	}
 }

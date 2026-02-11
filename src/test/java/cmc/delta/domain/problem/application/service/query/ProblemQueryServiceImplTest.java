@@ -78,7 +78,7 @@ class ProblemQueryServiceImplTest {
 			new CurriculumItemResponse("S1", "subject"),
 			new CurriculumItemResponse("U1", "unit"),
 			List.<CurriculumItemResponse>of(),
-			new ProblemListItemResponse.PreviewImageResponse(1L, "s3/k.png", "https://read/s3/k.png"),
+			new ProblemListItemResponse.PreviewImageResponse("s3/k.png", "https://read/s3/k.png"),
 			false,
 			LocalDateTime.now());
 		when(listMapper.toResponse(row, "https://read/s3/k.png")).thenReturn(base);
@@ -109,7 +109,7 @@ class ProblemQueryServiceImplTest {
 			new CurriculumItemResponse("S1", "subject"),
 			new CurriculumItemResponse("U1", "unit"),
 			List.of(new CurriculumItemResponse("T0", "old")),
-			new ProblemDetailResponse.OriginalImageResponse(1L, "https://read/s3/d.png"),
+			new ProblemDetailResponse.OriginalImageResponse("https://read/s3/d.png"),
 			cmc.delta.domain.problem.model.enums.AnswerFormat.TEXT,
 			null,
 			"ans",

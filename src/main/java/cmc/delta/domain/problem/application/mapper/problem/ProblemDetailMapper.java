@@ -13,7 +13,7 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 	@Mapping(target = "answerFormat", source = "row.answerFormat")
 	@Mapping(target = "answerChoiceNo", source = "row.answerChoiceNo")
 	@Mapping(target = "answerValue", source = "row.answerValue")
-	@Mapping(target = "solutionText", source = "row.solutionText")
+	@Mapping(target = "memoText", source = "row.memoText")
 	@Mapping(target = "completedAt", source = "row.completedAt")
 	@Mapping(target = "createdAt", source = "row.createdAt")
 
@@ -22,7 +22,7 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 
 	@Mapping(target = "types", expression = "java(List.of())")
 
-	@Mapping(target = "originalImage", expression = "java(new ProblemDetailResponse.OriginalImageResponse(row.assetId(), viewUrl))")
+	@Mapping(target = "originalImage", expression = "java(new ProblemDetailResponse.OriginalImageResponse(viewUrl))")
 	@Mapping(target = "completed", expression = "java(row.completedAt() != null)")
 	ProblemDetailResponse toResponse(ProblemDetailRow row, String viewUrl);
 }

@@ -7,7 +7,6 @@ import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.exception.ProblemStateException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
-import cmc.delta.domain.problem.application.validation.command.ProblemCreateScanValidator;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import cmc.delta.domain.problem.model.enums.RenderMode;
 import cmc.delta.domain.problem.model.problem.Problem;
@@ -23,7 +22,7 @@ class ProblemCreateAssemblerTest {
 	@DisplayName("Problem assemble: renderMode가 null이면 PROBLEM_SCAN_RENDER_MODE_MISSING")
 	void assemble_whenRenderModeNull_thenThrows() {
 		// given
-		ProblemCreateAssembler sut = new ProblemCreateAssembler(mock(ProblemCreateScanValidator.class));
+		ProblemCreateAssembler sut = new ProblemCreateAssembler();
 		ProblemScan scan = mock(ProblemScan.class);
 		when(scan.getRenderMode()).thenReturn(null);
 
@@ -38,7 +37,7 @@ class ProblemCreateAssemblerTest {
 
 		// when
 		ProblemStateException ex = catchThrowableOfType(
-			() -> sut.assemble(mock(User.class), scan, mock(Unit.class), mock(ProblemType.class), cmd),
+			() -> sut.assemble(mock(User.class), scan, "s3/k1", mock(Unit.class), mock(ProblemType.class), cmd),
 			ProblemStateException.class);
 
 		// then
@@ -49,7 +48,7 @@ class ProblemCreateAssemblerTest {
 	@DisplayName("Problem assemble: OCR 텍스트가 null/blank면 fallback markdown을 사용")
 	void assemble_whenOcrTextNullOrBlank_thenFallbackMarkdown() {
 		// given
-		ProblemCreateAssembler sut = new ProblemCreateAssembler(mock(ProblemCreateScanValidator.class));
+		ProblemCreateAssembler sut = new ProblemCreateAssembler();
 		ProblemScan scan1 = mock(ProblemScan.class);
 		when(scan1.getRenderMode()).thenReturn(RenderMode.LATEX);
 		when(scan1.getOcrPlainText()).thenReturn(null);
@@ -68,8 +67,8 @@ class ProblemCreateAssemblerTest {
 			"sol");
 
 		// when
-		Problem p1 = sut.assemble(mock(User.class), scan1, mock(Unit.class), mock(ProblemType.class), cmd);
-		Problem p2 = sut.assemble(mock(User.class), scan2, mock(Unit.class), mock(ProblemType.class), cmd);
+		Problem p1 = sut.assemble(mock(User.class), scan1, "s3/k1", mock(Unit.class), mock(ProblemType.class), cmd);
+		Problem p2 = sut.assemble(mock(User.class), scan2, "s3/k2", mock(Unit.class), mock(ProblemType.class), cmd);
 
 		// then
 		assertThat(p1.getProblemMarkdown()).isEqualTo("(문제 텍스트 없음)");

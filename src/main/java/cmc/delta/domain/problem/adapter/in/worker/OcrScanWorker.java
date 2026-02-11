@@ -9,11 +9,16 @@ import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
+import cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
+import cmc.delta.domain.problem.adapter.in.worker.exception.NonMathContentException;
+import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
+import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.model.asset.Asset;
 import java.time.Clock;
@@ -38,6 +43,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 	private final ObjectStorageReader storageReader;
 	private final OcrClient ocrClient;
 	private final OcrWorkerProperties properties;
+	private final LineDataSignalExtractor signalExtractor;
 
 	private final OcrFailureDecider failureDecider;
 	private final OcrScanValidator validator;
@@ -52,6 +58,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		ObjectStorageReader storageReader,
 		OcrClient ocrClient,
 		OcrWorkerProperties properties,
+		LineDataSignalExtractor signalExtractor,
 		ScanLockGuard lockGuard,
 		ScanUnlocker unlocker,
 		BacklogLogger backlogLogger,
@@ -64,6 +71,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		this.storageReader = storageReader;
 		this.ocrClient = ocrClient;
 		this.properties = properties;
+		this.signalExtractor = signalExtractor;
 		this.failureDecider = failureDecider;
 		this.validator = validator;
 		this.persister = persister;
@@ -95,14 +103,31 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		Asset originalAsset = validator.requireOriginalAsset(scanId);
 
 		byte[] originalBytes = storageReader.readBytes(originalAsset.getStorageKey());
-		OcrResult ocrResult = ocrClient.recognize(originalBytes, buildFilename(scanId));
+		OcrResult ocrResult = recognizeOcrOrThrow(scanId, originalBytes);
 
 		if (!isOwned(scanId, lockOwner, lockToken)) {
 			return;
 		}
 
+		requireNotCodeLike(scanId, ocrResult.rawJson());
+
 		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, batchNow);
 		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
+	}
+
+	private void requireNotCodeLike(Long scanId, String ocrRawJson) {
+		OcrSignalSummary signals = signalExtractor.extract(ocrRawJson);
+		if (signals.hasCodeLine()) {
+			throw new NonMathContentException(scanId);
+		}
+	}
+
+	private OcrResult recognizeOcrOrThrow(Long scanId, byte[] originalBytes) {
+		try {
+			return ocrClient.recognize(originalBytes, buildFilename(scanId));
+		} catch (OcrTextNotDetectedException e) {
+			throw new OcrTextEmptyException(scanId);
+		}
 	}
 
 	@Override

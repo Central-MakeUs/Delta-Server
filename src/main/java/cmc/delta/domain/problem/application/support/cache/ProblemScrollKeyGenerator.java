@@ -3,13 +3,14 @@ package cmc.delta.domain.problem.application.support.cache;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.cache.interceptor.KeyGenerator;
 import org.springframework.stereotype.Component;
 
 @Component("problemScrollKeyGenerator")
 public class ProblemScrollKeyGenerator implements KeyGenerator {
 
-	private static final String VERSION = "v=5";
+	private static final String VERSION = "v=6";
 
 	private final ProblemScrollCacheEpochStore epochStore;
 
@@ -25,9 +26,9 @@ public class ProblemScrollKeyGenerator implements KeyGenerator {
 
 		long epoch = epochStore.getEpoch(userId);
 
-		String subjectId = safe(condition.subjectId());
-		String unitId = safe(condition.unitId());
-		String typeId = safe(condition.typeId());
+		String subjectIds = safeIds(condition.subjectIds());
+		String unitIds = safeIds(condition.unitIds());
+		String typeIds = safeIds(condition.typeIds());
 		String sort = (condition.sort() == null) ? "-" : condition.sort().name();
 		String status = (condition.status() == null) ? "-" : condition.status().name();
 
@@ -38,9 +39,9 @@ public class ProblemScrollKeyGenerator implements KeyGenerator {
 		return VERSION
 			+ ":u=" + userId
 			+ ":e=" + epoch
-			+ ":sub=" + subjectId
-			+ ":unit=" + unitId
-			+ ":type=" + typeId
+			+ ":subs=" + subjectIds
+			+ ":units=" + unitIds
+			+ ":types=" + typeIds
 			+ ":sort=" + sort
 			+ ":status=" + status
 			+ ":lastId=" + lastId
@@ -48,8 +49,18 @@ public class ProblemScrollKeyGenerator implements KeyGenerator {
 			+ ":size=" + size;
 	}
 
-	private String safe(String v) {
-		return (v == null || v.isBlank()) ? "-" : v;
+	private String safeIds(List<String> ids) {
+		if (ids == null || ids.isEmpty()) {
+			return "-";
+		}
+		String joined = String.join(",", ids.stream()
+			.filter(v -> v != null && !v.isBlank())
+			.map(String::trim)
+			.filter(v -> !v.isEmpty())
+			.distinct()
+			.sorted()
+			.toList());
+		return joined.isEmpty() ? "-" : joined;
 	}
 
 	private String time(LocalDateTime t) {

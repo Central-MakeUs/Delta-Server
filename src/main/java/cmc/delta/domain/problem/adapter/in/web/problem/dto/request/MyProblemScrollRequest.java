@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.adapter.in.web.problem.dto.request;
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.enums.ProblemStatusFilter;
 import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 
 /**
@@ -11,9 +12,9 @@ import org.springframework.format.annotation.DateTimeFormat;
  * - 다음 요청: 직전 응답의 nextCursor 값을 그대로 전달
  */
 public record MyProblemScrollRequest(
-	String subjectId,
-	String unitId,
-	String typeId,
+	List<String> subjectIds,
+	List<String> unitIds,
+	List<String> typeIds,
 	ProblemListSort sort,
 	ProblemStatusFilter status,
 	Long lastId,

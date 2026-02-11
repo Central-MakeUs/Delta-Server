@@ -8,6 +8,7 @@ import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerTestTx;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.AiFailureDecider;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
@@ -20,6 +21,7 @@ import cmc.delta.domain.problem.application.port.in.worker.AiScanPersistUseCase;
 import cmc.delta.domain.problem.application.port.out.ai.AiClient;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -95,11 +97,12 @@ class AiScanWorkerTest {
 		ProblemScan scan = ocrDone(user(10L), "some text");
 		when(scanRepository.findById(scanId)).thenReturn(Optional.of(scan));
 
-		AiValidatedInput input = new AiValidatedInput(10L, "some text");
+		OcrSignalSummary signals = new OcrSignalSummary(1, 1, 0, 0);
+		AiValidatedInput input = new AiValidatedInput(10L, "some text", signals);
 		when(validator.validateAndNormalize(scanId, scan)).thenReturn(input);
 
 		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
-		when(promptBuilder.build(10L, "some text")).thenReturn(prompt);
+		when(promptBuilder.build(10L, "some text", signals)).thenReturn(prompt);
 
 		AiCurriculumResult ai = aiResult("U1", "T1", 0.90);
 		when(aiClient.classifyCurriculum(prompt)).thenReturn(ai);
@@ -112,13 +115,56 @@ class AiScanWorkerTest {
 
 		inOrder.verify(scanRepository).findById(scanId);
 		inOrder.verify(validator).validateAndNormalize(scanId, scan);
-		inOrder.verify(promptBuilder).build(10L, "some text");
+		inOrder.verify(promptBuilder).build(10L, "some text", signals);
 		inOrder.verify(aiClient).classifyCurriculum(prompt);
 		inOrder.verify(persister).persistAiSucceeded(scanId, OWNER, TOKEN, ai, batchNow);
 		inOrder.verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 
 		verify(persister, never()).persistAiFailed(anyLong(), anyString(), anyString(), any(FailureDecision.class),
 			any());
+	}
+
+	@Test
+	@DisplayName("수학 문제가 아니면 AI_NOT_MATH로 실패 저장(persistAiFailed)하고 성공 저장은 하지 않는다")
+	void notMath_persistsFailed_and_unlocks() {
+		// given
+		Long scanId = 2L;
+		LocalDateTime batchNow = LocalDateTime.of(2026, 1, 21, 10, 0);
+
+		when(lockGuard.isOwned(scanId, OWNER, TOKEN)).thenReturn(true, true);
+
+		ProblemScan scan = ocrDone(user(10L), "some text");
+		when(scanRepository.findById(scanId)).thenReturn(Optional.of(scan));
+
+		OcrSignalSummary signals = new OcrSignalSummary(0, 1, 0, 0);
+		AiValidatedInput input = new AiValidatedInput(10L, "some text", signals);
+		when(validator.validateAndNormalize(scanId, scan)).thenReturn(input);
+
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		when(promptBuilder.build(10L, "some text", signals)).thenReturn(prompt);
+
+		AiCurriculumResult ai = aiResult("U1", "T1", 0.10);
+		when(ai.isMathProblem()).thenReturn(false);
+		when(aiClient.classifyCurriculum(prompt)).thenReturn(ai);
+
+		// when
+		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);
+
+		// then
+		InOrder inOrder = inOrder(scanRepository, validator, promptBuilder, aiClient, persister, unlocker);
+		inOrder.verify(scanRepository).findById(scanId);
+		inOrder.verify(validator).validateAndNormalize(scanId, scan);
+		inOrder.verify(promptBuilder).build(10L, "some text", signals);
+		inOrder.verify(aiClient).classifyCurriculum(prompt);
+		inOrder.verify(persister).persistAiFailed(
+			eq(scanId),
+			eq(OWNER),
+			eq(TOKEN),
+			eq(FailureDecision.nonRetryable(FailureReason.AI_NOT_MATH)),
+			eq(batchNow));
+		inOrder.verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
+
+		verify(persister, never()).persistAiSucceeded(anyLong(), anyString(), anyString(), any(), any());
 	}
 
 	@Test
@@ -134,10 +180,10 @@ class AiScanWorkerTest {
 		when(scanRepository.findById(scanId)).thenReturn(Optional.of(scan));
 
 		when(validator.validateAndNormalize(scanId, scan))
-			.thenReturn(new AiValidatedInput(10L, "some text"));
+			.thenReturn(new AiValidatedInput(10L, "some text", new OcrSignalSummary(0, 1, 0, 0)));
 
 		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
-		when(promptBuilder.build(10L, "some text")).thenReturn(prompt);
+		when(promptBuilder.build(eq(10L), eq("some text"), any(OcrSignalSummary.class))).thenReturn(prompt);
 
 		AiCurriculumResult ai = aiResult("U1", "T1", 0.90);
 		when(aiClient.classifyCurriculum(prompt)).thenReturn(ai);

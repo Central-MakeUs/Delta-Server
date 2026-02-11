@@ -172,6 +172,35 @@ public class StorageService {
 		log.info("스토리지 삭제 완료 storageKey={} durationMs={}", storageKey, durationMs);
 	}
 
+	public String copyImage(String sourceStorageKey, String directory) {
+		long startedAt = System.nanoTime();
+
+		validator.validateStorageKey(sourceStorageKey);
+		String resolvedDirectory = resolveDirectory(directory);
+
+		String originalFilename = resolveFilenameFromKey(sourceStorageKey);
+		String destinationStorageKey = keyGenerator.generate(resolvedDirectory, originalFilename);
+		objectStorage.copy(sourceStorageKey, destinationStorageKey);
+
+		long durationMs = elapsedMs(startedAt);
+		log.info(
+			"스토리지 복사 완료 sourceKey={} destKey={} durationMs={} directory={}",
+			sourceStorageKey,
+			destinationStorageKey,
+			durationMs,
+			resolvedDirectory);
+		return destinationStorageKey;
+	}
+
+	private String resolveFilenameFromKey(String storageKey) {
+		int idx = storageKey.lastIndexOf('/');
+		if (idx < 0 || idx == storageKey.length() - 1) {
+			return "image";
+		}
+		String filename = storageKey.substring(idx + 1);
+		return StringUtils.hasText(filename) ? filename : "image";
+	}
+
 	private String resolveDirectory(String directory) {
 		return keyGenerator.resolveDirectoryOrDefault(directory, DEFAULT_DIRECTORY);
 	}

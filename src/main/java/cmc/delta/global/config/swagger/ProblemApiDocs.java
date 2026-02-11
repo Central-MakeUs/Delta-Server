@@ -27,9 +27,9 @@ public final class ProblemApiDocs {
 		내 오답카드를 페이징 조회합니다.
 
 		필터(선택):
-		- subjectId: 과목(Unit) ID (부모 단원, parent_id = null) 예) U_COMMON_1
-		- unitId: 단원(Unit) ID (자식 단원, parent_id = subjectId) 예) U_C1_POLY
-		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+		- subjectIds: 과목(Unit) ID 목록 (부모 단원, parent_id = null)
+		- unitIds: 단원(Unit) ID 목록 (자식 단원)
+		- typeIds: 문제 유형(ProblemType) ID 목록
 
 		정렬(sort):
 		- RECENT: 최신순(기본)
@@ -69,9 +69,9 @@ public final class ProblemApiDocs {
 		- GET /api/v1/problems/scroll
 
 		필터(선택):
-		- subjectId: 과목(Unit) ID (부모 단원) 예) U_COMMON_1
-		- unitId: 단원(Unit) ID (자식 단원) 예) U_C1_POLY
-		- typeId: 문제 유형(ProblemType) ID 예) T_SENTENCE
+		- subjectIds: 과목(Unit) ID 목록 (부모 단원)
+		- unitIds: 단원(Unit) ID 목록 (자식 단원)
+		- typeIds: 문제 유형(ProblemType) ID 목록
 
 		정렬(sort):
 		- RECENT: 최신순(기본)
@@ -115,7 +115,6 @@ public final class ProblemApiDocs {
 		  - type: 문제 유형(ProblemType)
 
 		- originalImage:
-		  - assetId: 원본 이미지 Asset ID
 		  - viewUrl: 원본 이미지 Presigned GET URL (만료 시간 존재)
 
 		- answerFormat: 정답 형식
@@ -123,7 +122,7 @@ public final class ProblemApiDocs {
 		  - TEXT/NUMBER/EXPRESSION: 단답/숫자/수식 텍스트 (answerValue 사용)
 
 		- answerChoiceNo/answerValue: 저장된 정답 값(없으면 null)
-		- solutionText: 저장된 풀이 텍스트(없으면 null)
+		- memoText: 저장된 메모 텍스트(없으면 null)
 
 		- completed: 오답 완료 여부 (completedAt != null)
 		- completedAt: 오답 완료 처리 시각(완료 전이면 null)
@@ -142,18 +141,27 @@ public final class ProblemApiDocs {
 		""";
 
 	public static final String UPDATE_WRONG_ANSWER_CARD = """
-		오답카드의 정답/풀이를 수정합니다.
+		오답카드의 정답/메모를 수정합니다.
 
 		수정 가능 필드:
 		- answerChoiceNo: 객관식 정답 번호 (answerFormat=CHOICE 인 문제에 사용)
 		- answerValue: 단답/서술/숫자/수식 정답 값 (answerFormat!=CHOICE 인 문제에 사용)
-		- solutionText: 풀이 텍스트
+		- memoText: 메모 텍스트
 
 		주의:
 		- 문제의 answerFormat(정답 형식)에 따라 유효한 필드가 다릅니다.
 		  - CHOICE: answerChoiceNo만 의미 있음 (answerValue는 무시/초기화)
 		  - TEXT/NUMBER/EXPRESSION: answerValue만 의미 있음 (answerChoiceNo는 무시/초기화)
 		- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
+		""";
+
+	public static final String DELETE_WRONG_ANSWER_CARD = """
+		내 오답카드를 삭제합니다.
+
+		동작:
+		- 본인 소유 오답카드만 삭제할 수 있습니다. (본인 소유가 아니면 404 처리)
+		- 오답카드에 연결된 태그/선택지(ProblemChoice, ProblemUnitTag, ProblemTypeTag)는 함께 삭제됩니다.
+		- 스캔(ProblemScan) 및 이미지(Asset)는 즉시 삭제하지 않습니다. (별도 purge 정책으로 정리)
 		""";
 
 	public static final String STATS_BY_UNIT = """

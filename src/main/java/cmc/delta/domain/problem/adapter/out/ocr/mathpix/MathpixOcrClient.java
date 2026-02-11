@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.adapter.out.ocr.mathpix;
 
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
+import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
@@ -57,6 +58,8 @@ public class MathpixOcrClient implements OcrClient {
 
 		} catch (RestClientResponseException e) {
 			throw MathpixOcrException.externalCallFailed(e);
+		} catch (OcrTextNotDetectedException e) {
+			throw e;
 		} catch (MathpixOcrException e) {
 			throw e;
 		} catch (Exception e) {
@@ -81,6 +84,7 @@ public class MathpixOcrClient implements OcrClient {
 			LinkedHashMap<String, Object> options = new LinkedHashMap<>();
 			options.put("math_inline_delimiters", new String[] {"$", "$"});
 			options.put("rm_spaces", true);
+			options.put("include_line_data", true);
 			options.put("formats", new String[] {"text", "latex_styled"});
 			return objectMapper.writeValueAsString(options);
 		} catch (Exception e) {
@@ -95,10 +99,12 @@ public class MathpixOcrClient implements OcrClient {
 			String latex = root.path(JSON_LATEX_STYLED).asText(null);
 
 			if (text == null || text.isBlank()) {
-				throw MathpixOcrException.emptyResponseText();
+				throw new OcrTextNotDetectedException();
 			}
 
 			return new OcrResult(text, latex, root.toString());
+		} catch (OcrTextNotDetectedException e) {
+			throw e;
 		} catch (MathpixOcrException e) {
 			throw e;
 		} catch (Exception e) {

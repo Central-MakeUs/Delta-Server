@@ -18,6 +18,60 @@ public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 		   set locked_at = :lockedAt,
 		       lock_owner = :lockOwner,
 		       lock_token = :lockToken
+		 where created_at < :cutoffCreatedAt
+		   and (locked_at is null or locked_at <= :staleBefore)
+		 order by created_at asc, id asc
+		 limit :limit
+		""", nativeQuery = true)
+	int claimPurgeCandidates(
+		@Param("cutoffCreatedAt")
+		LocalDateTime cutoffCreatedAt,
+		@Param("staleBefore")
+		LocalDateTime staleBefore,
+		@Param("lockOwner")
+		String lockOwner,
+		@Param("lockToken")
+		String lockToken,
+		@Param("lockedAt")
+		LocalDateTime lockedAt,
+		@Param("limit")
+		int limit);
+
+	@Query(value = """
+		select id
+		  from problem_scan
+		 where lock_owner = :lockOwner
+		   and lock_token = :lockToken
+		 order by created_at asc, id asc
+		 limit :limit
+		""", nativeQuery = true)
+	List<Long> findClaimedIds(
+		@Param("lockOwner")
+		String lockOwner,
+		@Param("lockToken")
+		String lockToken,
+		@Param("limit")
+		int limit);
+
+	@Query(value = """
+		select count(*)
+		  from problem_scan
+		 where created_at < :cutoffCreatedAt
+		   and (locked_at is null or locked_at <= :staleBefore)
+		""", nativeQuery = true)
+	long countPurgeBacklog(
+		@Param("cutoffCreatedAt")
+		LocalDateTime cutoffCreatedAt,
+		@Param("staleBefore")
+		LocalDateTime staleBefore);
+
+	@Transactional
+	@Modifying(clearAutomatically = true, flushAutomatically = true)
+	@Query(value = """
+		update problem_scan
+		   set locked_at = :lockedAt,
+		       lock_owner = :lockOwner,
+		       lock_token = :lockToken
 		 where status = 'UPLOADED'
 		   and (locked_at is null or locked_at <= :staleBefore)
 		   and (next_retry_at is null or next_retry_at <= :now)

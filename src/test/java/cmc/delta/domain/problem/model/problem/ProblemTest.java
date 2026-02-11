@@ -31,7 +31,7 @@ class ProblemTest {
 		p.complete("sol2", t2);
 
 		// then
-		assertThat(p.getSolutionText()).isEqualTo("sol2");
+		assertThat(p.getMemoText()).isEqualTo("sol2");
 		assertThat(p.getCompletedAt()).isEqualTo(t1);
 	}
 
@@ -64,14 +64,14 @@ class ProblemTest {
 	}
 
 	@Test
-	@DisplayName("applyUpdate: 변경 플래그에 따라 answer/solution 업데이트를 적용")
+	@DisplayName("applyUpdate: 변경 플래그에 따라 answer/memo 업데이트를 적용")
 	void applyUpdate_appliesBasedOnFlags() {
 		// given
 		Problem p = problem(AnswerFormat.TEXT);
 		ProblemUpdateCommand cmd = new ProblemUpdateCommand(
 			null,
 			"newAns",
-			"newSol",
+			"newMemo",
 			true,
 			true);
 
@@ -80,7 +80,7 @@ class ProblemTest {
 
 		// then
 		assertThat(p.getAnswerValue()).isEqualTo("newAns");
-		assertThat(p.getSolutionText()).isEqualTo("newSol");
+		assertThat(p.getMemoText()).isEqualTo("newMemo");
 	}
 
 	@Test
@@ -116,7 +116,7 @@ class ProblemTest {
 		Unit unit = mock(Unit.class);
 		cmc.delta.domain.curriculum.model.ProblemType type = mock(cmc.delta.domain.curriculum.model.ProblemType.class);
 		when(type.getId()).thenReturn("T0");
-		return Problem.create(user, scan, unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
+		return Problem.create(user, scan, "s3/k.png", unit, type, RenderMode.LATEX, "md", format, "a", 1, "s");
 	}
 
 	private void setId(Problem p, long id) {

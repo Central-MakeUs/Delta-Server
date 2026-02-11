@@ -26,7 +26,6 @@ public record ProblemListItemResponse(
 	}
 
 	public record PreviewImageResponse(
-		Long assetId,
 		String storageKey,
 		String viewUrl) {
 	}

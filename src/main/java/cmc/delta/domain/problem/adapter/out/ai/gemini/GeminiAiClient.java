@@ -24,6 +24,7 @@ public class GeminiAiClient implements AiClient {
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
 	private static final String QUERY_KEY = "key";
 
+	private static final String FIELD_IS_MATH_PROBLEM = "is_math_problem";
 	private static final String FIELD_PREDICTED_SUBJECT_ID = "predicted_subject_id";
 	private static final String FIELD_PREDICTED_UNIT_ID = "predicted_unit_id";
 	private static final String FIELD_PREDICTED_TYPE_ID = "predicted_type_id";
@@ -84,6 +85,8 @@ public class GeminiAiClient implements AiClient {
 			String modelJsonText = extractModelJsonText(rawResponseJson);
 			JsonNode out = objectMapper.readTree(modelJsonText);
 
+			boolean isMathProblem = out.path(FIELD_IS_MATH_PROBLEM).asBoolean(false);
+
 			String subjectId = readTextOrNull(out, FIELD_PREDICTED_SUBJECT_ID);
 			String unitId = readTextOrNull(out, FIELD_PREDICTED_UNIT_ID);
 			String typeId = readTextOrNull(out, FIELD_PREDICTED_TYPE_ID);
@@ -94,6 +97,7 @@ public class GeminiAiClient implements AiClient {
 			String typeCandidatesJson = out.path(FIELD_TYPE_CANDIDATES).toString();
 
 			return new AiCurriculumResult(
+				isMathProblem,
 				subjectId,
 				unitId,
 				typeId,
@@ -145,8 +149,20 @@ public class GeminiAiClient implements AiClient {
 			String subjectsJson = objectMapper.writeValueAsString(prompt.subjects());
 			String unitsJson = objectMapper.writeValueAsString(prompt.units());
 			String typesJson = objectMapper.writeValueAsString(prompt.types());
+			int mathLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().mathLineCount();
+			int textLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().textLineCount();
+			int codeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().codeLineCount();
+			int pseudocodeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().pseudocodeLineCount();
 
-			return GeminiPromptTemplate.render(subjectsJson, unitsJson, typesJson, prompt.ocrPlainText());
+			return GeminiPromptTemplate.render(
+				subjectsJson,
+				unitsJson,
+				typesJson,
+				mathLineCount,
+				textLineCount,
+				codeLineCount,
+				pseudocodeLineCount,
+				prompt.ocrPlainText());
 		} catch (Exception e) {
 			throw GeminiAiException.promptBuildFailed(e);
 		}

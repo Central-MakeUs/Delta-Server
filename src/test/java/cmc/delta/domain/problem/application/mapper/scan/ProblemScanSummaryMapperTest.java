@@ -29,7 +29,8 @@ class ProblemScanSummaryMapperTest {
 			"단원",
 			"T1",
 			"유형",
-			true);
+			true,
+			null);
 		SubjectInfo subject = new SubjectInfo("S1", "대단원");
 		List<CurriculumItemResponse> types = List.of(new CurriculumItemResponse("T1", "유형"));
 
@@ -45,6 +46,7 @@ class ProblemScanSummaryMapperTest {
 		assertThat(res.classification().unit()).isEqualTo(new CurriculumItemResponse("U1", "단원"));
 		assertThat(res.classification().types()).containsExactly(new CurriculumItemResponse("T1", "유형"));
 		assertThat(res.classification().needsReview()).isTrue();
+		assertThat(res.failReason()).isNull();
 	}
 
 	@Test
@@ -61,7 +63,8 @@ class ProblemScanSummaryMapperTest {
 			null,
 			null,
 			null,
-			null);
+			null,
+			"OCR_TEXT_EMPTY");
 		SubjectInfo subject = SubjectInfo.empty();
 
 		// when
@@ -71,5 +74,6 @@ class ProblemScanSummaryMapperTest {
 		assertThat(res.classification().unit()).isNull();
 		assertThat(res.classification().subject()).isNull();
 		assertThat(res.classification().needsReview()).isFalse();
+		assertThat(res.failReason()).isEqualTo("OCR_TEXT_EMPTY");
 	}
 }
