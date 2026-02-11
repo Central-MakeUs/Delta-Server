@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component;
 public class ProblemCreateRequestValidator {
 
 	private static final int MIN_ANSWER_CHOICE = 1;
-	private static final String FORMAT_PREFIX = " (answerFormat=";
-	private static final String FORMAT_SUFFIX = ")";
 
 	public void validate(CreateWrongAnswerCardCommand command) {
 		requireRequestBody(command);
@@ -62,8 +60,6 @@ public class ProblemCreateRequestValidator {
 			validateChoiceAnswer(command.answerChoiceNo());
 			return;
 		}
-
-		validateValueAnswer(command.answerValue(), answerFormat);
 	}
 
 	private void requireAnswerFormat(AnswerFormat answerFormat) {
@@ -78,16 +74,6 @@ public class ProblemCreateRequestValidator {
 		}
 		if (answerChoiceNo.intValue() < MIN_ANSWER_CHOICE) {
 			throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
-		}
-	}
-
-	private void validateValueAnswer(String answerValue, AnswerFormat answerFormat) {
-		if (isBlank(answerValue)) {
-			throw new ProblemValidationException(
-				"정답 값(answerValue)은 필수입니다."
-					+ FORMAT_PREFIX
-					+ answerFormat.name()
-					+ FORMAT_SUFFIX);
 		}
 	}
 
