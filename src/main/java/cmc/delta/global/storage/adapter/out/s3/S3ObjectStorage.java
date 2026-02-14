@@ -2,13 +2,16 @@ package cmc.delta.global.storage.adapter.out.s3;
 
 import cmc.delta.global.storage.exception.StorageException;
 import cmc.delta.global.storage.port.out.ObjectStorage;
+import cmc.delta.global.storage.port.out.StoredObjectStream;
 import cmc.delta.global.storage.support.StorageRequestValidator;
+import java.io.InputStream;
 import java.time.Duration;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -23,6 +26,8 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 @Component
 @RequiredArgsConstructor
 public class S3ObjectStorage implements ObjectStorage {
+
+	private static final long UNKNOWN_CONTENT_LENGTH = -1L;
 
 	private final S3Properties properties;
 	private final S3Client s3Client;
@@ -62,6 +67,25 @@ public class S3ObjectStorage implements ObjectStorage {
 
 			log.debug("S3 읽기 완료 storageKey={}", storageKey);
 			return objectBytes.asByteArray();
+		});
+	}
+
+	@Override
+	public StoredObjectStream openStream(String storageKey) {
+		validator.validateStorageKey(storageKey);
+
+		return execute("S3 스트림 읽기", () -> {
+			GetObjectRequest get = GetObjectRequest.builder()
+				.bucket(properties.bucket())
+				.key(storageKey)
+				.build();
+
+			ResponseInputStream<GetObjectResponse> objectStream = s3Client.getObject(get);
+			Long contentLength = objectStream.response().contentLength();
+			long resolvedLength = (contentLength == null) ? UNKNOWN_CONTENT_LENGTH : contentLength.longValue();
+
+			log.debug("S3 스트림 읽기 완료 storageKey={}", storageKey);
+			return new StoredObjectStream(objectStream, resolvedLength);
 		});
 	}
 
