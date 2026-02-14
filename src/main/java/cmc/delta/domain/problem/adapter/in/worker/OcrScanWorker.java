@@ -112,7 +112,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 		requireNotCodeLike(scanId, ocrResult.rawJson());
 
 		persister.persistOcrSucceeded(scanId, lockOwner, lockToken, ocrResult, batchNow);
-		log.info("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
+		log.debug("OCR 처리 완료 scanId={} 상태=OCR_DONE", scanId);
 	}
 
 	private void requireNotCodeLike(Long scanId, String ocrRawJson) {

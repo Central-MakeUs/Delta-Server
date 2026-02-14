@@ -62,6 +62,6 @@ public class ProblemKeyBackfillWorker {
 		p.attachOriginalStorageKeyIfEmpty(destinationKey);
 		p.detachScan();
 		problemRepository.saveAndFlush(p);
-		log.info("problem key backfill 완료 problemId={} scanId={}", p.getId(), scanId);
+		log.debug("problem key backfill 완료 problemId={} scanId={}", p.getId(), scanId);
 	}
 }

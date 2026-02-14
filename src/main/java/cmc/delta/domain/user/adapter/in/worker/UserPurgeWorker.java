@@ -77,7 +77,7 @@ public class UserPurgeWorker {
 
 			userRepositoryPort.delete(user);
 			afterCommit(() -> deleteStorageKeysBestEffort(userId, keysToDelete));
-			log.info("event=user.purge_db_deleted userId={} keys={}", userId, keysToDelete.size());
+			log.debug("event=user.purge_db_deleted userId={} keys={}", userId, keysToDelete.size());
 		});
 	}
 
@@ -103,7 +103,7 @@ public class UserPurgeWorker {
 				log.warn("event=user.purge_s3_delete_failed userId={} storageKey={}", userId, key, e);
 			}
 		}
-		log.info("event=user.purge_s3_deleted userId={} count={}", userId, keys.size());
+		log.debug("event=user.purge_s3_deleted userId={} count={}", userId, keys.size());
 	}
 
 	private void afterCommit(Runnable runnable) {

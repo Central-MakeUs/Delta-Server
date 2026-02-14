@@ -169,7 +169,7 @@ public class StorageService {
 
 		long durationMs = elapsedMs(startedAt);
 
-		log.info("스토리지 삭제 완료 storageKey={} durationMs={}", storageKey, durationMs);
+		log.debug("스토리지 삭제 완료 storageKey={} durationMs={}", storageKey, durationMs);
 	}
 
 	public String copyImage(String sourceStorageKey, String directory) {
@@ -183,7 +183,7 @@ public class StorageService {
 		objectStorage.copy(sourceStorageKey, destinationStorageKey);
 
 		long durationMs = elapsedMs(startedAt);
-		log.info(
+		log.debug(
 			"스토리지 복사 완료 sourceKey={} destKey={} durationMs={} directory={}",
 			sourceStorageKey,
 			destinationStorageKey,
@@ -241,7 +241,7 @@ public class StorageService {
 		long sizeBytes,
 		ImageMetadataExtractor.ImageSize imageSize,
 		long durationMs) {
-		log.info(
+		log.debug(
 			"스토리지 업로드 완료 storageKey={} directory={} contentType={} sizeBytes={} width={} height={} durationMs={}",
 			storageKey,
 			directory,

@@ -50,12 +50,12 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 			now,
 			backlogLogMinutes(),
 			() -> countBacklog(now, staleBefore),
-			(backlog) -> log.info("{} 워커 - 처리 대상 없음 (backlog={})", identity.label(), backlog));
+			(backlog) -> log.debug("{} 워커 - 처리 대상 없음 (backlog={})", identity.label(), backlog));
 	}
 
 	@Override
 	protected final void onClaimed(LocalDateTime now, int count) {
-		log.info("{} 워커 tick - 이번 배치 처리 대상={}건", identity.label(), count);
+		log.debug("{} 워커 tick - 이번 배치 처리 대상={}건", identity.label(), count);
 	}
 
 	@Override

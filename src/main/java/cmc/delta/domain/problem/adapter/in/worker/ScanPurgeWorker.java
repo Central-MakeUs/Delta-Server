@@ -84,7 +84,7 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 			now,
 			properties.backlogLogMinutes(),
 			() -> scanWorkRepository.countPurgeBacklog(cutoffCreatedAt, staleBefore),
-			(backlog) -> log.info("{} 워커 - purge 대상 없음 (backlog={})", IDENTITY.label(), backlog));
+			(backlog) -> log.debug("{} 워커 - purge 대상 없음 (backlog={})", IDENTITY.label(), backlog));
 	}
 
 	@Override
@@ -140,6 +140,6 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		}
 
 		persister.purgeIfLocked(scanId, lockOwner, lockToken);
-		log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
+		log.debug("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
 	}
 }

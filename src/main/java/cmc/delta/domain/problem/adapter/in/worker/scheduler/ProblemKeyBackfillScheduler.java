@@ -19,7 +19,7 @@ public class ProblemKeyBackfillScheduler {
 	public void tick() {
 		int processed = worker.runOnce(props.batchSize());
 		if (processed > 0) {
-			log.info("problem key backfill tick processed={}", processed);
+			log.debug("problem key backfill tick processed={}", processed);
 		}
 	}
 }

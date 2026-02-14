@@ -118,14 +118,14 @@ public class UserServiceImpl implements UserUseCase {
 	}
 
 	private void logUserWithdrawn(Long userId) {
-		log.info("event=user.withdraw userId={} result=success", userId);
+		log.debug("event=user.withdraw userId={} result=success", userId);
 	}
 
 	private void logOnboardingCompleted(long userId) {
-		log.info("event=user.onboarding.complete userId={} result=success", userId);
+		log.debug("event=user.onboarding.complete userId={} result=success", userId);
 	}
 
 	private void logNicknameUpdated(long userId) {
-		log.info("event=user.nickname.update userId={} result=success", userId);
+		log.debug("event=user.nickname.update userId={} result=success", userId);
 	}
 }
