@@ -5,8 +5,11 @@ import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
-import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -41,9 +44,9 @@ public class MathpixOcrClient implements OcrClient {
 	}
 
 	@Override
-	public OcrResult recognize(byte[] imageBytes, String filename) {
+	public OcrResult recognize(InputStream imageStream, long contentLength, String filename) {
 		try {
-			MultiValueMap<String, Object> form = buildForm(imageBytes, filename);
+			MultiValueMap<String, Object> form = buildForm(imageStream, contentLength, filename);
 
 			String response = restClient.post()
 				.uri(props.baseUrl() + PATH_TEXT)
@@ -67,16 +70,37 @@ public class MathpixOcrClient implements OcrClient {
 		}
 	}
 
-	private MultiValueMap<String, Object> buildForm(byte[] imageBytes, String filename) {
+	private MultiValueMap<String, Object> buildForm(InputStream imageStream, long contentLength, String filename) {
 		MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
-		form.add(FORM_FILE, new ByteArrayResource(imageBytes) {
-			@Override
-			public String getFilename() {
-				return filename;
-			}
-		});
+		SizedInputStreamResource resource = new SizedInputStreamResource(imageStream, contentLength, filename);
+		HttpHeaders partHeaders = new HttpHeaders();
+		partHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		partHeaders.setContentDispositionFormData(FORM_FILE, filename);
+		form.add(FORM_FILE, new HttpEntity<>(resource, partHeaders));
 		form.add(FORM_OPTIONS_JSON, optionsJson);
 		return form;
+	}
+
+	private static final class SizedInputStreamResource extends InputStreamResource {
+
+		private final long contentLength;
+		private final String filename;
+
+		private SizedInputStreamResource(InputStream inputStream, long contentLength, String filename) {
+			super(inputStream);
+			this.contentLength = contentLength;
+			this.filename = filename;
+		}
+
+		@Override
+		public long contentLength() {
+			return contentLength;
+		}
+
+		@Override
+		public String getFilename() {
+			return filename;
+		}
 	}
 
 	private String buildOptionsJsonCached() {
