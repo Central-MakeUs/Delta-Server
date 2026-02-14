@@ -1,5 +1,6 @@
 package cmc.delta.global.storage.port.out;
 
+import java.io.InputStream;
 import java.time.Duration;
 
 public interface ObjectStorage {
@@ -13,4 +14,6 @@ public interface ObjectStorage {
 	void copy(String sourceStorageKey, String destinationStorageKey);
 
 	byte[] readBytes(String storageKey);
+
+	StoredObjectStream openStream(String storageKey);
 }
