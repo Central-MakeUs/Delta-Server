@@ -1,11 +1,5 @@
 package cmc.delta.domain.user.application.service;
 
-import java.time.Instant;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
 import cmc.delta.domain.auth.model.SocialAccount;
 import cmc.delta.domain.auth.model.SocialProvider;
@@ -17,8 +11,12 @@ import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
+import java.time.Instant;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -26,9 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 public class UserServiceImpl implements UserUseCase {
 
-    private final UserRepositoryPort userRepositoryPort;
-    private final SocialAccountRepositoryPort socialAccountRepositoryPort;
-    private final UserValidator userValidator;
+	private final UserRepositoryPort userRepositoryPort;
+	private final SocialAccountRepositoryPort socialAccountRepositoryPort;
+	private final UserValidator userValidator;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -101,7 +99,7 @@ public class UserServiceImpl implements UserUseCase {
 	}
 
 	private void completeOnboarding(User user, UserOnboardingRequest request) {
-		user.completeOnboarding(request.nickname(), request.birthDate(), Instant.now());
+		user.completeOnboarding(request.nickname(), Instant.now());
 		userRepositoryPort.save(user);
 	}
 
@@ -118,14 +116,14 @@ public class UserServiceImpl implements UserUseCase {
 	}
 
 	private void logUserWithdrawn(Long userId) {
-		log.info("event=user.withdraw userId={} result=success", userId);
+		log.debug("event=user.withdraw userId={} result=success", userId);
 	}
 
 	private void logOnboardingCompleted(long userId) {
-		log.info("event=user.onboarding.complete userId={} result=success", userId);
+		log.debug("event=user.onboarding.complete userId={} result=success", userId);
 	}
 
 	private void logNicknameUpdated(long userId) {
-		log.info("event=user.nickname.update userId={} result=success", userId);
+		log.debug("event=user.nickname.update userId={} result=success", userId);
 	}
 }

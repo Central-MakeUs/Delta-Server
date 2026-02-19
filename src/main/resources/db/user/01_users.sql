@@ -4,7 +4,6 @@ CREATE TABLE users (
 	nickname VARCHAR(50) NULL,
 	status VARCHAR(20) NOT NULL,
 	name VARCHAR(50) NULL,
-	birth_date DATE NULL,
 	terms_agreed_at TIMESTAMP(6) NULL,
 	profile_image_storage_key VARCHAR(512) NULL,
 	withdrawn_at TIMESTAMP(6) NULL,

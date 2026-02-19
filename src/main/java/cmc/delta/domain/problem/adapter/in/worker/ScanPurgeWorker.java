@@ -1,15 +1,5 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.Executor;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionTemplate;
-
 import cmc.delta.domain.problem.adapter.in.worker.properties.PurgeWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.AbstractClaimingScanWorker;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
@@ -22,7 +12,15 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepo
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.global.storage.port.out.StoragePort;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
 @Component
@@ -84,7 +82,7 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 			now,
 			properties.backlogLogMinutes(),
 			() -> scanWorkRepository.countPurgeBacklog(cutoffCreatedAt, staleBefore),
-			(backlog) -> log.info("{} 워커 - purge 대상 없음 (backlog={})", IDENTITY.label(), backlog));
+			(backlog) -> log.debug("{} 워커 - purge 대상 없음 (backlog={})", IDENTITY.label(), backlog));
 	}
 
 	@Override
@@ -140,6 +138,6 @@ public class ScanPurgeWorker extends AbstractClaimingScanWorker {
 		}
 
 		persister.purgeIfLocked(scanId, lockOwner, lockToken);
-		log.info("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
+		log.debug("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
 	}
 }

@@ -12,10 +12,6 @@ import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,12 +21,6 @@ class UserServiceImplTest {
 	private static final long USER_ID = 999L;
 	private static final String NICKNAME_KIM = "김철수";
 	private static final String NICKNAME_HONG = "홍길동";
-	private static final int YEAR_2000 = 2000;
-	private static final int MONTH_JAN = 1;
-	private static final int DAY_FIRST = 1;
-	private static final String FIXED_TIME = "2024-01-01T00:00:00Z";
-	private static final Clock FIXED_CLOCK = Clock.fixed(Instant.parse(FIXED_TIME), ZoneOffset.UTC);
-	private static final LocalDate BIRTH_DATE = LocalDate.of(YEAR_2000, MONTH_JAN, DAY_FIRST);
 	private static final String PROVIDER_USER_ID = "pid";
 
 	private FakeUserRepositoryPort userRepositoryPort;
@@ -40,8 +30,9 @@ class UserServiceImplTest {
 	@BeforeEach
 	void setUp() {
 		userRepositoryPort = FakeUserRepositoryPort.create();
-		socialAccountRepositoryPort = cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort.create();
-		userService = new UserServiceImpl(userRepositoryPort, socialAccountRepositoryPort, new UserValidator(FIXED_CLOCK));
+		socialAccountRepositoryPort = cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort
+			.create();
+		userService = new UserServiceImpl(userRepositoryPort, socialAccountRepositoryPort, new UserValidator());
 	}
 
 	@Test
@@ -57,8 +48,8 @@ class UserServiceImplTest {
 		assertThat(result.oauthProvider()).isNull();
 	}
 
-    @Test
-    @DisplayName("내 프로필 조회: 소셜 계정이 연결되어 있으면 oauthProvider를 반환함")
+	@Test
+	@DisplayName("내 프로필 조회: 소셜 계정이 연결되어 있으면 oauthProvider를 반환함")
 	void getMyProfile_whenSocialAccountExists_thenReturnsProvider() {
 		User user = givenActiveUser();
 		cmc.delta.domain.auth.model.SocialAccount account = cmc.delta.domain.auth.model.SocialAccount.link(
@@ -120,13 +111,12 @@ class UserServiceImplTest {
 	@DisplayName("온보딩 완료: 요청이 유효하고 유저가 ONBOARDING_REQUIRED면 ACTIVE로 전환되고 프로필이 저장됨")
 	void completeOnboarding_whenValidRequest_thenCompletesOnboarding() {
 		User user = givenActiveUser();
-		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, BIRTH_DATE, true);
+		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, true);
 
 		userService.completeOnboarding(user.getId(), request);
 
 		User updated = userRepositoryPort.getReferenceById(user.getId());
 		assertThat(updated.getNickname()).isEqualTo(NICKNAME_HONG);
-		assertThat(updated.getBirthDate()).isEqualTo(BIRTH_DATE);
 		assertThat(updated.getTermsAgreedAt()).isNotNull();
 		assertThat(updated.getStatus()).isEqualTo(UserStatus.ACTIVE);
 	}
@@ -134,7 +124,7 @@ class UserServiceImplTest {
 	@Test
 	@DisplayName("온보딩 완료: 유저가 없으면 USER_NOT_FOUND가 발생함")
 	void completeOnboarding_whenUserMissing_thenThrowsUserNotFound() {
-		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, BIRTH_DATE, true);
+		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, true);
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.completeOnboarding(USER_ID, request),
 			BusinessException.class);
@@ -146,7 +136,7 @@ class UserServiceImplTest {
 	@DisplayName("온보딩 완료: 탈퇴한 유저면 USER_WITHDRAWN이 발생함")
 	void completeOnboarding_whenUserWithdrawn_thenThrowsUserWithdrawn() {
 		User user = givenWithdrawnUser();
-		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, BIRTH_DATE, true);
+		UserOnboardingRequest request = new UserOnboardingRequest(NICKNAME_HONG, true);
 		BusinessException ex = catchThrowableOfType(
 			() -> userService.completeOnboarding(user.getId(), request),
 			BusinessException.class);

@@ -9,6 +9,7 @@ public record AiWorkerProperties(
 	long lockLeaseSeconds,
 	int concurrency,
 	int backlogLogMinutes) {
+
 	private static final int MIN_BACKLOG_LOG_MINUTES = 1;
 	private static final int DEFAULT_BACKLOG_LOG_MINUTES = 5;
 

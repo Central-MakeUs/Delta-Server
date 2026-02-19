@@ -1,10 +1,5 @@
 package cmc.delta.domain.auth.application.service.token;
 
-import java.time.Duration;
-
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-
 import cmc.delta.domain.auth.application.exception.TokenException;
 import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
@@ -17,7 +12,10 @@ import cmc.delta.domain.auth.application.support.TokenConstants;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.logging.TokenAuditLogger;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -145,16 +143,15 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		} catch (RuntimeException e) {
 			// 토큰 원문/해시 절대 로그 금지. 예외 메시지도 최소화(클래스명만)
 			auditLogger.blacklistFailed(
-			userId,
-			DEFAULT_SESSION_ID,
-			action,
-			e.getClass().getSimpleName());
+				userId,
+				DEFAULT_SESSION_ID,
+				action,
+				e.getClass().getSimpleName());
 			if (required)
 				throw e;
 			return BlacklistResult.notBlacklisted();
 		}
 	}
-
 
 	private void requireProvided(String value, ErrorCode errorCode) {
 		if (!StringUtils.hasText(value)) {

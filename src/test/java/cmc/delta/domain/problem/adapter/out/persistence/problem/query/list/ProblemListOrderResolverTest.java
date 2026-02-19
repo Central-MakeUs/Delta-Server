@@ -23,7 +23,8 @@ class ProblemListOrderResolverTest {
 		ProblemListCountExpressions countExpressions = mock(ProblemListCountExpressions.class);
 		ProblemListOrderResolver resolver = new ProblemListOrderResolver(countExpressions);
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), null, ProblemStatusFilter.ALL);
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), null,
+			ProblemStatusFilter.ALL);
 
 		// when
 		OrderSpecifier<?>[] orders = resolver.resolve(10L, cond, p);
@@ -93,7 +94,8 @@ class ProblemListOrderResolverTest {
 		ProblemListCountExpressions countExpressions = mock(ProblemListCountExpressions.class);
 		ProblemListOrderResolver resolver = new ProblemListOrderResolver(countExpressions);
 		ProblemListQuerySupport.Paths p = ProblemListQuerySupport.Paths.create();
-		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(), ProblemListSort.TYPE_LEAST,
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of(),
+			ProblemListSort.TYPE_LEAST,
 			ProblemStatusFilter.ALL);
 
 		NumberExpression<Long> typeCnt = Expressions.numberPath(Long.class, "typeCnt");

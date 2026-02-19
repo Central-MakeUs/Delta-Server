@@ -1,9 +1,5 @@
 package cmc.delta.domain.user.model;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Objects;
-
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
@@ -15,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,9 +42,6 @@ public class User extends BaseTimeEntity {
 	@Deprecated
 	@Column(name = "name", length = 50)
 	private String name;
-
-	@Column(name = "birth_date")
-	private LocalDate birthDate;
 
 	@Column(name = "terms_agreed_at")
 	private Instant termsAgreedAt;
@@ -78,10 +73,9 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
-
-    public void updateProfileImage(String storageKey) {
-        this.profileImageStorageKey = normalize(storageKey);
-    }
+	public void updateProfileImage(String storageKey) {
+		this.profileImageStorageKey = normalize(storageKey);
+	}
 
 	public void clearProfileImage() {
 		this.profileImageStorageKey = null;
@@ -99,9 +93,8 @@ public class User extends BaseTimeEntity {
 		}
 	}
 
-	public void completeOnboarding(String nicknameOrName, LocalDate birthDate, Instant agreedAt) {
+	public void completeOnboarding(String nicknameOrName, Instant agreedAt) {
 		this.nickname = normalize(nicknameOrName);
-		this.birthDate = birthDate;
 
 		if (this.termsAgreedAt == null) {
 			this.termsAgreedAt = agreedAt;

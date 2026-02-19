@@ -12,6 +12,7 @@ public record ProblemListItemResponse(
 	PreviewImageResponse previewImage,
 	boolean isCompleted,
 	LocalDateTime createdAt) {
+
 	public ProblemListItemResponse withTypesAndPreview(
 		List<CurriculumItemResponse> types,
 		PreviewImageResponse previewImage) {

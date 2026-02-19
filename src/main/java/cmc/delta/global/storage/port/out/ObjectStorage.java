@@ -13,4 +13,6 @@ public interface ObjectStorage {
 	void copy(String sourceStorageKey, String destinationStorageKey);
 
 	byte[] readBytes(String storageKey);
+
+	StoredObjectStream openStream(String storageKey);
 }

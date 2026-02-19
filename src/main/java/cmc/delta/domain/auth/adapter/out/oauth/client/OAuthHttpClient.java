@@ -81,7 +81,7 @@ public class OAuthHttpClient {
 
 	private void logOk(String provider, String operation, HttpStatusCode status, long startNano) {
 		long durationMs = Duration.ofNanos(System.nanoTime() - startNano).toMillis();
-		log.info("oauth_external_ok provider={} operation={} status={} durationMs={}",
+		log.debug("oauth_external_ok provider={} operation={} status={} durationMs={}",
 			provider, operation, status.value(), durationMs);
 	}
 

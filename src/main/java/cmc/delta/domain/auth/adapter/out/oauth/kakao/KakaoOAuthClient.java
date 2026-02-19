@@ -20,8 +20,8 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 	private static final String OP_TOKEN = OAuthClientException.OP_TOKEN_EXCHANGE;
 	private static final String OP_USER = OAuthClientException.OP_PROFILE_FETCH;
 
-    private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
-    private static final String USER_URL = "https://kapi.kakao.com/v2/user/me";
+	private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+	private static final String USER_URL = "https://kapi.kakao.com/v2/user/me";
 	private static final String GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code";
 
 	private final KakaoOAuthProperties properties;

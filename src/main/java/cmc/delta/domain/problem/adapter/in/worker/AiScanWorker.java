@@ -117,13 +117,13 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 				lockToken,
 				FailureDecision.nonRetryable(FailureReason.AI_NOT_MATH),
 				batchNow);
-			log.info("AI 판별 결과 수학문제 아님 scanId={} 상태=FAILED", scanId);
+			log.debug("AI 판별 결과 수학문제 아님 scanId={} 상태=FAILED", scanId);
 			return;
 		}
 
 		persistUseCase.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
 
-		log.info("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
+		log.debug("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
 	}
 
 	@Override

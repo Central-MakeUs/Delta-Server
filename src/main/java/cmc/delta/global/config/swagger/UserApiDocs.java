@@ -12,7 +12,6 @@ public final class UserApiDocs {
 
 		요청 필드:
 		- nickname: 사용자 닉네임
-		- birthDate: 생년월일 (YYYY-MM-DD)
 		- termsAgreed: 필수 약관 동의 여부 (true 필수)
 
 		동작/상태 정책(UserStatus):
