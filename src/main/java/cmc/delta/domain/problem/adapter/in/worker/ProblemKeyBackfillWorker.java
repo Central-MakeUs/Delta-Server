@@ -2,9 +2,9 @@ package cmc.delta.domain.problem.adapter.in.worker;
 
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaRepository;
+import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.problem.Problem;
-import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.Clock;
 import java.util.List;

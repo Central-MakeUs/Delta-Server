@@ -42,8 +42,7 @@ public class LineDataSignalExtractor {
 					case "text" -> text++;
 					case "code" -> code++;
 					case "pseudocode" -> pseudocode++;
-					default -> {
-					}
+					default -> {}
 				}
 			}
 

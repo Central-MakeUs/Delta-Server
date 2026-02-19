@@ -94,7 +94,8 @@ class UserProfileImageServiceImplTest {
 
 		// when
 		BusinessException ex = catchThrowableOfType(
-			() -> sut.uploadMyProfileImage(MISSING_USER_ID, new ProfileImageUploadCommand(EMPTY_BYTES, CONTENT_TYPE, FILE_NAME)),
+			() -> sut.uploadMyProfileImage(MISSING_USER_ID,
+				new ProfileImageUploadCommand(EMPTY_BYTES, CONTENT_TYPE, FILE_NAME)),
 			BusinessException.class);
 
 		// then

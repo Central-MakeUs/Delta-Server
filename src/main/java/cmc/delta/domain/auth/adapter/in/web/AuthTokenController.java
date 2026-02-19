@@ -39,7 +39,7 @@ public class AuthTokenController {
 		TokenIssuer.IssuedTokens tokens = tokenCommandUseCase.reissue(refreshToken);
 		tokenHeaderWriter.write(response, tokens);
 
-        return ApiResponses.success(SuccessCode.OK);
+		return ApiResponses.success(SuccessCode.OK);
 	}
 
 	@Operation(summary = "로그아웃")
@@ -53,6 +53,6 @@ public class AuthTokenController {
 		String accessToken = httpTokenExtractor.extractAccessToken(request);
 		tokenCommandUseCase.invalidateAll(principal.userId(), accessToken);
 
-        return ApiResponses.success(SuccessCode.OK);
+		return ApiResponses.success(SuccessCode.OK);
 	}
 }

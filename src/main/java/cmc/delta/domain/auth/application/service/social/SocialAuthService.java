@@ -1,16 +1,14 @@
 package cmc.delta.domain.auth.application.service.social;
 
-import java.time.Duration;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.exception.SocialAuthException;
 import cmc.delta.domain.auth.application.port.in.loginkey.LoginKeyExchangeUseCase;
 import cmc.delta.domain.auth.application.support.FrontendDefaults;
 import cmc.delta.global.config.FrontendProperties;
+import java.time.Duration;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.*;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerTestTx;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
+import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.OcrFailureDecider;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
@@ -15,7 +16,6 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
-import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
@@ -62,7 +62,7 @@ class OcrScanWorkerTest {
 
 		failureDecider = new OcrFailureDecider();
 
-			sut = new TestableOcrScanWorker(
+		sut = new TestableOcrScanWorker(
 			Clock.systemDefaultZone(),
 			tx,
 			direct,

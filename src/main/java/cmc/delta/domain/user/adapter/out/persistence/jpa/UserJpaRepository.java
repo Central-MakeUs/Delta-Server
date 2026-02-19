@@ -12,13 +12,13 @@ import org.springframework.data.repository.query.Param;
 public interface UserJpaRepository extends JpaRepository<User, Long> {
 
 	@Query("""
-		select u.id
-		  from User u
-		 where u.status = :status
-		   and u.withdrawnAt is not null
-		   and u.withdrawnAt < :cutoff
-		 order by u.withdrawnAt asc, u.id asc
-	""")
+			select u.id
+			  from User u
+			 where u.status = :status
+			   and u.withdrawnAt is not null
+			   and u.withdrawnAt < :cutoff
+			 order by u.withdrawnAt asc, u.id asc
+		""")
 	List<Long> findIdsByStatusAndWithdrawnAtBefore(
 		@Param("status")
 		UserStatus status,

@@ -10,8 +10,7 @@ public final class ProblemStoragePaths {
 
 	private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
-	private ProblemStoragePaths() {
-	}
+	private ProblemStoragePaths() {}
 
 	public static String buildOriginalDirectory(Clock clock, Long userId) {
 		String datePath = LocalDate.now(clock).format(DATE_FORMAT);

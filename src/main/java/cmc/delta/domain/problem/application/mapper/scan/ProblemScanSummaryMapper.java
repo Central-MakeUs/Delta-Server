@@ -1,9 +1,9 @@
 package cmc.delta.domain.problem.application.mapper.scan;
 
+import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import cmc.delta.domain.problem.application.mapper.support.SubjectInfo;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryClassificationResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
-import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import java.util.List;

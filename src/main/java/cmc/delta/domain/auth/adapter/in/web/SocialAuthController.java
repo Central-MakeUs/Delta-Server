@@ -50,8 +50,7 @@ public class SocialAuthController {
 	})
 	@PostMapping("/kakao")
 	public ApiResponse<SocialLoginData> kakao(
-		@Valid
-		@RequestBody
+		@Valid @RequestBody
 		KakaoLoginRequest request,
 		HttpServletResponse response) {
 		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginKakao(request.code());

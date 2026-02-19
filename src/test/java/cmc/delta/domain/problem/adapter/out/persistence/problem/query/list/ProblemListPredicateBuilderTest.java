@@ -102,7 +102,8 @@ class ProblemListPredicateBuilderTest {
 	@DisplayName("문제 목록 count base where: status 조건은 의도적으로 제외")
 	void buildCountBaseWhere_excludesStatusFilter() {
 		// given
-		ProblemListCondition cond = new ProblemListCondition(List.of("S1"), List.of(), List.of(), ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of("S1"), List.of(), List.of(),
+			ProblemListSort.RECENT,
 			ProblemStatusFilter.SOLVED);
 
 		// when
@@ -117,7 +118,8 @@ class ProblemListPredicateBuilderTest {
 	@DisplayName("문제 목록 count base where: typeIds 필터는 finalType 또는 typeTag(exists) 기준으로 적용됨")
 	void buildCountBaseWhere_whenTypeIdsPresent_thenUsesTypeTagExists() {
 		// given
-		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of("T_ABS"), ProblemListSort.RECENT,
+		ProblemListCondition cond = new ProblemListCondition(List.of(), List.of(), List.of("T_ABS"),
+			ProblemListSort.RECENT,
 			ProblemStatusFilter.ALL);
 
 		// when

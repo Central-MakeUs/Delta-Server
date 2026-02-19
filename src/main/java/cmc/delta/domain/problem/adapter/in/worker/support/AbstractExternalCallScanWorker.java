@@ -1,11 +1,11 @@
 package cmc.delta.domain.problem.adapter.in.worker.support;
 
+import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureDecision;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
-import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executor;

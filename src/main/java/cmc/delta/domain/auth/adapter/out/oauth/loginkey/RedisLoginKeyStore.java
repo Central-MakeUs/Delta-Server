@@ -1,14 +1,11 @@
 package cmc.delta.domain.auth.adapter.out.oauth.loginkey;
 
-import java.time.Duration;
-
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Component;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginData;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Duration;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.stereotype.Component;
 
 /**
  * Redis에 loginKey와 연관된 페이로드를 저장하고 1회성으로 소비하는 책임을 가진 컴포넌트입니다.

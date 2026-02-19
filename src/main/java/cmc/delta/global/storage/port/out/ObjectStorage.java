@@ -1,6 +1,5 @@
 package cmc.delta.global.storage.port.out;
 
-import java.io.InputStream;
 import java.time.Duration;
 
 public interface ObjectStorage {

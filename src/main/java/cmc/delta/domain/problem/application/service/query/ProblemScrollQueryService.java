@@ -36,10 +36,7 @@ public class ProblemScrollQueryService {
 	private final StoragePort storagePort;
 	private final ProblemListMapper problemListMapper;
 
-	@Cacheable(
-		cacheNames = CacheNames.WRONG_ANSWER_PAGES,
-		keyGenerator = "problemScrollKeyGenerator",
-		sync = true)
+	@Cacheable(cacheNames = CacheNames.WRONG_ANSWER_PAGES, keyGenerator = "problemScrollKeyGenerator", sync = true)
 	public CursorPagedResponse<ProblemListItemResponse> getMyProblemCardListCursorBase(
 		Long userId,
 		ProblemListCondition condition,
@@ -128,8 +125,7 @@ public class ProblemScrollQueryService {
 
 		if (condition.sort() != null) {
 			switch (condition.sort()) {
-				case RECENT, OLDEST -> {
-				}
+				case RECENT, OLDEST -> {}
 				default -> throw new ProblemValidationException(ErrorCode.INVALID_REQUEST);
 			}
 		}

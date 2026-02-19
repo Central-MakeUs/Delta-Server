@@ -1,7 +1,7 @@
 package cmc.delta.domain.problem.application.port.out.ai.dto;
 
-import java.util.List;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
+import java.util.List;
 
 public record AiCurriculumPrompt(
 	String ocrPlainText,

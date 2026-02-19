@@ -11,7 +11,6 @@ import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
 import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,7 +53,7 @@ class UserControllerWebMvcTest {
 	@Test
 	@DisplayName("POST /users/me/onboarding: request 전달 + usecase 호출")
 	void completeOnboarding_ok_callsUseCase() throws Exception {
-		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", LocalDate.of(2000, 1, 1), true);
+		UserOnboardingRequest req = new UserOnboardingRequest("홍길동", true);
 
 		mvc.perform(post("/api/v1/users/me/onboarding")
 			.requestAttr(ATTR, principal(10L))

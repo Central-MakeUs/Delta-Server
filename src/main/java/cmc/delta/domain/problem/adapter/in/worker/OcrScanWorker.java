@@ -1,5 +1,7 @@
 package cmc.delta.domain.problem.adapter.in.worker;
 
+import cmc.delta.domain.problem.adapter.in.worker.exception.NonMathContentException;
+import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.support.AbstractExternalCallScanWorker;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerIdentity;
@@ -12,13 +14,11 @@ import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolic
 import cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.OcrScanPersister;
 import cmc.delta.domain.problem.adapter.in.worker.support.validation.OcrScanValidator;
-import cmc.delta.domain.problem.adapter.in.worker.exception.NonMathContentException;
-import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
-import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
+import cmc.delta.domain.problem.application.port.out.ocr.exception.OcrTextNotDetectedException;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.global.storage.port.out.StoredObjectStream;

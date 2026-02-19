@@ -15,11 +15,12 @@ public interface AssetJpaRepository extends JpaRepository<Asset, Long> {
 	List<Asset> findAllByScan_Id(Long scanId);
 
 	@Query("""
-		select a.storageKey
-		  from Asset a
-		 where a.scan.user.id = :userId
-	""")
-	List<String> findStorageKeysByUserId(@Param("userId") Long userId);
+			select a.storageKey
+			  from Asset a
+			 where a.scan.user.id = :userId
+		""")
+	List<String> findStorageKeysByUserId(@Param("userId")
+	Long userId);
 
 	void deleteAllByScan_Id(Long scanId);
 
