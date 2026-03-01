@@ -10,6 +10,8 @@ import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemScrollRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
@@ -28,15 +30,23 @@ class ProblemControllerWebMvcTest {
 
 	private ProblemCommandUseCase problemCommandUseCase;
 	private ProblemQueryUseCase problemQueryUseCase;
+	private ProblemAiSolutionCommandUseCase problemAiSolutionCommandUseCase;
+	private ProblemAiSolutionQueryUseCase problemAiSolutionQueryUseCase;
 	private ProblemListConditionFactory conditionFactory;
 
 	@BeforeEach
 	void setUp() {
 		problemCommandUseCase = mock(ProblemCommandUseCase.class);
 		problemQueryUseCase = mock(ProblemQueryUseCase.class);
+		problemAiSolutionCommandUseCase = mock(ProblemAiSolutionCommandUseCase.class);
+		problemAiSolutionQueryUseCase = mock(ProblemAiSolutionQueryUseCase.class);
 		conditionFactory = mock(ProblemListConditionFactory.class);
 
-		ProblemController controller = new ProblemController(problemCommandUseCase, problemQueryUseCase,
+		ProblemController controller = new ProblemController(
+			problemCommandUseCase,
+			problemQueryUseCase,
+			problemAiSolutionCommandUseCase,
+			problemAiSolutionQueryUseCase,
 			conditionFactory);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
