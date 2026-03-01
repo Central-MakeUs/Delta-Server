@@ -16,7 +16,7 @@ public class GeminiRestClientConfig {
 	public RestClient geminiRestClient(GeminiProperties props) {
 		RequestConfig requestConfig = RequestConfig.custom()
 			.setConnectTimeout(Timeout.ofSeconds(3))
-			.setResponseTimeout(Timeout.ofSeconds(20))
+			.setResponseTimeout(Timeout.ofSeconds(90))
 			.build();
 
 		CloseableHttpClient httpClient = HttpClients.custom()

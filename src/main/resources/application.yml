@@ -35,6 +35,7 @@ gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash-lite
+  solve-model: ${GEMINI_SOLVE_MODEL:gemini-2.5-flash-lite}
 
 
 logging:
@@ -42,6 +43,8 @@ logging:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
   level:
     cmc.delta.domain.problem.adapter.in.worker: INFO
+    cmc.delta.domain.problem.adapter.out.ai.gemini.GeminiProblemSolveAiClient: DEBUG
+    cmc.delta.domain.problem.application.service.command.ProblemAiSolutionCommandServiceImpl: DEBUG
 
 management:
   endpoints:
