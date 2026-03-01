@@ -6,9 +6,13 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemComple
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionDetailResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionRequestResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
@@ -45,6 +49,8 @@ public class ProblemController {
 
 	private final ProblemCommandUseCase problemCommandUseCase;
 	private final ProblemQueryUseCase problemQueryUseCase;
+	private final ProblemAiSolutionCommandUseCase problemAiSolutionCommandUseCase;
+	private final ProblemAiSolutionQueryUseCase problemAiSolutionQueryUseCase;
 	private final ProblemListConditionFactory conditionFactory;
 
 	@Operation(summary = "오답카드 생성 (scan 기반 최종 저장)", description = ProblemApiDocs.CREATE_WRONG_ANSWER_CARD)
@@ -154,6 +160,44 @@ public class ProblemController {
 		Long problemId) {
 		ProblemDetailResponse data = problemQueryUseCase.getMyProblemDetail(principal.userId(), problemId);
 
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "오답카드 AI 풀이 생성 요청", description = ProblemApiDocs.REQUEST_AI_SOLUTION)
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_NOT_FOUND,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@PostMapping("/{problemId}/ai-solution-requests")
+	public ApiResponse<ProblemAiSolutionRequestResponse> requestAiSolution(
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId) {
+		ProblemAiSolutionRequestResponse data = problemAiSolutionCommandUseCase.requestMyProblemAiSolution(
+			principal.userId(),
+			problemId);
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "오답카드 AI 풀이 조회", description = ProblemApiDocs.GET_AI_SOLUTION)
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_NOT_FOUND,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/{problemId}/ai-solution")
+	public ApiResponse<ProblemAiSolutionDetailResponse> getAiSolution(
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId) {
+		ProblemAiSolutionDetailResponse data = problemAiSolutionQueryUseCase.getMyProblemAiSolution(
+			principal.userId(),
+			problemId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 

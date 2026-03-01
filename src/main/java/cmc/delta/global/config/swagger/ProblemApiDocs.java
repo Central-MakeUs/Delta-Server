@@ -164,6 +164,28 @@ public final class ProblemApiDocs {
 		- 스캔(ProblemScan) 및 이미지(Asset)는 즉시 삭제하지 않습니다. (별도 purge 정책으로 정리)
 		""";
 
+	public static final String REQUEST_AI_SOLUTION = """
+		오답카드 AI 풀이 생성을 요청합니다.
+
+		동작:
+		- 같은 문제(problemId)에 대해 이미 생성 중이거나 생성 완료된 동일 입력이 있으면 재사용합니다.
+		- 입력(문제 본문/정답)이 변경된 경우에는 새 요청으로 재생성합니다.
+		""";
+
+	public static final String GET_AI_SOLUTION = """
+		오답카드 AI 풀이 상태/결과를 조회합니다.
+
+		상태:
+		- NOT_REQUESTED: 아직 생성 요청이 없음
+		- PENDING: 대기 중
+		- PROCESSING: 생성 중
+		- READY: 생성 완료
+		- FAILED: 최종 실패
+
+		결과:
+		- solution.plainText: 일반 텍스트 풀이
+		""";
+
 	public static final String STATS_BY_UNIT = """
 		내 오답카드를 단원(Unit) 기준으로 집계합니다.
 
