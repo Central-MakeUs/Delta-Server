@@ -14,12 +14,14 @@ import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemMo
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeStatsRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemUnitStatsRow;
 import cmc.delta.domain.problem.application.validation.query.ProblemMonthlyProgressValidator;
+import cmc.delta.global.cache.CacheNames;
 import cmc.delta.global.error.ErrorCode;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +39,10 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	private final ProblemMonthlyProgressValidator monthlyProgressValidator;
 
 	@Override
+	@Cacheable(
+		cacheNames = CacheNames.PROBLEM_STATS_UNITS,
+		key = "@problemStatsCacheKeyFactory.unitStatsKey(#userId, #condition)",
+		sync = true)
 	public ProblemStatsResponse<ProblemUnitStatsItemResponse> getUnitStats(Long userId,
 		ProblemStatsCondition condition) {
 		List<ProblemUnitStatsRow> rows = problemStatsQueryPort.findUnitStats(userId, condition);
@@ -44,6 +50,10 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	}
 
 	@Override
+	@Cacheable(
+		cacheNames = CacheNames.PROBLEM_STATS_TYPES,
+		key = "@problemStatsCacheKeyFactory.typeStatsKey(#userId, #condition)",
+		sync = true)
 	public ProblemStatsResponse<ProblemTypeStatsItemResponse> getTypeStats(Long userId,
 		ProblemStatsCondition condition) {
 		validateTypeFilter(userId, condition);
@@ -52,6 +62,10 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	}
 
 	@Override
+	@Cacheable(
+		cacheNames = CacheNames.PROBLEM_STATS_MONTHLY,
+		key = "@problemStatsCacheKeyFactory.monthlyProgressKey(#userId, #year, #month)",
+		sync = true)
 	public ProblemMonthlyProgressResponse getMonthlyProgress(Long userId, Integer year, Integer month) {
 		YearMonth yearMonth = monthlyProgressValidator.validateAndParse(year, month);
 		MonthlyRange range = buildMonthlyRange(yearMonth);

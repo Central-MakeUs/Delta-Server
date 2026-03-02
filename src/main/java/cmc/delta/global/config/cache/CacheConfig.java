@@ -38,10 +38,18 @@ public class CacheConfig {
 					valueSerializer));
 
 		RedisCacheConfiguration wrongAnswerPages = base.entryTtl(Duration.ofMinutes(5));
+		RedisCacheConfiguration problemStatsUnits = base.entryTtl(Duration.ofMinutes(3));
+		RedisCacheConfiguration problemStatsTypes = base.entryTtl(Duration.ofMinutes(3));
+		RedisCacheConfiguration problemStatsMonthly = base.entryTtl(Duration.ofMinutes(10));
+		RedisCacheConfiguration proCheckoutStats = base.entryTtl(Duration.ofMinutes(1));
 
 		return RedisCacheManager.builder(connectionFactory)
 			.cacheDefaults(base)
 			.withCacheConfiguration(CacheNames.WRONG_ANSWER_PAGES, wrongAnswerPages)
+			.withCacheConfiguration(CacheNames.PROBLEM_STATS_UNITS, problemStatsUnits)
+			.withCacheConfiguration(CacheNames.PROBLEM_STATS_TYPES, problemStatsTypes)
+			.withCacheConfiguration(CacheNames.PROBLEM_STATS_MONTHLY, problemStatsMonthly)
+			.withCacheConfiguration(CacheNames.PRO_CHECKOUT_STATS, proCheckoutStats)
 			.transactionAware()
 			.build();
 	}
