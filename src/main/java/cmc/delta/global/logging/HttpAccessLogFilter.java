@@ -4,13 +4,17 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.io.IOException;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
+import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
@@ -20,11 +24,19 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 	private static final Logger log = LoggerFactory.getLogger(HttpAccessLogFilter.class);
 
 	private static final String ACCESS_LOG_FORMAT = "[HTTP] 요청 처리 완료 method={} path={} status={} durationMs={} ip={} ua={}";
+	private static final String METRIC_NAME = "delta.http.server.duration";
+	private static final String URI_UNKNOWN = "UNKNOWN";
 
 	private static final int USER_AGENT_MAX_LEN = 200;
 
 	private static final Set<String> SKIP_PATH_PREFIXES = Set.of(
 		"/actuator", "/swagger", "/swagger-ui", "/v3/api-docs", "/favicon.ico");
+
+	private final MeterRegistry meterRegistry;
+
+	public HttpAccessLogFilter(MeterRegistry meterRegistry) {
+		this.meterRegistry = meterRegistry;
+	}
 
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
@@ -43,8 +55,26 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 		} finally {
 			watch.stop();
 			AccessLogContext ctx = createAccessLogContext(request, response, watch.getTotalTimeMillis());
+			recordHttpMetric(ctx);
 			writeAccessLog(ctx);
 		}
+	}
+
+	private void recordHttpMetric(AccessLogContext ctx) {
+		Timer.builder(METRIC_NAME)
+			.description("HTTP request duration from access log filter")
+			.tag("method", ctx.method())
+			.tag("uri", resolveUriTag(ctx.path()))
+			.tag("status", String.valueOf(ctx.status()))
+			.register(meterRegistry)
+			.record(ctx.durationMs(), TimeUnit.MILLISECONDS);
+	}
+
+	private String resolveUriTag(String path) {
+		if (path == null || path.isBlank()) {
+			return URI_UNKNOWN;
+		}
+		return path;
 	}
 
 	private boolean shouldSkipLogging(String path) {
@@ -71,6 +101,10 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 
 	/** 민감정보 유출 방지를 위해 queryString은 기본 로그에서 제외 */
 	private String buildSafePath(HttpServletRequest request) {
+		Object bestPattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+		if (bestPattern instanceof String pattern && !pattern.isBlank()) {
+			return pattern;
+		}
 		return request.getRequestURI();
 	}
 
