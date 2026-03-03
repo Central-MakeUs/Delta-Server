@@ -14,37 +14,48 @@ public class ProblemUpdateRequestValidator {
 	private static final String EMPTY = "";
 
 	public ProblemUpdateCommand validateAndNormalize(Problem problem, UpdateWrongAnswerCardCommand command) {
-		UpdateChangeFlags flags = readFlags(command);
+		UpdateChangeFlags flags = readFlags(problem, command);
 		if (flags.hasNoChanges()) {
 			throw new ProblemValidationException(ErrorCode.PROBLEM_UPDATE_EMPTY);
 		}
 
-		AnswerUpdate answerUpdate = resolveAnswerUpdate(problem, command, flags);
+		AnswerFormat targetAnswerFormat = resolveTargetAnswerFormat(problem, command);
+		AnswerUpdate answerUpdate = resolveAnswerUpdate(command, flags, targetAnswerFormat);
 		String normalizedMemoText = normalizeMemoText(command.memoText());
 
 		return new ProblemUpdateCommand(
 			answerUpdate.answerChoiceNo(),
 			answerUpdate.answerValue(),
+			targetAnswerFormat,
 			normalizedMemoText,
 			flags.hasAnswerChange(),
+			flags.hasAnswerFormatChange(),
 			flags.hasMemoChange());
 	}
 
-	private UpdateChangeFlags readFlags(UpdateWrongAnswerCardCommand command) {
-		boolean hasAnswerChange = command.answerChoiceNo() != null || command.answerValue() != null;
+	private UpdateChangeFlags readFlags(Problem problem, UpdateWrongAnswerCardCommand command) {
+		boolean hasAnswerFormatChange = command.answerFormat() != null && command.answerFormat() != problem.getAnswerFormat();
+		boolean hasAnswerValueChange = command.answerChoiceNo() != null || command.answerValue() != null;
+		boolean hasAnswerChange = hasAnswerFormatChange || hasAnswerValueChange;
 		boolean hasMemoChange = command.memoText() != null;
-		return new UpdateChangeFlags(hasAnswerChange, hasMemoChange);
+		return new UpdateChangeFlags(hasAnswerChange, hasAnswerFormatChange, hasMemoChange);
+	}
+
+	private AnswerFormat resolveTargetAnswerFormat(Problem problem, UpdateWrongAnswerCardCommand command) {
+		if (command.answerFormat() == null) {
+			return problem.getAnswerFormat();
+		}
+		return command.answerFormat();
 	}
 
 	private AnswerUpdate resolveAnswerUpdate(
-		Problem problem,
 		UpdateWrongAnswerCardCommand command,
-		UpdateChangeFlags flags) {
+		UpdateChangeFlags flags,
+		AnswerFormat targetAnswerFormat) {
 		if (!flags.hasAnswerChange()) {
 			return AnswerUpdate.empty();
 		}
-		AnswerFormat format = problem.getAnswerFormat();
-		if (format == AnswerFormat.CHOICE) {
+		if (targetAnswerFormat == AnswerFormat.CHOICE) {
 			return resolveChoiceAnswer(command);
 		}
 		String answerValue = normalizeAnswerValue(command.answerValue());
@@ -74,7 +85,7 @@ public class ProblemUpdateRequestValidator {
 		return trimmed.isEmpty() ? null : trimmed;
 	}
 
-	private record UpdateChangeFlags(boolean hasAnswerChange, boolean hasMemoChange) {
+	private record UpdateChangeFlags(boolean hasAnswerChange, boolean hasAnswerFormatChange, boolean hasMemoChange) {
 		private boolean hasNoChanges() {
 			return !hasAnswerChange && !hasMemoChange;
 		}

@@ -144,12 +144,14 @@ public final class ProblemApiDocs {
 		오답카드의 정답/메모를 수정합니다.
 
 		수정 가능 필드:
+		- answerFormat: 정답 형식 (CHOICE/TEXT/NUMBER/EXPRESSION)
 		- answerChoiceNo: 객관식 정답 번호 (answerFormat=CHOICE 인 문제에 사용)
 		- answerValue: 단답/서술/숫자/수식 정답 값 (answerFormat!=CHOICE 인 문제에 사용)
 		- memoText: 메모 텍스트
 
 		주의:
-		- 문제의 answerFormat(정답 형식)에 따라 유효한 필드가 다릅니다.
+		- 요청에 answerFormat을 포함하면 정답 형식을 함께 변경할 수 있습니다.
+		- 최종 answerFormat(요청값 또는 기존값)에 따라 유효한 정답 필드가 다릅니다.
 		  - CHOICE: answerChoiceNo만 의미 있음 (answerValue는 무시/초기화)
 		  - TEXT/NUMBER/EXPRESSION: answerValue만 의미 있음 (answerChoiceNo는 무시/초기화)
 		- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
