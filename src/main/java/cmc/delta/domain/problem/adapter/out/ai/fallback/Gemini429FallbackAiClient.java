@@ -25,10 +25,10 @@ public class Gemini429FallbackAiClient implements AiClient {
 		try {
 			return geminiAiClient.classifyCurriculum(prompt);
 		} catch (GeminiAiException geminiAiException) {
-			if (!geminiAiException.isRateLimited() || !openAiClient.isEnabled()) {
+			if (!geminiAiException.isFallbackEligibleStatus() || !openAiClient.isEnabled()) {
 				throw geminiAiException;
 			}
-			log.warn("Gemini 분류 429 감지, OpenAI fallback 수행");
+			log.warn("Gemini 분류 외부 실패(status={}) 감지, OpenAI fallback 수행", geminiAiException.httpStatus());
 			return openAiClient.classifyCurriculum(prompt);
 		}
 	}

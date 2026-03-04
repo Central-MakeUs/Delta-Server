@@ -47,6 +47,20 @@ public class GeminiAiException extends BusinessException {
 		return httpStatus() != null && httpStatus() == HttpStatus.TOO_MANY_REQUESTS.value();
 	}
 
+	public boolean isFallbackEligibleStatus() {
+		Integer status = httpStatus();
+		if (status == null) {
+			return false;
+		}
+		if (status == HttpStatus.TOO_MANY_REQUESTS.value()) {
+			return true;
+		}
+		if (status == HttpStatus.REQUEST_TIMEOUT.value()) {
+			return true;
+		}
+		return status >= HttpStatus.INTERNAL_SERVER_ERROR.value();
+	}
+
 	public Integer httpStatus() {
 		Object data = getData();
 		if (!(data instanceof ExternalCallFailureData externalCallFailureData)) {

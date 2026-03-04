@@ -12,6 +12,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 class Gemini429FallbackAiClientTest {
 
@@ -49,6 +50,21 @@ class Gemini429FallbackAiClientTest {
 	}
 
 	@Test
+	@DisplayName("Gemini 503 + OpenAI 활성화면 OpenAI로 1회 fallback 한다")
+	void classifyCurriculum_whenGemini503AndOpenAiEnabled_thenFallbackToOpenAi() {
+		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
+		AiCurriculumResult openAiResult = mock(AiCurriculumResult.class);
+		when(geminiAiClient.classifyCurriculum(prompt)).thenThrow(serverErrorException());
+		when(openAiClient.isEnabled()).thenReturn(true);
+		when(openAiClient.classifyCurriculum(prompt)).thenReturn(openAiResult);
+
+		AiCurriculumResult actual = fallbackClient.classifyCurriculum(prompt);
+
+		assertThat(actual).isSameAs(openAiResult);
+		verify(openAiClient).classifyCurriculum(prompt);
+	}
+
+	@Test
 	@DisplayName("Gemini 429 + OpenAI 비활성화면 Gemini 예외를 그대로 던진다")
 	void classifyCurriculum_whenGemini429AndOpenAiDisabled_thenThrowsGeminiException() {
 		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
@@ -63,8 +79,8 @@ class Gemini429FallbackAiClientTest {
 	}
 
 	@Test
-	@DisplayName("Gemini 429가 아니면 OpenAI를 호출하지 않는다")
-	void classifyCurriculum_whenGeminiNot429_thenNoFallback() {
+	@DisplayName("Gemini 4xx(429 제외)면 OpenAI를 호출하지 않는다")
+	void classifyCurriculum_whenGemini4xxWithout429_thenNoFallback() {
 		AiCurriculumPrompt prompt = mock(AiCurriculumPrompt.class);
 		GeminiAiException exception = GeminiAiException.externalCallFailed(
 			HttpClientErrorException.create(HttpStatus.BAD_REQUEST, "bad request", null, new byte[0], null));
@@ -79,5 +95,10 @@ class Gemini429FallbackAiClientTest {
 	private GeminiAiException rateLimitException() {
 		return GeminiAiException.externalCallFailed(
 			HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "too many", null, new byte[0], null));
+	}
+
+	private GeminiAiException serverErrorException() {
+		return GeminiAiException.externalCallFailed(
+			HttpServerErrorException.create(HttpStatus.SERVICE_UNAVAILABLE, "unavailable", null, new byte[0], null));
 	}
 }
