@@ -20,6 +20,8 @@ public interface ProblemAiSolutionTaskJpaRepository
 		""")
 	Optional<ProblemAiSolutionTask> findByProblemIdWithLock(Long problemId);
 
+	void deleteByProblem_Id(Long problemId);
+
 	@Override
 	default Optional<ProblemAiSolutionTask> findByProblemId(Long problemId) {
 		return findByProblem_Id(problemId);
@@ -28,5 +30,10 @@ public interface ProblemAiSolutionTaskJpaRepository
 	@Override
 	default Optional<ProblemAiSolutionTask> findByProblemIdForUpdate(Long problemId) {
 		return findByProblemIdWithLock(problemId);
+	}
+
+	@Override
+	default void deleteByProblemId(Long problemId) {
+		deleteByProblem_Id(problemId);
 	}
 }

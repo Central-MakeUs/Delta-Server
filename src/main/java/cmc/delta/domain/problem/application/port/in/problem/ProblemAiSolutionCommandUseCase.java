@@ -5,4 +5,6 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolu
 public interface ProblemAiSolutionCommandUseCase {
 
 	ProblemAiSolutionRequestResponse requestMyProblemAiSolution(Long userId, Long problemId);
+
+	void deleteMyProblemAiSolution(Long userId, Long problemId);
 }

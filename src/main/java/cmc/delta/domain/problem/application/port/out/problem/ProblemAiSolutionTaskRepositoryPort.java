@@ -12,4 +12,6 @@ public interface ProblemAiSolutionTaskRepositoryPort {
 	Optional<ProblemAiSolutionTask> findByProblemIdForUpdate(Long problemId);
 
 	Optional<ProblemAiSolutionTask> findById(Long id);
+
+	void deleteByProblemId(Long problemId);
 }

@@ -201,6 +201,23 @@ public class ProblemController {
 		return ApiResponses.success(SuccessCode.OK, data);
 	}
 
+	@Operation(summary = "오답카드 AI 풀이 삭제", description = ProblemApiDocs.DELETE_AI_SOLUTION)
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_NOT_FOUND,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@DeleteMapping("/{problemId}/ai-solution")
+	public ApiResponse<Void> deleteAiSolution(
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long problemId) {
+		problemAiSolutionCommandUseCase.deleteMyProblemAiSolution(principal.userId(), problemId);
+		return ApiResponses.success(SuccessCode.OK, null);
+	}
+
 	@Operation(summary = "오답카드 정답/풀이 수정", description = ProblemApiDocs.UPDATE_WRONG_ANSWER_CARD)
 	@ApiErrorCodeExamples({
 		ErrorCode.AUTHENTICATION_FAILED,

@@ -19,8 +19,11 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HexFormat;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,6 +45,16 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 	private static final String MIME_TYPE_IMAGE_PNG = "image/png";
 	private static final String MIME_TYPE_IMAGE_WEBP = "image/webp";
 	private static final String MIME_TYPE_IMAGE_HEIC = "image/heic";
+	private static final Pattern FINAL_ANSWER_LINE_PATTERN = Pattern.compile(
+		"^\\s*[\\\\\"']*(?:\\*\\*)?정답(?:\\*\\*)?\\s*[:：].*");
+	private static final int MAX_SAME_LONG_SENTENCE_OCCURRENCES = 1;
+	private static final int LONG_SENTENCE_MIN_LENGTH = 40;
+	private static final int DUPLICATE_LINE_MIN_LENGTH = 20;
+	private static final int LOOP_MARKER_TRUNCATION_MIN_LINES = 12;
+	private static final int LOOP_MARKER_TRUNCATION_THRESHOLD = 2;
+ 	private static final Pattern REASONING_LOOP_MARKER_PATTERN = Pattern.compile(
+		"(?i).*(let\\s*'?s\\s+(recheck|reconsider|assume|use)|this is impossible|contradiction|다시\\s*검|재검토|모순|불가능).*"
+	);
 
 	private final ProblemRepositoryPort problemRepositoryPort;
 	private final ProblemAiSolutionTaskRepositoryPort taskRepositoryPort;
@@ -104,6 +117,15 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 		return executeSyncSolve(existingTask, false);
 	}
 
+	@Override
+	@Transactional
+	public void deleteMyProblemAiSolution(Long userId, Long problemId) {
+		problemRepositoryPort.findByIdAndUserId(problemId, userId)
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
+
+		taskRepositoryPort.deleteByProblemId(problemId);
+	}
+
 	private ProblemAiSolutionRequestResponse executeSyncSolve(ProblemAiSolutionTask task, boolean reusedExistingTask) {
 		LocalDateTime startedAt = LocalDateTime.now(clock);
 		log.debug(
@@ -120,11 +142,11 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			ProblemAiSolvePrompt prompt = new ProblemAiSolvePrompt(
 				problemImageBytes,
 				problemImageMimeType,
-				task.getAnswerFormat(),
-				task.getAnswerValue(),
-				task.getAnswerChoiceNo());
+				null,
+				null,
+				null);
 			ProblemAiSolveResult solveResult = problemSolveAiClient.solveProblem(prompt);
-			String normalizedSolutionText = ensureFinalAnswerLine(solveResult.solutionText(), task);
+			String normalizedSolutionText = normalizeSolutionTextForStorage(solveResult.solutionText(), task);
 			LocalDateTime completedAt = LocalDateTime.now(clock);
 			task.markReady(solveResult.solutionLatex(), normalizedSolutionText, completedAt);
 			log.debug(
@@ -152,6 +174,16 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			task.getStatus().name(),
 			reusedExistingTask,
 			task.getRequestedAt());
+	}
+
+	private String normalizeSolutionTextForStorage(String solutionText, ProblemAiSolutionTask task) {
+		String normalizedSolutionText = normalizeSolutionText(solutionText);
+		normalizedSolutionText = deduplicateConsecutiveLines(normalizedSolutionText);
+		normalizedSolutionText = deduplicateGlobalLongLines(normalizedSolutionText);
+		normalizedSolutionText = truncateReasoningLoopTail(normalizedSolutionText);
+		normalizedSolutionText = sanitizeRepeatedSentences(normalizedSolutionText);
+		normalizedSolutionText = collapseDuplicatedLeadingBlock(normalizedSolutionText);
+		return ensureFinalAnswerLine(normalizedSolutionText, task);
 	}
 
 	private String extractFailureReason(Exception exception) {
@@ -193,20 +225,14 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 
 	private String ensureFinalAnswerLine(String solutionText, ProblemAiSolutionTask task) {
 		String normalizedSolutionText = normalizeSolutionText(solutionText);
-		if (normalizedSolutionText != null && hasFinalAnswerLine(normalizedSolutionText)) {
-			return normalizedSolutionText;
+		TrailingAnswerStripResult stripResult = stripTrailingAnswerLines(normalizedSolutionText);
+		if (stripResult.trailingAnswer() == null) {
+			return stripResult.body();
 		}
-
-		String finalAnswer = buildExpectedFinalAnswer(task);
-		if (finalAnswer == null) {
-			return normalizedSolutionText;
+		if (stripResult.body() == null || stripResult.body().isBlank()) {
+			return ANSWER_LINE_PREFIX + " " + stripResult.trailingAnswer();
 		}
-
-		String answerLine = ANSWER_LINE_PREFIX + " " + finalAnswer;
-		if (normalizedSolutionText == null || normalizedSolutionText.isBlank()) {
-			return answerLine;
-		}
-		return normalizedSolutionText + "\n\n" + answerLine;
+		return stripResult.body() + "\n\n" + ANSWER_LINE_PREFIX + " " + stripResult.trailingAnswer();
 	}
 
 	private String normalizeSolutionText(String solutionText) {
@@ -220,35 +246,310 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 		return normalized;
 	}
 
-	private boolean hasFinalAnswerLine(String solutionText) {
+	private TrailingAnswerStripResult stripTrailingAnswerLines(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return new TrailingAnswerStripResult(null, null);
+		}
+
 		String[] lines = solutionText.split("\n");
-		for (String line : lines) {
-			if (normalizeAnswerLinePrefix(line).startsWith(ANSWER_LINE_PREFIX)) {
-				return true;
+		int endIndex = lines.length - 1;
+		String trailingAnswer = null;
+		while (endIndex >= 0 && lines[endIndex].trim().isEmpty()) {
+			endIndex -= 1;
+		}
+		while (endIndex >= 0 && FINAL_ANSWER_LINE_PATTERN.matcher(lines[endIndex]).matches()) {
+			if (trailingAnswer == null) {
+				trailingAnswer = extractAnswerValue(lines[endIndex]);
+			}
+			endIndex -= 1;
+			while (endIndex >= 0 && lines[endIndex].trim().isEmpty()) {
+				endIndex -= 1;
 			}
 		}
-		return false;
+		if (endIndex < 0) {
+			return new TrailingAnswerStripResult(null, trailingAnswer);
+		}
+
+		StringBuilder bodyBuilder = new StringBuilder();
+		for (int index = 0; index <= endIndex; index++) {
+			if (bodyBuilder.length() > 0) {
+				bodyBuilder.append('\n');
+			}
+			bodyBuilder.append(lines[index]);
+		}
+
+		String body = bodyBuilder.toString().trim();
+		if (body.isBlank()) {
+			return new TrailingAnswerStripResult(null, trailingAnswer);
+		}
+		return new TrailingAnswerStripResult(body, trailingAnswer);
 	}
 
-	private String normalizeAnswerLinePrefix(String line) {
-		if (line == null) {
-			return "";
+	private String extractAnswerValue(String answerLine) {
+		if (answerLine == null) {
+			return null;
 		}
-		String normalized = line.trim();
-		while (normalized.startsWith("\\")) {
-			normalized = normalized.substring(1).trim();
+		int separatorIndex = answerLine.indexOf(':');
+		if (separatorIndex < 0) {
+			separatorIndex = answerLine.indexOf('：');
+		}
+		if (separatorIndex < 0 || separatorIndex + 1 >= answerLine.length()) {
+			return null;
+		}
+		String answerValue = answerLine.substring(separatorIndex + 1).trim();
+		while (answerValue.startsWith("*") || answerValue.startsWith("\"") || answerValue.startsWith("'")
+			|| answerValue.startsWith("\\")) {
+			answerValue = answerValue.substring(1).trim();
+		}
+		while (answerValue.endsWith("*") || answerValue.endsWith("\"") || answerValue.endsWith("'")) {
+			answerValue = answerValue.substring(0, answerValue.length() - 1).trim();
+		}
+		if (answerValue.isBlank()) {
+			return null;
+		}
+		return answerValue;
+	}
+
+	private String sanitizeRepeatedSentences(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return solutionText;
+		}
+
+		String[] sentences = solutionText.split("(?<=[.!?])\\s+");
+		if (sentences.length == 0) {
+			return solutionText;
+		}
+
+		Map<String, Integer> sentenceCounts = new HashMap<>();
+		StringBuilder sanitizedBuilder = new StringBuilder();
+		for (String sentence : sentences) {
+			String normalizedSentence = normalizeSentenceKey(sentence);
+			if (normalizedSentence == null) {
+				appendSentence(sanitizedBuilder, sentence);
+				continue;
+			}
+
+			int nextCount = sentenceCounts.getOrDefault(normalizedSentence, 0) + 1;
+			sentenceCounts.put(normalizedSentence, nextCount);
+			if (nextCount > MAX_SAME_LONG_SENTENCE_OCCURRENCES) {
+				continue;
+			}
+			appendSentence(sanitizedBuilder, sentence);
+		}
+
+		String sanitized = sanitizedBuilder.toString().trim();
+		if (sanitized.isBlank()) {
+			return solutionText;
+		}
+		return sanitized;
+	}
+
+	private String deduplicateConsecutiveLines(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return solutionText;
+		}
+
+		String[] lines = solutionText.split("\n");
+		StringBuilder deduplicatedBuilder = new StringBuilder();
+		String previousKey = null;
+
+		for (String line : lines) {
+			String key = normalizeLineKey(line);
+			boolean isDuplicate = previousKey != null
+				&& key != null
+				&& key.length() >= DUPLICATE_LINE_MIN_LENGTH
+				&& key.equals(previousKey);
+			if (isDuplicate) {
+				continue;
+			}
+
+			if (deduplicatedBuilder.length() > 0) {
+				deduplicatedBuilder.append('\n');
+			}
+			deduplicatedBuilder.append(line);
+			if (key != null) {
+				previousKey = key;
+			}
+		}
+
+		String deduplicated = deduplicatedBuilder.toString().trim();
+		if (deduplicated.isBlank()) {
+			return solutionText;
+		}
+		return deduplicated;
+	}
+
+	private String deduplicateGlobalLongLines(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return solutionText;
+		}
+
+		String[] lines = solutionText.split("\n");
+		Map<String, Integer> seen = new HashMap<>();
+		StringBuilder deduplicatedBuilder = new StringBuilder();
+
+		for (String line : lines) {
+			String key = normalizeLineKey(line);
+			if (key != null && key.length() >= DUPLICATE_LINE_MIN_LENGTH) {
+				int occurrence = seen.getOrDefault(key, 0);
+				if (occurrence >= 1) {
+					continue;
+				}
+				seen.put(key, occurrence + 1);
+			}
+
+			if (deduplicatedBuilder.length() > 0) {
+				deduplicatedBuilder.append('\n');
+			}
+			deduplicatedBuilder.append(line);
+		}
+
+		String deduplicated = deduplicatedBuilder.toString().trim();
+		if (deduplicated.isBlank()) {
+			return solutionText;
+		}
+		return deduplicated;
+	}
+
+	private String truncateReasoningLoopTail(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return solutionText;
+		}
+
+		String[] lines = solutionText.split("\n");
+		int loopMarkerCount = 0;
+		int truncateFrom = -1;
+
+		for (int index = 0; index < lines.length; index++) {
+			String line = lines[index];
+			if (!REASONING_LOOP_MARKER_PATTERN.matcher(line).matches()) {
+				continue;
+			}
+			loopMarkerCount += 1;
+			if (index >= LOOP_MARKER_TRUNCATION_MIN_LINES && loopMarkerCount >= LOOP_MARKER_TRUNCATION_THRESHOLD) {
+				truncateFrom = index;
+				break;
+			}
+		}
+
+		if (truncateFrom < 0) {
+			return solutionText;
+		}
+
+		StringBuilder keptBuilder = new StringBuilder();
+		for (int index = 0; index < truncateFrom; index++) {
+			if (keptBuilder.length() > 0) {
+				keptBuilder.append('\n');
+			}
+			keptBuilder.append(lines[index]);
+		}
+
+		String kept = keptBuilder.toString().trim();
+		if (kept.isBlank()) {
+			return solutionText;
+		}
+		return kept;
+	}
+
+	private String normalizeLineKey(String line) {
+		if (line == null) {
+			return null;
+		}
+		String normalized = line.trim().replaceAll("\\s+", " ");
+		if (normalized.isBlank()) {
+			return null;
 		}
 		return normalized;
 	}
 
-	private String buildExpectedFinalAnswer(ProblemAiSolutionTask task) {
-		if (task.getAnswerValue() != null && !task.getAnswerValue().isBlank()) {
-			return task.getAnswerValue().trim();
+	private String normalizeSentenceKey(String sentence) {
+		if (sentence == null) {
+			return null;
 		}
-		if (task.getAnswerChoiceNo() != null) {
-			return String.valueOf(task.getAnswerChoiceNo());
+		String normalized = sentence.replace("\n", " ").trim().replaceAll("\\s+", " ");
+		if (normalized.length() < LONG_SENTENCE_MIN_LENGTH) {
+			return null;
 		}
-		return null;
+		return normalized;
+	}
+
+	private void appendSentence(StringBuilder builder, String sentence) {
+		String trimmedSentence = sentence == null ? "" : sentence.trim();
+		if (trimmedSentence.isBlank()) {
+			return;
+		}
+		if (builder.length() > 0) {
+			builder.append('\n');
+		}
+		builder.append(trimmedSentence);
+	}
+
+	private String collapseDuplicatedLeadingBlock(String solutionText) {
+		if (solutionText == null || solutionText.isBlank()) {
+			return solutionText;
+		}
+
+		String normalized = solutionText.trim();
+		if (normalized.length() < 400) {
+			return normalized;
+		}
+
+		int anchorLength = Math.min(160, normalized.length() / 4);
+		if (anchorLength < 60) {
+			return normalized;
+		}
+		String anchor = normalized.substring(0, anchorLength);
+
+		int secondIndex = findSecondBlockStart(normalized, anchor, anchorLength);
+		if (secondIndex < 0) {
+			return normalized;
+		}
+
+		String firstBlock = normalized.substring(0, secondIndex).trim();
+		String secondBlock = normalized.substring(secondIndex).trim();
+		if (!isHighlySimilarPrefix(firstBlock, secondBlock)) {
+			return normalized;
+		}
+
+		return firstBlock;
+	}
+
+	private int findSecondBlockStart(String text, String anchor, int anchorLength) {
+		int directIndex = text.indexOf(anchor, anchorLength);
+		if (directIndex >= 0) {
+			return directIndex;
+		}
+
+		String quotedAnchor = "\"" + anchor;
+		int quotedIndex = text.indexOf(quotedAnchor, anchorLength);
+		if (quotedIndex >= 0) {
+			return quotedIndex + 1;
+		}
+
+		String lineAnchored = "\n" + anchor;
+		int lineIndex = text.indexOf(lineAnchored, anchorLength);
+		if (lineIndex >= 0) {
+			return lineIndex + 1;
+		}
+
+		return -1;
+	}
+
+	private boolean isHighlySimilarPrefix(String first, String second) {
+		int compareLength = Math.min(Math.min(first.length(), second.length()), 500);
+		if (compareLength < 120) {
+			return false;
+		}
+
+		int matched = 0;
+		for (int index = 0; index < compareLength; index++) {
+			if (first.charAt(index) == second.charAt(index)) {
+				matched += 1;
+			}
+		}
+
+		double ratio = (double)matched / (double)compareLength;
+		return ratio >= 0.9;
 	}
 
 	private byte[] loadProblemImageBytes(ProblemAiSolutionTask task) {
@@ -316,5 +617,8 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			fromIndex = found + target.length();
 		}
 		return count;
+	}
+
+	private record TrailingAnswerStripResult(String body, String trailingAnswer) {
 	}
 }

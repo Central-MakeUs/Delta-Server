@@ -188,6 +188,14 @@ public final class ProblemApiDocs {
 		- solution.plainText: 일반 텍스트 풀이
 		""";
 
+	public static final String DELETE_AI_SOLUTION = """
+		오답카드 AI 풀이를 삭제합니다.
+
+		동작:
+		- 본인 소유 오답카드의 AI 풀이만 삭제할 수 있습니다. (본인 소유가 아니면 404 처리)
+		- AI 풀이 task 레코드를 삭제하며, 이후 조회 시 NOT_REQUESTED 상태로 반환됩니다.
+		""";
+
 	public static final String STATS_BY_UNIT = """
 		내 오답카드를 단원(Unit) 기준으로 집계합니다.
 
