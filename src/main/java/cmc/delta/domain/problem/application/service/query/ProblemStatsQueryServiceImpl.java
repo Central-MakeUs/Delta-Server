@@ -39,10 +39,7 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	private final ProblemMonthlyProgressValidator monthlyProgressValidator;
 
 	@Override
-	@Cacheable(
-		cacheNames = CacheNames.PROBLEM_STATS_UNITS,
-		key = "@problemStatsCacheKeyFactory.unitStatsKey(#userId, #condition)",
-		sync = true)
+	@Cacheable(cacheNames = CacheNames.PROBLEM_STATS_UNITS, key = "@problemStatsCacheKeyFactory.unitStatsKey(#userId, #condition)", sync = true)
 	public ProblemStatsResponse<ProblemUnitStatsItemResponse> getUnitStats(Long userId,
 		ProblemStatsCondition condition) {
 		List<ProblemUnitStatsRow> rows = problemStatsQueryPort.findUnitStats(userId, condition);
@@ -50,10 +47,7 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	}
 
 	@Override
-	@Cacheable(
-		cacheNames = CacheNames.PROBLEM_STATS_TYPES,
-		key = "@problemStatsCacheKeyFactory.typeStatsKey(#userId, #condition)",
-		sync = true)
+	@Cacheable(cacheNames = CacheNames.PROBLEM_STATS_TYPES, key = "@problemStatsCacheKeyFactory.typeStatsKey(#userId, #condition)", sync = true)
 	public ProblemStatsResponse<ProblemTypeStatsItemResponse> getTypeStats(Long userId,
 		ProblemStatsCondition condition) {
 		validateTypeFilter(userId, condition);
@@ -62,10 +56,7 @@ public class ProblemStatsQueryServiceImpl implements ProblemStatsUseCase {
 	}
 
 	@Override
-	@Cacheable(
-		cacheNames = CacheNames.PROBLEM_STATS_MONTHLY,
-		key = "@problemStatsCacheKeyFactory.monthlyProgressKey(#userId, #year, #month)",
-		sync = true)
+	@Cacheable(cacheNames = CacheNames.PROBLEM_STATS_MONTHLY, key = "@problemStatsCacheKeyFactory.monthlyProgressKey(#userId, #year, #month)", sync = true)
 	public ProblemMonthlyProgressResponse getMonthlyProgress(Long userId, Integer year, Integer month) {
 		YearMonth yearMonth = monthlyProgressValidator.validateAndParse(year, month);
 		MonthlyRange range = buildMonthlyRange(yearMonth);

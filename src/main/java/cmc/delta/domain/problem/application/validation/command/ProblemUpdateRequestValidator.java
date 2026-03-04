@@ -34,7 +34,8 @@ public class ProblemUpdateRequestValidator {
 	}
 
 	private UpdateChangeFlags readFlags(Problem problem, UpdateWrongAnswerCardCommand command) {
-		boolean hasAnswerFormatChange = command.answerFormat() != null && command.answerFormat() != problem.getAnswerFormat();
+		boolean hasAnswerFormatChange = command.answerFormat() != null
+			&& command.answerFormat() != problem.getAnswerFormat();
 		boolean hasAnswerValueChange = command.answerChoiceNo() != null || command.answerValue() != null;
 		boolean hasAnswerChange = hasAnswerFormatChange || hasAnswerValueChange;
 		boolean hasMemoChange = command.memoText() != null;
