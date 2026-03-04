@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,7 +22,6 @@ import org.springframework.web.client.RestClientResponseException;
 @Slf4j
 @Component
 @EnableConfigurationProperties(GeminiProperties.class)
-@RequiredArgsConstructor
 public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	private static final int LOG_TEXT_LIMIT = 1200;
@@ -47,6 +46,16 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
 	private final RestClient geminiRestClient;
+
+	public GeminiProblemSolveAiClient(
+		GeminiProperties props,
+		ObjectMapper objectMapper,
+		@Qualifier("geminiRestClient")
+		RestClient geminiRestClient) {
+		this.props = props;
+		this.objectMapper = objectMapper;
+		this.geminiRestClient = geminiRestClient;
+	}
 
 	@Override
 	public ProblemAiSolveResult solveProblem(ProblemAiSolvePrompt prompt) {

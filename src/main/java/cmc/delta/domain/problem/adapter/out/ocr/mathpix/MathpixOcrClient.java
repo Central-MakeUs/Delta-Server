@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.util.LinkedHashMap;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -36,7 +37,9 @@ public class MathpixOcrClient implements OcrClient {
 
 	private final String optionsJson;
 
-	public MathpixOcrClient(MathpixProperties props, ObjectMapper objectMapper, RestClient restClient) {
+	public MathpixOcrClient(MathpixProperties props, ObjectMapper objectMapper,
+		@Qualifier("mathpixRestClient")
+		RestClient restClient) {
 		this.props = props;
 		this.objectMapper = objectMapper;
 		this.restClient = restClient;
