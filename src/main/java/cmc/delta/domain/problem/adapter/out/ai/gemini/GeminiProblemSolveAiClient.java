@@ -6,7 +6,6 @@ import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +26,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private static final int LOG_TEXT_LIMIT = 1200;
 	private static final int SOLVE_MAX_OUTPUT_TOKENS = 8192;
 	private static final int SOLVE_THINKING_BUDGET = 0;
-	private static final String ANSWER_LINE_PREFIX = "정답:";
 
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
 	private static final String QUERY_KEY = "key";
@@ -38,9 +36,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private static final String KEY_SOLUTION_LATEX = "\"solution_latex\"";
 	private static final String KEY_SOLUTION_TEXT = "\"solution_text\"";
 	private static final String KEY_FINAL_ANSWER = "\"final_answer\"";
-	private static final int MAX_SAME_LONG_SENTENCE_OCCURRENCES = 3;
-	private static final int LONG_SENTENCE_MIN_LENGTH = 40;
-
 	private static final Map<String, Object> RESPONSE_SCHEMA = GeminiSolveSchemaFactory.responseSchema();
 
 	private final GeminiProperties props;
@@ -107,10 +102,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	private PreparedPrompt buildPromptText(ProblemAiSolvePrompt prompt) {
 		try {
-			String answerFormat = prompt.answerFormat() == null ? "UNKNOWN" : prompt.answerFormat().name();
-			String answerValue = safeText(prompt.answerValue());
-			String answerChoiceNo = prompt.answerChoiceNo() == null ? "null" : String.valueOf(prompt.answerChoiceNo());
-			String promptText = GeminiSolvePromptTemplate.render(answerFormat, answerValue, answerChoiceNo);
+			String promptText = GeminiSolvePromptTemplate.render();
 			return new PreparedPrompt(promptText);
 		} catch (Exception e) {
 			throw GeminiAiException.promptBuildFailed(e);
@@ -168,7 +160,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 				String solutionText = readTextOrNull(root, FIELD_SOLUTION_TEXT);
 				String finalAnswer = readTextOrNull(root, FIELD_FINAL_ANSWER);
 				if (solutionLatex != null || solutionText != null || finalAnswer != null) {
-					return finalizeResult(solutionLatex, solutionText, finalAnswer);
+					return finalizeResult(solutionLatex, solutionText);
 				}
 				log.debug("Gemini 풀이 JSON 파싱 성공했지만 필수 필드 누락. malformed fallback 시도 textLength={}",
 					unwrappedModelText.length());
@@ -330,7 +322,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			normalizedText = normalizedLatex;
 		}
 
-		return finalizeResult(normalizedLatex, normalizedText, normalizedFinalAnswer);
+		return finalizeResult(normalizedLatex, normalizedText);
 	}
 
 	private String extractMalformedFieldValue(String text, String fieldKey, String nextFieldKey) {
@@ -424,17 +416,12 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			.trim();
 	}
 
-	private ProblemAiSolveResult finalizeResult(String rawLatex, String rawPlainText, String rawFinalAnswer) {
+	private ProblemAiSolveResult finalizeResult(String rawLatex, String rawPlainText) {
 		String latex = normalizeDisplayText(rawLatex);
 		String plainText = normalizeDisplayText(rawPlainText);
 		if (plainText == null || plainText.isBlank()) {
 			plainText = latex;
 		}
-		plainText = sanitizeRepeatedSentences(plainText);
-		plainText = collapseDuplicatedLeadingBlock(plainText);
-
-		String resolvedFinalAnswer = resolveFinalAnswer(rawFinalAnswer, plainText);
-		plainText = mergeFinalAnswerLine(plainText, resolvedFinalAnswer);
 
 		return new ProblemAiSolveResult(latex, plainText);
 	}
@@ -451,222 +438,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			return null;
 		}
 		return normalized;
-	}
-
-	private String resolveFinalAnswer(String rawFinalAnswer, String plainText) {
-		String normalizedFinalAnswer = normalizeFinalAnswer(rawFinalAnswer);
-		if (normalizedFinalAnswer != null) {
-			return normalizedFinalAnswer;
-		}
-
-		String finalAnswerFromText = extractAnswerFromText(plainText);
-		if (finalAnswerFromText != null) {
-			return normalizeFinalAnswer(finalAnswerFromText);
-		}
-		return null;
-	}
-
-	private String extractAnswerFromText(String plainText) {
-		if (plainText == null || plainText.isBlank()) {
-			return null;
-		}
-
-		String normalizedText = plainText.replace("\r\n", "\n");
-		String[] lines = normalizedText.split("\n");
-		for (int index = lines.length - 1; index >= 0; index--) {
-			String line = normalizeAnswerLinePrefix(lines[index]);
-			if (line.startsWith(ANSWER_LINE_PREFIX)) {
-				return line.substring(ANSWER_LINE_PREFIX.length()).trim();
-			}
-		}
-
-		return null;
-	}
-
-	private String normalizeFinalAnswer(String finalAnswer) {
-		String normalized = normalizeDisplayText(finalAnswer);
-		if (normalized == null) {
-			return null;
-		}
-		return normalized.replace("\r\n", " ").replace("\n", " ").trim();
-	}
-
-	private String mergeFinalAnswerLine(String plainText, String finalAnswer) {
-		if (plainText == null && finalAnswer == null) {
-			return null;
-		}
-
-		String normalizedText = plainText == null ? "" : plainText.replace("\r\n", "\n").trim();
-		if (finalAnswer == null || finalAnswer.isBlank()) {
-			return normalizedText.isBlank() ? null : normalizedText;
-		}
-
-		String answerLine = ANSWER_LINE_PREFIX + " " + finalAnswer;
-		if (normalizedText.isBlank()) {
-			return answerLine;
-		}
-
-		String[] lines = normalizedText.split("\n");
-		StringBuilder rebuilt = new StringBuilder();
-		boolean replaced = false;
-		for (String line : lines) {
-			String trimmedLine = normalizeAnswerLinePrefix(line);
-			if (trimmedLine.startsWith(ANSWER_LINE_PREFIX)) {
-				if (!replaced) {
-					appendLine(rebuilt, answerLine);
-					replaced = true;
-				}
-				continue;
-			}
-			appendLine(rebuilt, line);
-		}
-
-		if (!replaced) {
-			appendLine(rebuilt, "");
-			appendLine(rebuilt, answerLine);
-		}
-
-		String merged = rebuilt.toString().trim();
-		return merged.isBlank() ? null : merged;
-	}
-
-	private void appendLine(StringBuilder builder, String line) {
-		if (builder.length() > 0) {
-			builder.append('\n');
-		}
-		builder.append(line);
-	}
-
-	private String normalizeAnswerLinePrefix(String line) {
-		if (line == null) {
-			return "";
-		}
-		String normalized = line.trim();
-		while (normalized.startsWith("\\")) {
-			normalized = normalized.substring(1).trim();
-		}
-		return normalized;
-	}
-
-	private String sanitizeRepeatedSentences(String plainText) {
-		if (plainText == null || plainText.isBlank()) {
-			return plainText;
-		}
-
-		String[] sentences = plainText.split("(?<=[.!?])\\s+");
-		if (sentences.length == 0) {
-			return plainText;
-		}
-
-		Map<String, Integer> sentenceCounts = new HashMap<>();
-		StringBuilder sanitizedBuilder = new StringBuilder();
-		for (String sentence : sentences) {
-			String normalizedSentence = normalizeSentenceKey(sentence);
-			if (normalizedSentence == null) {
-				appendSentence(sanitizedBuilder, sentence);
-				continue;
-			}
-
-			int nextCount = sentenceCounts.getOrDefault(normalizedSentence, 0) + 1;
-			sentenceCounts.put(normalizedSentence, nextCount);
-			if (nextCount > MAX_SAME_LONG_SENTENCE_OCCURRENCES) {
-				continue;
-			}
-			appendSentence(sanitizedBuilder, sentence);
-		}
-
-		String sanitized = sanitizedBuilder.toString().trim();
-		return sanitized.isBlank() ? plainText : sanitized;
-	}
-
-	private String normalizeSentenceKey(String sentence) {
-		if (sentence == null) {
-			return null;
-		}
-		String normalized = sentence.replace("\n", " ").trim().replaceAll("\\s+", " ");
-		if (normalized.length() < LONG_SENTENCE_MIN_LENGTH) {
-			return null;
-		}
-		return normalized;
-	}
-
-	private void appendSentence(StringBuilder builder, String sentence) {
-		String trimmedSentence = sentence == null ? "" : sentence.trim();
-		if (trimmedSentence.isBlank()) {
-			return;
-		}
-		if (builder.length() > 0) {
-			builder.append('\n');
-		}
-		builder.append(trimmedSentence);
-	}
-
-	private String collapseDuplicatedLeadingBlock(String plainText) {
-		if (plainText == null || plainText.isBlank()) {
-			return plainText;
-		}
-
-		String normalized = plainText.trim();
-		if (normalized.length() < 400) {
-			return normalized;
-		}
-
-		int anchorLength = Math.min(160, normalized.length() / 4);
-		if (anchorLength < 60) {
-			return normalized;
-		}
-		String anchor = normalized.substring(0, anchorLength);
-
-		int secondIndex = findSecondBlockStart(normalized, anchor, anchorLength);
-		if (secondIndex < 0) {
-			return normalized;
-		}
-
-		String firstBlock = normalized.substring(0, secondIndex).trim();
-		String secondBlock = normalized.substring(secondIndex).trim();
-		if (!isHighlySimilarPrefix(firstBlock, secondBlock)) {
-			return normalized;
-		}
-
-		return firstBlock;
-	}
-
-	private int findSecondBlockStart(String text, String anchor, int anchorLength) {
-		int directIndex = text.indexOf(anchor, anchorLength);
-		if (directIndex >= 0) {
-			return directIndex;
-		}
-
-		String quotedAnchor = "\"" + anchor;
-		int quotedIndex = text.indexOf(quotedAnchor, anchorLength);
-		if (quotedIndex >= 0) {
-			return quotedIndex + 1;
-		}
-
-		String lineAnchored = "\n" + anchor;
-		int lineIndex = text.indexOf(lineAnchored, anchorLength);
-		if (lineIndex >= 0) {
-			return lineIndex + 1;
-		}
-
-		return -1;
-	}
-
-	private boolean isHighlySimilarPrefix(String first, String second) {
-		int compareLength = Math.min(Math.min(first.length(), second.length()), 500);
-		if (compareLength < 120) {
-			return false;
-		}
-
-		int matched = 0;
-		for (int index = 0; index < compareLength; index++) {
-			if (first.charAt(index) == second.charAt(index)) {
-				matched += 1;
-			}
-		}
-
-		double ratio = (double)matched / (double)compareLength;
-		return ratio >= 0.9;
 	}
 
 	private record PreparedPrompt(String promptText) {

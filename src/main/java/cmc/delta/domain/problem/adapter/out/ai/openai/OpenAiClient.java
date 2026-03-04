@@ -312,10 +312,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 	private String buildSolvePromptText(ProblemAiSolvePrompt prompt) {
 		try {
-			String answerFormat = prompt.answerFormat() == null ? "UNKNOWN" : prompt.answerFormat().name();
-			String answerValue = prompt.answerValue() == null ? "" : prompt.answerValue();
-			String answerChoiceNo = prompt.answerChoiceNo() == null ? "null" : String.valueOf(prompt.answerChoiceNo());
-			return OpenAiSolvePromptTemplate.render(answerFormat, answerValue, answerChoiceNo);
+			return OpenAiSolvePromptTemplate.render();
 		} catch (Exception e) {
 			throw OpenAiAiException.promptBuildFailed(e);
 		}
