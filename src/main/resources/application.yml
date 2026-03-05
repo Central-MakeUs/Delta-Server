@@ -35,7 +35,7 @@ gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash-lite
-  solve-model: ${GEMINI_SOLVE_MODEL:gemini-2.5-flash-lite}
+  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite-preview}
 
 openai:
   base-url: https://api.openai.com
@@ -57,3 +57,8 @@ management:
     web:
       exposure:
         include: health,prometheus
+
+worker:
+  ai-solution:
+    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:2000}
+    batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}

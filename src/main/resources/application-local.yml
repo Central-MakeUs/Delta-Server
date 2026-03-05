@@ -58,3 +58,6 @@ worker:
     lock-lease-seconds: 600
     concurrency: 3
     backlog-log-minutes: 1
+  ai-solution:
+    fixed-delay-ms: 2000
+    batch-size: 3
