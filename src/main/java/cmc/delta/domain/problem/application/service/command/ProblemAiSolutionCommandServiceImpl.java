@@ -1,5 +1,20 @@
 package cmc.delta.domain.problem.application.service.command;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionRequestResponse;
@@ -13,22 +28,12 @@ import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.problem.ProblemAiSolutionTask;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HexFormat;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 나중에 꼭 리팩토리 예정 데모데이가 얼마 남지않아서 급하게 짬
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -83,7 +88,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 				problem.getAnswerChoiceNo(),
 				now);
 			ProblemAiSolutionTask savedTask = taskRepositoryPort.save(createdTask);
-			return executeSyncSolve(savedTask, false);
+			return toRequestResponse(savedTask, false);
 		}
 
 		ProblemAiSolutionTask existingTask = optionalTask.get();
@@ -96,7 +101,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 				problem.getAnswerValue(),
 				problem.getAnswerChoiceNo(),
 				now);
-			return executeSyncSolve(existingTask, false);
+			return toRequestResponse(existingTask, false);
 		}
 		if (existingTask.canReuseFor(inputHash)) {
 			return new ProblemAiSolutionRequestResponse(
@@ -114,7 +119,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			problem.getAnswerValue(),
 			problem.getAnswerChoiceNo(),
 			now);
-		return executeSyncSolve(existingTask, false);
+		return toRequestResponse(existingTask, false);
 	}
 
 	@Override
@@ -126,10 +131,19 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 		taskRepositoryPort.deleteByProblemId(problemId);
 	}
 
-	private ProblemAiSolutionRequestResponse executeSyncSolve(ProblemAiSolutionTask task, boolean reusedExistingTask) {
+	@Transactional
+	public void processNextPendingTask() {
+		Optional<ProblemAiSolutionTask> optionalTask = taskRepositoryPort.findNextPendingForUpdate(LocalDateTime.now(clock));
+		if (optionalTask.isEmpty()) {
+			return;
+		}
+		executePendingSolve(optionalTask.get());
+	}
+
+	private void executePendingSolve(ProblemAiSolutionTask task) {
 		LocalDateTime startedAt = LocalDateTime.now(clock);
 		log.debug(
-			"AI 풀이 동기 실행 시작 taskId={} problemId={} promptVersion={} requestedAt={}",
+			"AI 풀이 비동기 실행 시작 taskId={} problemId={} promptVersion={} requestedAt={}",
 			task.getId(),
 			task.getProblem().getId(),
 			task.getPromptVersion(),
@@ -150,7 +164,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			LocalDateTime completedAt = LocalDateTime.now(clock);
 			task.markReady(solveResult.solutionLatex(), normalizedSolutionText, completedAt);
 			log.debug(
-				"AI 풀이 동기 실행 성공 taskId={} problemId={} elapsedSeconds={} completedAt={}",
+				"AI 풀이 비동기 실행 성공 taskId={} problemId={} elapsedSeconds={} completedAt={}",
 				task.getId(),
 				task.getProblem().getId(),
 				elapsedSeconds(startedAt, completedAt),
@@ -160,7 +174,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			String failureReason = extractFailureReason(exception);
 			task.markTerminalFailure(failureReason, failedAt);
 			log.debug(
-				"AI 풀이 동기 실행 실패 taskId={} problemId={} elapsedSeconds={} failureReason={} exceptionClass={} message={}",
+				"AI 풀이 비동기 실행 실패 taskId={} problemId={} elapsedSeconds={} failureReason={} exceptionClass={} message={}",
 				task.getId(),
 				task.getProblem().getId(),
 				elapsedSeconds(startedAt, failedAt),
@@ -168,7 +182,9 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 				exception.getClass().getSimpleName(),
 				exception.getMessage());
 		}
+}
 
+	private ProblemAiSolutionRequestResponse toRequestResponse(ProblemAiSolutionTask task, boolean reusedExistingTask) {
 		return new ProblemAiSolutionRequestResponse(
 			task.getId(),
 			task.getStatus().name(),
