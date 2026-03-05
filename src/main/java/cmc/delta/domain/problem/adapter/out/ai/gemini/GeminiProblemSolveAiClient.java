@@ -6,6 +6,7 @@ import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,13 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private static final int LOG_TEXT_LIMIT = 1200;
 	private static final int SOLVE_MAX_OUTPUT_TOKENS = 8192;
 	private static final int SOLVE_THINKING_BUDGET = 0;
+	private static final int MALFORMED_FIELD_MAX_LENGTH = 8000;
+	private static final int MAX_JSON_REPAIR_SCAN_LENGTH = 24000;
+	private static final int MAX_ACCEPTABLE_SOLUTION_TEXT_LENGTH = 12000;
+	private static final int REPEATED_LINE_MIN_LENGTH = 20;
+	private static final int MAX_SAME_LINE_OCCURRENCES = 4;
+	private static final int REPEATED_LINE_RATIO_MIN_LINES = 12;
+	private static final int REPEATED_LINE_RATIO_PERCENT = 35;
 
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
 	private static final String QUERY_KEY = "key";
@@ -152,6 +160,9 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		String normalizedModelText = normalizeModelText(modelText);
 		String unwrappedModelText = unwrapJsonTextNodeIfNeeded(normalizedModelText);
 		String jsonPayload = extractJsonObject(unwrappedModelText);
+		if (jsonPayload == null) {
+			jsonPayload = repairTruncatedJsonObject(unwrappedModelText);
+		}
 
 		if (jsonPayload != null) {
 			try {
@@ -282,12 +293,122 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	}
 
 	private String extractJsonObject(String text) {
-		int startIndex = text.indexOf('{');
-		int endIndex = text.lastIndexOf('}');
-		if (startIndex < 0 || endIndex < 0 || startIndex >= endIndex) {
+		if (text == null || text.isBlank()) {
 			return null;
 		}
-		return text.substring(startIndex, endIndex + 1);
+
+		int startIndex = text.indexOf('{');
+		if (startIndex < 0) {
+			return null;
+		}
+
+		boolean inString = false;
+		boolean escaped = false;
+		int depth = 0;
+		for (int index = startIndex; index < text.length(); index++) {
+			char current = text.charAt(index);
+
+			if (inString) {
+				if (escaped) {
+					escaped = false;
+					continue;
+				}
+				if (current == '\\') {
+					escaped = true;
+					continue;
+				}
+				if (current == '"') {
+					inString = false;
+				}
+				continue;
+			}
+
+			if (current == '"') {
+				inString = true;
+				continue;
+			}
+			if (current == '{') {
+				depth += 1;
+				continue;
+			}
+			if (current == '}') {
+				depth -= 1;
+				if (depth == 0) {
+					return text.substring(startIndex, index + 1);
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private String repairTruncatedJsonObject(String text) {
+		if (text == null || text.isBlank()) {
+			return null;
+		}
+
+		int startIndex = text.indexOf('{');
+		if (startIndex < 0) {
+			return null;
+		}
+
+		int endExclusive = Math.min(text.length(), startIndex + MAX_JSON_REPAIR_SCAN_LENGTH);
+		String candidate = text.substring(startIndex, endExclusive);
+		StringBuilder repaired = new StringBuilder(candidate);
+
+		boolean inString = false;
+		boolean escaped = false;
+		int depth = 0;
+
+		for (int index = 0; index < candidate.length(); index++) {
+			char current = candidate.charAt(index);
+
+			if (inString) {
+				if (escaped) {
+					escaped = false;
+					continue;
+				}
+				if (current == '\\') {
+					escaped = true;
+					continue;
+				}
+				if (current == '"') {
+					inString = false;
+				}
+				continue;
+			}
+
+			if (current == '"') {
+				inString = true;
+				continue;
+			}
+			if (current == '{') {
+				depth += 1;
+				continue;
+			}
+			if (current == '}' && depth > 0) {
+				depth -= 1;
+			}
+		}
+
+		if (escaped) {
+			repaired.append('\\');
+		}
+		if (inString) {
+			repaired.append('"');
+		}
+		while (depth > 0) {
+			repaired.append('}');
+			depth -= 1;
+		}
+
+		String repairedJson = repaired.toString();
+		if (!repairedJson.contains(KEY_SOLUTION_LATEX)
+			&& !repairedJson.contains(KEY_SOLUTION_TEXT)
+			&& !repairedJson.contains(KEY_FINAL_ANSWER)) {
+			return null;
+		}
+		return repairedJson;
 	}
 
 	private String abbreviate(String text) {
@@ -337,16 +458,36 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		}
 
 		int closedQuoteIndex = findClosingQuoteIndex(text, valueStartIndex);
+		String candidate;
 		if (closedQuoteIndex > valueStartIndex) {
-			return text.substring(valueStartIndex, closedQuoteIndex);
+			candidate = text.substring(valueStartIndex, closedQuoteIndex);
+			return isUsableMalformedFieldValue(candidate) ? candidate : null;
 		}
 
 		int nextFieldIndex = nextFieldKey == null ? -1 : text.indexOf(nextFieldKey, valueStartIndex);
 		if (nextFieldIndex > valueStartIndex) {
-			return trimMalformedTail(text.substring(valueStartIndex, nextFieldIndex));
+			candidate = trimMalformedTail(text.substring(valueStartIndex, nextFieldIndex));
+			return isUsableMalformedFieldValue(candidate) ? candidate : null;
 		}
 
-		return trimMalformedTail(text.substring(valueStartIndex));
+		return null;
+	}
+
+	private boolean isUsableMalformedFieldValue(String value) {
+		if (value == null || value.isBlank()) {
+			return false;
+		}
+
+		String trimmed = value.trim();
+		if (trimmed.length() > MALFORMED_FIELD_MAX_LENGTH) {
+			return false;
+		}
+		if (trimmed.contains(KEY_SOLUTION_LATEX)
+			|| trimmed.contains(KEY_SOLUTION_TEXT)
+			|| trimmed.contains(KEY_FINAL_ANSWER)) {
+			return false;
+		}
+		return true;
 	}
 
 	private int findFieldValueStartIndex(String text, int fromIndex) {
@@ -408,12 +549,56 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		if (value == null || value.isBlank()) {
 			return null;
 		}
-		return value
-			.replace("\\n", "\n")
-			.replace("\\r", "\r")
-			.replace("\\\"", "\"")
-			.replace("\\\\", "\\")
-			.trim();
+
+		String decoded = decodeJsonEscapes(value.trim());
+		if (decoded == null || decoded.isBlank()) {
+			return null;
+		}
+		return decoded.trim();
+	}
+
+	private String decodeJsonEscapes(String value) {
+		StringBuilder result = new StringBuilder();
+		for (int index = 0; index < value.length(); index++) {
+			char current = value.charAt(index);
+			if (current != '\\') {
+				result.append(current);
+				continue;
+			}
+
+			if (index + 1 >= value.length()) {
+				return null;
+			}
+
+			char next = value.charAt(++index);
+			switch (next) {
+				case 'n' -> result.append('\n');
+				case 'r' -> result.append('\r');
+				case 't' -> result.append('\t');
+				case 'b' -> result.append('\b');
+				case 'f' -> result.append('\f');
+				case '"' -> result.append('"');
+				case '\\' -> result.append('\\');
+				case '/' -> result.append('/');
+				case 'u' -> {
+					if (index + 4 >= value.length()) {
+						return null;
+					}
+					String hex = value.substring(index + 1, index + 5);
+					try {
+						int codePoint = Integer.parseInt(hex, 16);
+						result.append((char)codePoint);
+					} catch (NumberFormatException exception) {
+						return null;
+					}
+					index += 4;
+				}
+				default -> {
+					return null;
+				}
+			}
+		}
+		return result.toString();
 	}
 
 	private ProblemAiSolveResult finalizeResult(String rawLatex, String rawPlainText) {
@@ -422,8 +607,64 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		if (plainText == null || plainText.isBlank()) {
 			plainText = latex;
 		}
+		if (isDegenerateSolveText(plainText)) {
+			throw GeminiAiException
+				.responseParseFailed(new IllegalArgumentException("Degenerate solve text rejected"));
+		}
 
 		return new ProblemAiSolveResult(latex, plainText);
+	}
+
+	private boolean isDegenerateSolveText(String text) {
+		if (text == null || text.isBlank()) {
+			return false;
+		}
+		if (text.length() > MAX_ACCEPTABLE_SOLUTION_TEXT_LENGTH) {
+			return true;
+		}
+
+		String[] lines = text.split("\\n");
+		Map<String, Integer> lineCounts = new HashMap<>();
+		int longLineCount = 0;
+		int repeatedLongLineCount = 0;
+
+		for (String line : lines) {
+			String key = normalizeLineKey(line);
+			if (key == null || key.length() < REPEATED_LINE_MIN_LENGTH) {
+				continue;
+			}
+			longLineCount += 1;
+			int nextCount = lineCounts.getOrDefault(key, 0) + 1;
+			lineCounts.put(key, nextCount);
+			if (nextCount > 1) {
+				repeatedLongLineCount += 1;
+			}
+			if (nextCount >= MAX_SAME_LINE_OCCURRENCES) {
+				return true;
+			}
+		}
+
+		if (longLineCount >= REPEATED_LINE_RATIO_MIN_LINES) {
+			int repeatedRatio = repeatedLongLineCount * 100 / longLineCount;
+			if (repeatedRatio >= REPEATED_LINE_RATIO_PERCENT) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private String normalizeLineKey(String line) {
+		if (line == null) {
+			return null;
+		}
+		String normalized = line
+			.replaceAll("\\s+", " ")
+			.replaceAll("[\\\\\"']", "")
+			.trim();
+		if (normalized.isBlank()) {
+			return null;
+		}
+		return normalized;
 	}
 
 	private String normalizeDisplayText(String value) {
