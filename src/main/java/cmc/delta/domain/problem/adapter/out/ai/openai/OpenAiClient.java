@@ -183,6 +183,9 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			JsonNode root = objectMapper.readTree(extractJsonObject(modelText));
 			String solutionLatex = readTextOrNull(root, FIELD_SOLUTION_LATEX);
 			String solutionText = readTextOrNull(root, FIELD_SOLUTION_TEXT);
+			if (shouldPreferLatexText(solutionLatex, solutionText)) {
+				solutionText = solutionLatex;
+			}
 			return new ProblemAiSolveResult(solutionLatex, solutionText);
 		} catch (OpenAiAiException e) {
 			throw e;
@@ -284,6 +287,24 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			return null;
 		}
 		return text;
+	}
+
+	private boolean shouldPreferLatexText(String latex, String plainText) {
+		if (latex == null || latex.isBlank() || plainText == null || plainText.isBlank()) {
+			return false;
+		}
+		if (hasMathDelimiter(plainText)) {
+			return false;
+		}
+		return containsLatexCommand(plainText) && hasMathDelimiter(latex);
+	}
+
+	private boolean hasMathDelimiter(String text) {
+		return text.contains("$") || text.contains("\\(") || text.contains("\\[");
+	}
+
+	private boolean containsLatexCommand(String text) {
+		return text.matches("(?s).*\\\\[A-Za-z]+.*");
 	}
 
 	private String buildCurriculumPromptText(AiCurriculumPrompt prompt) {

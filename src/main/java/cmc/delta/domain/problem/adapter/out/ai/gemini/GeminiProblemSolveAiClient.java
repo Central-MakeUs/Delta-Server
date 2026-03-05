@@ -607,6 +607,9 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		if (plainText == null || plainText.isBlank()) {
 			plainText = latex;
 		}
+		if (shouldPreferLatexText(latex, plainText)) {
+			plainText = latex;
+		}
 		if (isDegenerateSolveText(plainText)) {
 			throw GeminiAiException
 				.responseParseFailed(new IllegalArgumentException("Degenerate solve text rejected"));
@@ -665,6 +668,24 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			return null;
 		}
 		return normalized;
+	}
+
+	private boolean shouldPreferLatexText(String latex, String plainText) {
+		if (latex == null || latex.isBlank() || plainText == null || plainText.isBlank()) {
+			return false;
+		}
+		if (hasMathDelimiter(plainText)) {
+			return false;
+		}
+		return containsLatexCommand(plainText) && hasMathDelimiter(latex);
+	}
+
+	private boolean hasMathDelimiter(String text) {
+		return text.contains("$") || text.contains("\\(") || text.contains("\\[");
+	}
+
+	private boolean containsLatexCommand(String text) {
+		return text.matches("(?s).*\\\\[A-Za-z]+.*");
 	}
 
 	private String normalizeDisplayText(String value) {
