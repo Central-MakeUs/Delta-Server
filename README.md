@@ -1,6 +1,17 @@
-# 세모(SEMO) Backend
+![img_4.png](img_4.png)
+## 세모 - 수학 문제 사진으로 오답카드 생성/관리 서비스
 
 세모는 수학 문제 사진을 업로드하면 OCR/AI 분석을 통해 단원·유형을 추천하고, 사용자는 최소 수정만으로 오답카드를 생성/관리할 수 있는 서비스입니다.
+
+## Architecture
+
+### Service/Infra Architecture
+
+<img src="img/img_2.png" width="80%" />
+
+### System Architecture
+<img src="img/img_5.png" width="80%" />
+
 
 ## 개선 과정
 
@@ -11,16 +22,6 @@
 
 
 - [OCR 선택 과정](https://recondite-bear-a3b.notion.site/OCR-2e15b82d76f4805e84a5c9764f14fd3f?source=copy_link)
-
-## Architecture
-
-### Service/Infra Architecture
-
-<img src="img/img_2.png" width="70%" />
-
-### System Architecture
-
-<img src="img/img_4.png" width="60%" />
 
 ## Tech Stack
 
