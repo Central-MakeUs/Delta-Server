@@ -25,10 +25,15 @@ public class Gemini429FallbackProblemSolveAiClient implements ProblemSolveAiClie
 		try {
 			return geminiProblemSolveAiClient.solveProblem(prompt);
 		} catch (GeminiAiException geminiAiException) {
-			if (!geminiAiException.isFallbackEligibleStatus() || !openAiClient.isEnabled()) {
+			boolean fallbackEligible = geminiAiException.isFallbackEligibleStatus()
+				|| geminiAiException.isResponseParseFailure();
+			if (!fallbackEligible || !openAiClient.isEnabled()) {
 				throw geminiAiException;
 			}
-			log.warn("Gemini 풀이 외부 실패(status={}) 감지, OpenAI fallback 수행", geminiAiException.httpStatus());
+			log.warn(
+				"Gemini 풀이 실패 감지(status={} reason={}), OpenAI fallback 수행",
+				geminiAiException.httpStatus(),
+				geminiAiException.getMessage());
 			return openAiClient.solveProblem(prompt);
 		}
 	}
