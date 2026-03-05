@@ -162,6 +162,9 @@ public class Problem extends BaseTimeEntity {
 	}
 
 	public void applyUpdate(ProblemUpdateCommand cmd) {
+		if (cmd.hasAnswerFormatChange()) {
+			this.answerFormat = cmd.answerFormat();
+		}
 		if (cmd.hasAnswerChange()) {
 			updateAnswer(cmd.answerChoiceNo(), cmd.answerValue());
 		}

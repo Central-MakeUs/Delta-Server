@@ -13,6 +13,7 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreate
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
+import cmc.delta.domain.problem.application.support.cache.ProblemStatsCacheEpochStore;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.validation.command.*;
 import cmc.delta.domain.problem.model.asset.Asset;
@@ -45,6 +46,7 @@ class ProblemServiceImplTest {
 	private ProblemCreateMapper mapper;
 	private ProblemUpdateRequestValidator updateRequestValidator;
 	private ProblemScrollCacheEpochStore scrollCacheEpochStore;
+	private ProblemStatsCacheEpochStore statsCacheEpochStore;
 
 	private Clock fixedClock;
 
@@ -65,6 +67,7 @@ class ProblemServiceImplTest {
 		mapper = mock(ProblemCreateMapper.class);
 		updateRequestValidator = mock(ProblemUpdateRequestValidator.class);
 		scrollCacheEpochStore = mock(ProblemScrollCacheEpochStore.class);
+		statsCacheEpochStore = mock(ProblemStatsCacheEpochStore.class);
 
 		fixedClock = Clock.fixed(Instant.parse("2026-01-21T00:00:00Z"), ZoneId.of("UTC"));
 
@@ -80,6 +83,7 @@ class ProblemServiceImplTest {
 			mapper,
 			updateRequestValidator,
 			scrollCacheEpochStore,
+			statsCacheEpochStore,
 			fixedClock);
 	}
 
@@ -150,6 +154,7 @@ class ProblemServiceImplTest {
 		// then
 		verify(problemRepositoryPort).delete(p);
 		verify(scrollCacheEpochStore).bumpAfterCommit(10L);
+		verify(statsCacheEpochStore).bumpAfterCommit(10L);
 		triggerAfterCommit();
 		verify(storagePort).deleteImage("s3/problem.png");
 	}

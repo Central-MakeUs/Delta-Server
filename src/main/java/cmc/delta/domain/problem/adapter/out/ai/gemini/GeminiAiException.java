@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.adapter.out.ai.gemini;
 import cmc.delta.domain.problem.adapter.out.support.ExternalCallFailureData;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientResponseException;
 
 public class GeminiAiException extends BusinessException {
@@ -40,5 +41,35 @@ public class GeminiAiException extends BusinessException {
 	public static GeminiAiException responseParseFailed(Throwable cause) {
 		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_RESPONSE_PARSE_FAILED, null);
 		return new GeminiAiException(ErrorCode.AI_PROCESSING_FAILED, REASON_RESPONSE_PARSE_FAILED, data, cause);
+	}
+
+	public boolean isRateLimited() {
+		return httpStatus() != null && httpStatus() == HttpStatus.TOO_MANY_REQUESTS.value();
+	}
+
+	public boolean isFallbackEligibleStatus() {
+		Integer status = httpStatus();
+		if (status == null) {
+			return false;
+		}
+		if (status == HttpStatus.TOO_MANY_REQUESTS.value()) {
+			return true;
+		}
+		if (status == HttpStatus.REQUEST_TIMEOUT.value()) {
+			return true;
+		}
+		return status >= HttpStatus.INTERNAL_SERVER_ERROR.value();
+	}
+
+	public boolean isResponseParseFailure() {
+		return REASON_RESPONSE_PARSE_FAILED.equals(getMessage());
+	}
+
+	public Integer httpStatus() {
+		Object data = getData();
+		if (!(data instanceof ExternalCallFailureData externalCallFailureData)) {
+			return null;
+		}
+		return externalCallFailureData.httpStatus();
 	}
 }

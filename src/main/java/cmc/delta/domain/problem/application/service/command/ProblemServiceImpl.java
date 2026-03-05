@@ -12,6 +12,7 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreate
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.support.cache.ProblemScrollCacheEpochStore;
+import cmc.delta.domain.problem.application.support.cache.ProblemStatsCacheEpochStore;
 import cmc.delta.domain.problem.application.support.command.ProblemCreateAssembler;
 import cmc.delta.domain.problem.application.support.command.ProblemStoragePaths;
 import cmc.delta.domain.problem.application.validation.command.ProblemCreateCurriculumValidator;
@@ -52,6 +53,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	private final ProblemCreateMapper mapper;
 	private final ProblemUpdateRequestValidator updateRequestValidator;
 	private final ProblemScrollCacheEpochStore scrollCacheEpochStore;
+	private final ProblemStatsCacheEpochStore statsCacheEpochStore;
 
 	private final Clock clock;
 
@@ -67,7 +69,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 		Problem newProblem = assembleProblem(currentUserId, userRef, scan, finalUnit, finalTypes, command);
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
-		bumpScrollCache(currentUserId);
+		bumpProblemQueryCaches(currentUserId);
 		return mapper.toResponse(savedProblem);
 	}
 
@@ -76,7 +78,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	public void completeWrongAnswerCard(Long currentUserId, Long problemId, String memoText) {
 		Problem problem = loadProblemOrThrow(problemId, currentUserId);
 		completeProblem(problem, memoText);
-		bumpScrollCache(currentUserId);
+		bumpProblemQueryCaches(currentUserId);
 	}
 
 	@Override
@@ -85,7 +87,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		Problem problem = loadProblemOrThrow(problemId, userId);
 		ProblemUpdateCommand updateCommand = updateRequestValidator.validateAndNormalize(problem, command);
 		applyUpdate(problem, updateCommand);
-		bumpScrollCache(userId);
+		bumpProblemQueryCaches(userId);
 	}
 
 	@Override
@@ -95,7 +97,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		String originalStorageKey = problem.getOriginalStorageKey();
 		problemRepositoryPort.delete(problem);
 		scheduleOriginalImageDeletion(originalStorageKey);
-		bumpScrollCache(currentUserId);
+		bumpProblemQueryCaches(currentUserId);
 	}
 
 	private ProblemScan loadValidatedScan(Long userId, Long scanId) {
@@ -151,8 +153,9 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		problem.complete(memoText, LocalDateTime.now(clock));
 	}
 
-	private void bumpScrollCache(Long userId) {
+	private void bumpProblemQueryCaches(Long userId) {
 		scrollCacheEpochStore.bumpAfterCommit(userId);
+		statsCacheEpochStore.bumpAfterCommit(userId);
 	}
 
 	private void scheduleOriginalImageDeletion(String storageKey) {

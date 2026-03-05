@@ -71,8 +71,10 @@ class ProblemTest {
 		ProblemUpdateCommand cmd = new ProblemUpdateCommand(
 			null,
 			"newAns",
+			AnswerFormat.TEXT,
 			"newMemo",
 			true,
+			false,
 			true);
 
 		// when
@@ -81,6 +83,29 @@ class ProblemTest {
 		// then
 		assertThat(p.getAnswerValue()).isEqualTo("newAns");
 		assertThat(p.getMemoText()).isEqualTo("newMemo");
+	}
+
+	@Test
+	@DisplayName("applyUpdate: answerFormat 변경이 있으면 형식을 먼저 바꾸고 정답을 반영")
+	void applyUpdate_whenAnswerFormatChanged_thenUsesNewFormat() {
+		// given
+		Problem p = problem(AnswerFormat.TEXT);
+		ProblemUpdateCommand cmd = new ProblemUpdateCommand(
+			2,
+			"ignored",
+			AnswerFormat.CHOICE,
+			null,
+			true,
+			true,
+			false);
+
+		// when
+		p.applyUpdate(cmd);
+
+		// then
+		assertThat(p.getAnswerFormat()).isEqualTo(AnswerFormat.CHOICE);
+		assertThat(p.getAnswerChoiceNo()).isEqualTo(2);
+		assertThat(p.getAnswerValue()).isNull();
 	}
 
 	@Test

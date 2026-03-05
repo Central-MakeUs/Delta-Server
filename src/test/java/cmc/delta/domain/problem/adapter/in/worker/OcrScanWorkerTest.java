@@ -20,6 +20,9 @@ import cmc.delta.domain.problem.application.port.out.ocr.OcrClient;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.model.asset.Asset;
+import cmc.delta.global.storage.port.out.StoredObjectStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.concurrent.Executor;
@@ -92,11 +95,13 @@ class OcrScanWorkerTest {
 
 		Asset asset = asset("s3/key-3");
 		when(validator.requireOriginalAsset(scanId)).thenReturn(asset);
-		when(storageReader.readBytes("s3/key-3")).thenReturn(new byte[] {9});
+		byte[] bytes = new byte[] {9};
+		when(storageReader.openStream("s3/key-3"))
+			.thenReturn(new StoredObjectStream(new ByteArrayInputStream(bytes), bytes.length));
 
 		String rawJson = "{\"text\":\"import x;\",\"line_data\":[{\"type\":\"code\"}]}";
 		OcrResult result = ocrResult("import x;", rawJson);
-		when(ocrClient.recognize(any(), anyString())).thenReturn(result);
+		when(ocrClient.recognize(any(InputStream.class), anyLong(), anyString())).thenReturn(result);
 
 		// when
 		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);
@@ -121,10 +126,12 @@ class OcrScanWorkerTest {
 
 		Asset asset = asset("s3/key-7");
 		when(validator.requireOriginalAsset(scanId)).thenReturn(asset);
-		when(storageReader.readBytes("s3/key-7")).thenReturn(new byte[] {9});
+		byte[] bytes = new byte[] {9};
+		when(storageReader.openStream("s3/key-7"))
+			.thenReturn(new StoredObjectStream(new ByteArrayInputStream(bytes), bytes.length));
 
 		OcrResult result = ocrResult("plain", "{\"ok\":true}");
-		when(ocrClient.recognize(any(), anyString())).thenReturn(result);
+		when(ocrClient.recognize(any(InputStream.class), anyLong(), anyString())).thenReturn(result);
 
 		// when
 		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);
@@ -133,8 +140,8 @@ class OcrScanWorkerTest {
 		InOrder inOrder = inOrder(validator, storageReader, ocrClient, persister, unlocker);
 
 		inOrder.verify(validator).requireOriginalAsset(scanId);
-		inOrder.verify(storageReader).readBytes("s3/key-7");
-		inOrder.verify(ocrClient).recognize(eq(new byte[] {9}), eq("scan-7.jpg"));
+		inOrder.verify(storageReader).openStream("s3/key-7");
+		inOrder.verify(ocrClient).recognize(any(InputStream.class), eq(1L), eq("scan-7.jpg"));
 		inOrder.verify(persister).persistOcrSucceeded(scanId, OWNER, TOKEN, result, batchNow);
 		inOrder.verify(unlocker).unlockBestEffort(scanId, OWNER, TOKEN);
 
@@ -156,10 +163,11 @@ class OcrScanWorkerTest {
 		when(validator.requireOriginalAsset(scanId)).thenReturn(asset);
 
 		byte[] bytes = new byte[] {1, 2};
-		when(storageReader.readBytes("s3/key")).thenReturn(bytes);
+		when(storageReader.openStream("s3/key"))
+			.thenReturn(new StoredObjectStream(new ByteArrayInputStream(bytes), bytes.length));
 
 		OcrResult result = mock(OcrResult.class);
-		when(ocrClient.recognize(eq(bytes), anyString())).thenReturn(result);
+		when(ocrClient.recognize(any(InputStream.class), eq(2L), anyString())).thenReturn(result);
 
 		// when
 		sut.processOnePublic(scanId, OWNER, TOKEN, batchNow);

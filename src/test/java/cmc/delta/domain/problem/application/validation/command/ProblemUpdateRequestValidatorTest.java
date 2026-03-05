@@ -26,7 +26,7 @@ class ProblemUpdateRequestValidatorTest {
 	void validateAndNormalize_whenEmpty_thenThrowsEmpty() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.TEXT);
-		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, null);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, null, null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
@@ -42,7 +42,7 @@ class ProblemUpdateRequestValidatorTest {
 	void validateAndNormalize_whenChoiceAndMissingChoiceNo_thenThrowsInvalidAnswer() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.CHOICE);
-		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, "ignored", null);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, "ignored", null, null);
 
 		// when
 		ProblemValidationException ex = catchThrowableOfType(
@@ -58,7 +58,7 @@ class ProblemUpdateRequestValidatorTest {
 	void validateAndNormalize_whenChoice_thenSetsChoiceNoAndNullValue() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.CHOICE);
-		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(3, "shouldDrop", null);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(3, "shouldDrop", null, null);
 
 		// when
 		ProblemUpdateCommand out = validator.validateAndNormalize(p, cmd);
@@ -75,7 +75,7 @@ class ProblemUpdateRequestValidatorTest {
 	void validateAndNormalize_whenText_thenTrimsAnswerValue() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.TEXT);
-		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(1, "  ans  ", null);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(1, "  ans  ", null, null);
 
 		// when
 		ProblemUpdateCommand out = validator.validateAndNormalize(p, cmd);
@@ -91,7 +91,7 @@ class ProblemUpdateRequestValidatorTest {
 	void validateAndNormalize_whenMemoText_thenTrimsMemo() {
 		// given
 		Problem p = problemWithFormat(AnswerFormat.TEXT);
-		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, "  ");
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, null, "  ");
 
 		// when
 		ProblemUpdateCommand out = validator.validateAndNormalize(p, cmd);
@@ -100,6 +100,40 @@ class ProblemUpdateRequestValidatorTest {
 		assertThat(out.hasMemoChange()).isTrue();
 		assertThat(out.memoText()).isNull();
 		assertThat(out.hasAnswerChange()).isFalse();
+	}
+
+	@Test
+	@DisplayName("오답노트 수정 검증: 기존과 같은 answerFormat만 전달하면 변경 없음으로 본다")
+	void validateAndNormalize_whenOnlySameAnswerFormat_thenThrowsEmpty() {
+		// given
+		Problem p = problemWithFormat(AnswerFormat.TEXT);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(null, null, AnswerFormat.TEXT, null);
+
+		// when
+		ProblemValidationException ex = catchThrowableOfType(
+			() -> validator.validateAndNormalize(p, cmd),
+			ProblemValidationException.class);
+
+		// then
+		assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PROBLEM_UPDATE_EMPTY);
+	}
+
+	@Test
+	@DisplayName("오답노트 수정 검증: answerFormat 변경 시 변경된 형식 기준으로 정답 필드를 검증한다")
+	void validateAndNormalize_whenAnswerFormatChangesToChoice_thenUsesChoiceValidation() {
+		// given
+		Problem p = problemWithFormat(AnswerFormat.TEXT);
+		UpdateWrongAnswerCardCommand cmd = new UpdateWrongAnswerCardCommand(2, "ignored", AnswerFormat.CHOICE, null);
+
+		// when
+		ProblemUpdateCommand out = validator.validateAndNormalize(p, cmd);
+
+		// then
+		assertThat(out.hasAnswerChange()).isTrue();
+		assertThat(out.hasAnswerFormatChange()).isTrue();
+		assertThat(out.answerFormat()).isEqualTo(AnswerFormat.CHOICE);
+		assertThat(out.answerChoiceNo()).isEqualTo(2);
+		assertThat(out.answerValue()).isNull();
 	}
 
 	private Problem problemWithFormat(AnswerFormat format) {

@@ -10,6 +10,8 @@ import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemListRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.MyProblemScrollRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
@@ -28,15 +30,23 @@ class ProblemControllerWebMvcTest {
 
 	private ProblemCommandUseCase problemCommandUseCase;
 	private ProblemQueryUseCase problemQueryUseCase;
+	private ProblemAiSolutionCommandUseCase problemAiSolutionCommandUseCase;
+	private ProblemAiSolutionQueryUseCase problemAiSolutionQueryUseCase;
 	private ProblemListConditionFactory conditionFactory;
 
 	@BeforeEach
 	void setUp() {
 		problemCommandUseCase = mock(ProblemCommandUseCase.class);
 		problemQueryUseCase = mock(ProblemQueryUseCase.class);
+		problemAiSolutionCommandUseCase = mock(ProblemAiSolutionCommandUseCase.class);
+		problemAiSolutionQueryUseCase = mock(ProblemAiSolutionQueryUseCase.class);
 		conditionFactory = mock(ProblemListConditionFactory.class);
 
-		ProblemController controller = new ProblemController(problemCommandUseCase, problemQueryUseCase,
+		ProblemController controller = new ProblemController(
+			problemCommandUseCase,
+			problemQueryUseCase,
+			problemAiSolutionCommandUseCase,
+			problemAiSolutionQueryUseCase,
 			conditionFactory);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
@@ -142,6 +152,20 @@ class ProblemControllerWebMvcTest {
 			.andExpect(status().isOk());
 
 		verify(problemCommandUseCase).deleteWrongAnswerCard(10L, 5L);
+	}
+
+	@Test
+	@DisplayName("DELETE /problems/{id}/ai-solution: pathvariable 바인딩 + usecase 호출")
+	void deleteAiSolution_ok_bindsPath() throws Exception {
+		// given
+		UserPrincipal principal = principal(10L);
+
+		// when & then
+		mvc.perform(delete("/api/v1/problems/{problemId}/ai-solution", 5L)
+			.requestAttr(ATTR, principal))
+			.andExpect(status().isOk());
+
+		verify(problemAiSolutionCommandUseCase).deleteMyProblemAiSolution(10L, 5L);
 	}
 
 	private UserPrincipal principal(long userId) {

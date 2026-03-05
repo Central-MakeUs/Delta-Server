@@ -10,6 +10,7 @@ import cmc.delta.domain.curriculum.application.port.in.type.result.ProblemTypeLi
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
 import cmc.delta.domain.curriculum.application.validation.ProblemTypeCommandValidator;
 import cmc.delta.domain.curriculum.model.ProblemType;
+import cmc.delta.domain.problem.application.support.cache.ProblemStatsCacheEpochStore;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import java.util.List;
@@ -31,6 +32,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	private final ProblemTypeRepositoryPort problemTypeRepositoryPort;
 	private final UserRepositoryPort userRepositoryPort;
 	private final ProblemTypeCommandValidator validator;
+	private final ProblemStatsCacheEpochStore statsCacheEpochStore;
 
 	@Override
 	@Transactional(readOnly = true)
@@ -46,6 +48,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		ensureCustomNameAvailable(userId, name);
 		ProblemType newType = buildCustomType(userId, name);
 		ProblemType saved = problemTypeRepositoryPort.save(newType);
+		bumpStatsCache(userId);
 		return toItem(saved);
 	}
 
@@ -54,6 +57,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		SetProblemTypeActiveCommand validated = requireSetActiveCommand(command);
 		ProblemType type = loadOwnedCustomType(userId, typeId);
 		changeActive(type, validated.active());
+		bumpStatsCache(userId);
 	}
 
 	@Override
@@ -65,7 +69,12 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		applyNameChange(userId, type, changeSet);
 		applySortOrderChange(type, changeSet);
 		ProblemType saved = problemTypeRepositoryPort.save(type);
+		bumpStatsCache(userId);
 		return toItem(saved);
+	}
+
+	private void bumpStatsCache(Long userId) {
+		statsCacheEpochStore.bumpAfterCommit(userId);
 	}
 
 	private List<ProblemType> loadTypes(Long userId, boolean includeInactive) {

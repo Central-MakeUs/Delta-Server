@@ -144,12 +144,14 @@ public final class ProblemApiDocs {
 		오답카드의 정답/메모를 수정합니다.
 
 		수정 가능 필드:
+		- answerFormat: 정답 형식 (CHOICE/TEXT/NUMBER/EXPRESSION)
 		- answerChoiceNo: 객관식 정답 번호 (answerFormat=CHOICE 인 문제에 사용)
 		- answerValue: 단답/서술/숫자/수식 정답 값 (answerFormat!=CHOICE 인 문제에 사용)
 		- memoText: 메모 텍스트
 
 		주의:
-		- 문제의 answerFormat(정답 형식)에 따라 유효한 필드가 다릅니다.
+		- 요청에 answerFormat을 포함하면 정답 형식을 함께 변경할 수 있습니다.
+		- 최종 answerFormat(요청값 또는 기존값)에 따라 유효한 정답 필드가 다릅니다.
 		  - CHOICE: answerChoiceNo만 의미 있음 (answerValue는 무시/초기화)
 		  - TEXT/NUMBER/EXPRESSION: answerValue만 의미 있음 (answerChoiceNo는 무시/초기화)
 		- 완료 여부(SOLVED/UNSOLVED)는 이 API가 아니라 완료 처리 API(completedAt) 기준입니다.
@@ -162,6 +164,36 @@ public final class ProblemApiDocs {
 		- 본인 소유 오답카드만 삭제할 수 있습니다. (본인 소유가 아니면 404 처리)
 		- 오답카드에 연결된 태그/선택지(ProblemChoice, ProblemUnitTag, ProblemTypeTag)는 함께 삭제됩니다.
 		- 스캔(ProblemScan) 및 이미지(Asset)는 즉시 삭제하지 않습니다. (별도 purge 정책으로 정리)
+		""";
+
+	public static final String REQUEST_AI_SOLUTION = """
+		오답카드 AI 풀이 생성을 요청합니다.
+
+		동작:
+		- 같은 문제(problemId)에 대해 이미 생성 중이거나 생성 완료된 동일 입력이 있으면 재사용합니다.
+		- 입력(문제 본문/정답)이 변경된 경우에는 새 요청으로 재생성합니다.
+		""";
+
+	public static final String GET_AI_SOLUTION = """
+		오답카드 AI 풀이 상태/결과를 조회합니다.
+
+		상태:
+		- NOT_REQUESTED: 아직 생성 요청이 없음
+		- PENDING: 대기 중
+		- PROCESSING: 생성 중
+		- READY: 생성 완료
+		- FAILED: 최종 실패
+
+		결과:
+		- solution.plainText: 일반 텍스트 풀이
+		""";
+
+	public static final String DELETE_AI_SOLUTION = """
+		오답카드 AI 풀이를 삭제합니다.
+
+		동작:
+		- 본인 소유 오답카드의 AI 풀이만 삭제할 수 있습니다. (본인 소유가 아니면 404 처리)
+		- AI 풀이 task 레코드를 삭제하며, 이후 조회 시 NOT_REQUESTED 상태로 반환됩니다.
 		""";
 
 	public static final String STATS_BY_UNIT = """

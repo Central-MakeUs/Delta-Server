@@ -6,6 +6,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -17,7 +18,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 class HttpAccessLogFilterTest {
 
-	private final HttpAccessLogFilter filter = new HttpAccessLogFilter();
+	private final HttpAccessLogFilter filter = new HttpAccessLogFilter(new SimpleMeterRegistry());
 
 	@Test
 	@DisplayName("shouldNotFilter: swagger 관련 경로면 filter를 타지 않는다")

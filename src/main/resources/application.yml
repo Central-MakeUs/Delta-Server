@@ -35,6 +35,13 @@ gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
   model: gemini-2.5-flash-lite
+  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite-preview}
+
+openai:
+  base-url: https://api.openai.com
+  api-key: ${OPENAI_API_KEY:}
+  model: ${OPENAI_MODEL:gpt-4o-mini}
+  solve-model: ${OPENAI_SOLVE_MODEL:${OPENAI_MODEL:gpt-4o-mini}}
 
 
 logging:
@@ -42,9 +49,16 @@ logging:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
   level:
     cmc.delta.domain.problem.adapter.in.worker: INFO
+    cmc.delta.domain.problem.adapter.out.ai.gemini.GeminiProblemSolveAiClient: DEBUG
+    cmc.delta.domain.problem.application.service.command.ProblemAiSolutionCommandServiceImpl: DEBUG
 
 management:
   endpoints:
     web:
       exposure:
         include: health,prometheus
+
+worker:
+  ai-solution:
+    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:2000}
+    batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}

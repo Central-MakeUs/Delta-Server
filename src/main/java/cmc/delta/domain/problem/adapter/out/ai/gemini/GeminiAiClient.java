@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -18,7 +18,6 @@ import org.springframework.web.client.RestClientResponseException;
 
 @Component
 @EnableConfigurationProperties(GeminiProperties.class)
-@RequiredArgsConstructor
 public class GeminiAiClient implements AiClient {
 
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
@@ -40,6 +39,16 @@ public class GeminiAiClient implements AiClient {
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
 	private final RestClient geminiRestClient;
+
+	public GeminiAiClient(
+		GeminiProperties props,
+		ObjectMapper objectMapper,
+		@Qualifier("geminiRestClient")
+		RestClient geminiRestClient) {
+		this.props = props;
+		this.objectMapper = objectMapper;
+		this.geminiRestClient = geminiRestClient;
+	}
 
 	@Override
 	public AiCurriculumResult classifyCurriculum(AiCurriculumPrompt prompt) {
