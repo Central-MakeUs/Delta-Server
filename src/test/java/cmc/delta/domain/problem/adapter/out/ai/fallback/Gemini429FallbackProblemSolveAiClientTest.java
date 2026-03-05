@@ -93,6 +93,23 @@ class Gemini429FallbackProblemSolveAiClientTest {
 		verifyNoInteractions(openAiClient);
 	}
 
+	@Test
+	@DisplayName("Gemini 풀이 파싱 실패 + OpenAI 활성화면 OpenAI로 fallback 한다")
+	void solveProblem_whenGeminiParseFailureAndOpenAiEnabled_thenFallbackToOpenAi() {
+		ProblemAiSolvePrompt prompt = mock(ProblemAiSolvePrompt.class);
+		ProblemAiSolveResult openAiResult = new ProblemAiSolveResult("fallback-latex", "fallback-text");
+		GeminiAiException parseException = GeminiAiException.responseParseFailed(
+			new IllegalArgumentException("Structured solve response parse failed"));
+		when(geminiProblemSolveAiClient.solveProblem(prompt)).thenThrow(parseException);
+		when(openAiClient.isEnabled()).thenReturn(true);
+		when(openAiClient.solveProblem(prompt)).thenReturn(openAiResult);
+
+		ProblemAiSolveResult actual = fallbackClient.solveProblem(prompt);
+
+		assertThat(actual).isEqualTo(openAiResult);
+		verify(openAiClient).solveProblem(prompt);
+	}
+
 	private GeminiAiException rateLimitException() {
 		return GeminiAiException.externalCallFailed(
 			HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "too many", null, new byte[0], null));
