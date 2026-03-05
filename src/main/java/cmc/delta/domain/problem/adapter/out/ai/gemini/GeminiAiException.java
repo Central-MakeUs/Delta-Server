@@ -61,6 +61,10 @@ public class GeminiAiException extends BusinessException {
 		return status >= HttpStatus.INTERNAL_SERVER_ERROR.value();
 	}
 
+	public boolean isResponseParseFailure() {
+		return REASON_RESPONSE_PARSE_FAILED.equals(getMessage());
+	}
+
 	public Integer httpStatus() {
 		Object data = getData();
 		if (!(data instanceof ExternalCallFailureData externalCallFailureData)) {
