@@ -425,7 +425,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private ProblemAiSolveResult extractFromMalformedStructuredText(String normalizedModelText) {
 		String latex = extractMalformedFieldValue(normalizedModelText, KEY_SOLUTION_LATEX, KEY_SOLUTION_TEXT);
 		String text = extractMalformedFieldValue(normalizedModelText, KEY_SOLUTION_TEXT, KEY_FINAL_ANSWER);
-		String finalAnswer = extractMalformedFieldValue(normalizedModelText, KEY_FINAL_ANSWER, null);
 
 		String normalizedLatex = normalizeExtractedValue(latex);
 		String normalizedText = normalizeExtractedValue(text);
@@ -434,8 +433,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			&& (normalizedText == null || normalizedText.isBlank())) {
 			return null;
 		}
-
-		String normalizedFinalAnswer = normalizeExtractedValue(finalAnswer);
 
 		if ((normalizedText == null || normalizedText.isBlank())
 			&& normalizedLatex != null
