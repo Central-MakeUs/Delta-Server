@@ -1,5 +1,10 @@
 package cmc.delta.domain.auth.application.service.provisioning;
 
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
 import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
@@ -8,11 +13,8 @@ import cmc.delta.domain.auth.model.SocialAccount;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.config.WebhookConfig;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 	private final UserRepositoryPort userRepositoryPort;
 	private final SocialAccountRepositoryPort socialAccountRepositoryPort;
 	private final SocialUserProvisionValidator validator;
+	private final WebhookConfig webhookConfig;
 
 	@Override
 	@Transactional
@@ -48,6 +51,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 
 	private ProvisioningResult createAndLink(SocialUserProvisionCommand command) {
 		User user = userRepositoryPort.save(User.createProvisioned(command.email(), command.nickname()));
+		webhookConfig.sendDiscordNotification(user.getId());
 		SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
 		socialAccountRepositoryPort.save(account);
 		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), true);

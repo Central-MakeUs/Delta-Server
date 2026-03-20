@@ -1,14 +1,17 @@
 package cmc.delta.domain.auth.application.service.social;
 
+import java.time.Duration;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+
 import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.exception.SocialAuthException;
 import cmc.delta.domain.auth.application.port.in.loginkey.LoginKeyExchangeUseCase;
+import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
 import cmc.delta.domain.auth.application.support.FrontendDefaults;
 import cmc.delta.global.config.FrontendProperties;
-import java.time.Duration;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -19,9 +22,7 @@ public class SocialAuthService {
 	private final LoginKeyExchangeUseCase loginKeyExchangeUseCase;
 	private final FrontendProperties frontendProperties;
 
-	public String createLoginKeyAndBuildRedirect(
-		cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase.LoginResult result,
-		Duration ttl) {
+	public String createLoginKeyAndBuildRedirect(SocialLoginCommandUseCase.LoginResult result, Duration ttl) {
 		String loginKey = UUID.randomUUID().toString();
 		loginKeyExchangeUseCase.save(loginKey, result.data(), result.tokens(), ttl);
 
