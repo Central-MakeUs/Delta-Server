@@ -1,13 +1,29 @@
 package cmc.delta.domain.problem.adapter.in.web.scan;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.ScanGroupCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
+import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanGroupCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanCreateResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanGroupCreateResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
+import cmc.delta.domain.problem.application.port.in.scan.result.ScanGroupCreateResult;
 import cmc.delta.domain.problem.application.port.in.support.UploadFile;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
@@ -18,11 +34,7 @@ import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.io.IOException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "문제 스캔")
 @RestController
@@ -31,6 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProblemScanController {
 
 	private final ScanCommandUseCase scanCommandUseCase;
+	private final ScanGroupCommandUseCase scanGroupCommandUseCase;
 	private final ProblemScanQueryUseCase problemScanQueryUseCase;
 
 	@Operation(summary = "문제 스캔 생성 (업로드 + scan/asset 생성)")
@@ -51,6 +64,30 @@ public class ProblemScanController {
 		UploadFile uploadFile = toUploadFile(file);
 		ScanCreateResult result = scanCommandUseCase.createScan(principal.userId(), new CreateScanCommand(uploadFile));
 		return ApiResponses.success(SuccessCode.OK, ProblemScanCreateResponse.from(result));
+	}
+
+	@Operation(summary = "문제 스캔 그룹 생성 (다중 이미지 업로드)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ApiResponse<ProblemScanGroupCreateResponse> create(
+		@CurrentUser UserPrincipal principal,
+		@RequestPart("files") List<MultipartFile> files) {
+
+		List<UploadFile> uploadFiles = files.stream()
+			.map(this::toUploadFile)
+			.toList();
+
+		ScanGroupCreateResult result = scanGroupCommandUseCase.createScanGroup(
+			principal.userId(), new CreateScanGroupCommand(uploadFiles));
+
+		return ApiResponses.success(SuccessCode.OK, ProblemScanGroupCreateResponse.from(result));
 	}
 
 	private UploadFile toUploadFile(MultipartFile file) {
