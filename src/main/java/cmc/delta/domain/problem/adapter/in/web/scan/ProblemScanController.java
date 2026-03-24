@@ -1,26 +1,16 @@
 package cmc.delta.domain.problem.adapter.in.web.scan;
 
-import java.io.IOException;
-import java.util.List;
-
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.ScanGroupCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.ScanGroupQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
 import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanGroupCommand;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanCreateResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanDetailResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanGroupCreateResponse;
+import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanGroupSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ProblemScanSummaryResponse;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
 import cmc.delta.domain.problem.application.port.in.scan.result.ScanGroupCreateResult;
@@ -34,7 +24,12 @@ import cmc.delta.global.config.swagger.ApiErrorCodeExamples;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "문제 스캔")
 @RestController
@@ -45,6 +40,7 @@ public class ProblemScanController {
 	private final ScanCommandUseCase scanCommandUseCase;
 	private final ScanGroupCommandUseCase scanGroupCommandUseCase;
 	private final ProblemScanQueryUseCase problemScanQueryUseCase;
+	private final ScanGroupQueryUseCase scanGroupQueryUseCase;
 
 	@Operation(summary = "문제 스캔 생성 (업로드 + scan/asset 생성)")
 	@ApiErrorCodeExamples({
@@ -75,27 +71,16 @@ public class ProblemScanController {
 		ErrorCode.USER_WITHDRAWN,
 		ErrorCode.INTERNAL_ERROR
 	})
-	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ApiResponse<ProblemScanGroupCreateResponse> create(
+	@PostMapping(value = "/groups", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ApiResponse<ProblemScanGroupCreateResponse> createGroup(
 		@CurrentUser UserPrincipal principal,
 		@RequestPart("files") List<MultipartFile> files) {
-
 		List<UploadFile> uploadFiles = files.stream()
 			.map(this::toUploadFile)
 			.toList();
-
 		ScanGroupCreateResult result = scanGroupCommandUseCase.createScanGroup(
 			principal.userId(), new CreateScanGroupCommand(uploadFiles));
-
 		return ApiResponses.success(SuccessCode.OK, ProblemScanGroupCreateResponse.from(result));
-	}
-
-	private UploadFile toUploadFile(MultipartFile file) {
-		try {
-			return new UploadFile(file.getBytes(), file.getContentType(), file.getOriginalFilename());
-		} catch (IOException e) {
-			throw new ProblemValidationException("업로드 파일을 읽을 수 없습니다.");
-		}
 	}
 
 	@Operation(summary = "문제 스캔 상세 조회 (원본 이미지 URL + OCR/LaTeX 상태)")
@@ -136,5 +121,30 @@ public class ProblemScanController {
 		Long scanId) {
 		ProblemScanSummaryResponse data = problemScanQueryUseCase.getSummary(principal.userId(), scanId);
 		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "문제 스캔 그룹 요약 조회 (폴링용: 그룹 내 전체 스캔 상태)")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.PROBLEM_ASSET_NOT_FOUND,
+		ErrorCode.USER_NOT_FOUND,
+		ErrorCode.USER_WITHDRAWN,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@GetMapping("/groups/{groupId}/summary")
+	public ApiResponse<ProblemScanGroupSummaryResponse> getGroupSummary(
+		@CurrentUser UserPrincipal principal,
+		@PathVariable Long groupId) {
+		ProblemScanGroupSummaryResponse data = scanGroupQueryUseCase.getGroupSummary(principal.userId(), groupId);
+		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	private UploadFile toUploadFile(MultipartFile file) {
+		try {
+			return new UploadFile(file.getBytes(), file.getContentType(), file.getOriginalFilename());
+		} catch (IOException e) {
+			throw new ProblemValidationException("업로드 파일을 읽을 수 없습니다.");
+		}
 	}
 }
