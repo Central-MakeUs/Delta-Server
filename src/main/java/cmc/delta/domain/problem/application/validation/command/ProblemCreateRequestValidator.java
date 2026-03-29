@@ -18,7 +18,7 @@ public class ProblemCreateRequestValidator {
 		requireScanId(command.scanId());
 		requireFinalUnitId(command.finalUnitId());
 		requireFinalTypeIds(command.finalTypeIds());
-		validateAnswerFields(command);
+		validateAnswerFields(command.answerFormat(), command.answerChoiceNo());
 	}
 
 	private void requireRequestBody(CreateWrongAnswerCardCommand command) {
@@ -52,12 +52,11 @@ public class ProblemCreateRequestValidator {
 		}
 	}
 
-	private void validateAnswerFields(CreateWrongAnswerCardCommand command) {
-		AnswerFormat answerFormat = command.answerFormat();
+	private void validateAnswerFields(AnswerFormat answerFormat, Integer answerChoiceNo) {
 		requireAnswerFormat(answerFormat);
 
 		if (answerFormat == AnswerFormat.CHOICE) {
-			validateChoiceAnswer(command.answerChoiceNo());
+			validateChoiceAnswer(answerChoiceNo);
 		}
 	}
 
