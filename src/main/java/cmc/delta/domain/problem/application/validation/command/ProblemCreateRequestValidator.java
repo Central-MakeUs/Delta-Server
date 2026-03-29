@@ -1,12 +1,12 @@
 package cmc.delta.domain.problem.application.validation.command;
 
-import cmc.delta.domain.problem.application.exception.ProblemException;
+import java.util.List;
+
+import org.springframework.stereotype.Component;
+
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
-import cmc.delta.global.error.ErrorCode;
-import java.util.List;
-import org.springframework.stereotype.Component;
 
 @Component
 public class ProblemCreateRequestValidator {
@@ -34,21 +34,21 @@ public class ProblemCreateRequestValidator {
 	}
 
 	private void requireFinalUnitId(String finalUnitId) {
-		if (isBlank(finalUnitId)) {
+		if (finalUnitId == null || finalUnitId.isBlank()) {
 			throw new ProblemValidationException("finalUnitId는 필수입니다.");
 		}
 	}
 
 	private void requireFinalTypeIds(List<String> finalTypeIds) {
 		if (finalTypeIds == null || finalTypeIds.isEmpty()) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST); // 너희 규칙대로
+			throw new ProblemValidationException("finalTypeId는 필수입니다."); // 너희 규칙대로
 		}
 
-		boolean hasValid = finalTypeIds.stream()
-			.anyMatch(id -> id != null && !id.isBlank());
+		boolean isAllValid = finalTypeIds.stream()
+			.allMatch(id -> id != null && !id.isBlank());
 
-		if (!hasValid) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST);
+		if (!isAllValid) {
+			throw new ProblemValidationException("유효하지 않은 finalTypeId가 있습니다.");
 		}
 	}
 
@@ -57,11 +57,7 @@ public class ProblemCreateRequestValidator {
 		requireAnswerFormat(answerFormat);
 
 		if (answerFormat == AnswerFormat.CHOICE) {
-			Integer answerChoiceNo = command.answerChoiceNo();
-			if (answerChoiceNo != null) {
-				validateChoiceAnswer(answerChoiceNo);
-			}
-			return;
+			validateChoiceAnswer(command.answerChoiceNo());
 		}
 	}
 
@@ -75,15 +71,8 @@ public class ProblemCreateRequestValidator {
 		if (answerChoiceNo == null) {
 			throw new ProblemValidationException("객관식은 answerChoiceNo가 필수입니다.");
 		}
-		if (answerChoiceNo.intValue() < MIN_ANSWER_CHOICE) {
+		if (answerChoiceNo < MIN_ANSWER_CHOICE) {
 			throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
 		}
-	}
-
-	private boolean isBlank(String value) {
-		if (value == null) {
-			return true;
-		}
-		return value.trim().isEmpty();
 	}
 }
