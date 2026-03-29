@@ -37,6 +37,8 @@ public class ProblemScanGroupServiceImpl implements ScanGroupCommandUseCase {
 	private final ProblemCreateScanValidator uploadValidator;
 	private final Clock clock;
 
+	private static final String DATE_FORMAT = "yyyy/MM/dd";
+
 	@Transactional
 	@Override
 	public ScanGroupCreateResult createScanGroup(Long userId, CreateScanGroupCommand command) {
@@ -45,7 +47,7 @@ public class ProblemScanGroupServiceImpl implements ScanGroupCommandUseCase {
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScanGroup group = scanGroupRepositoryPort.save(ProblemScanGroup.create(userRef));
 
-		String datePath = LocalDate.now(clock).format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+		String datePath = LocalDate.now(clock).format(DateTimeFormatter.ofPattern(DATE_FORMAT));
 		String directory = ProblemScanStoragePaths.ORIGINAL_DIR + "/" + datePath + "/" + userId;
 
 		List<ScanCreateResult> scans = new ArrayList<>();
