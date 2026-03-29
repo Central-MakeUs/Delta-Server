@@ -86,7 +86,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		requestValidator.validate(command);
 		ProblemScan scan = loadValidatedScan(userId, command.scanId());
 		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
-		List<ProblemType> finalTypes = loadFinalTypesOrThrow(userId, command.finalTypeIds());
+		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(userId, command.finalTypeIds());
 		Problem newProblem = assembleProblem(userId, userRef, scan, finalUnit, finalTypes, command);
 		Problem savedProblem = problemRepositoryPort.save(newProblem);
 		return mapper.toResponse(savedProblem);
@@ -124,14 +124,6 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		scanValidator.validateScanIsAiDone(scan);
 		scanValidator.validateProblemNotAlreadyCreated(scanId);
 		return scan;
-	}
-
-	private List<ProblemType> loadFinalTypesOrThrow(Long userId, List<String> finalTypeIds) {
-		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(userId, finalTypeIds);
-		if (finalTypes == null || finalTypes.isEmpty()) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST);
-		}
-		return finalTypes;
 	}
 
 	private Problem assembleProblem(
