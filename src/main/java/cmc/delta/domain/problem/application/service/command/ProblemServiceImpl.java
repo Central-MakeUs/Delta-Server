@@ -8,6 +8,7 @@ import cmc.delta.domain.problem.application.mapper.command.ProblemCreateMapper;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.command.UpdateWrongAnswerCardCommand;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemBulkCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.out.asset.AssetRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
@@ -60,16 +61,34 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 	@Override
 	@Transactional
 	public ProblemCreateResponse createWrongAnswerCard(Long currentUserId, CreateWrongAnswerCardCommand command) {
-		requestValidator.validate(command);
+		User userRef = userRepositoryPort.getReferenceById(currentUserId);
+		ProblemCreateResponse response = createSingle(currentUserId, userRef, command);
+		bumpProblemQueryCaches(currentUserId);
+		return response;
+	}
 
-		ProblemScan scan = loadValidatedScan(currentUserId, command.scanId());
-		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
-		List<ProblemType> finalTypes = loadFinalTypesOrThrow(currentUserId, command.finalTypeIds());
+	@Override
+	@Transactional
+	public ProblemBulkCreateResponse createBulkWrongAnswerCards(
+		Long currentUserId, List<CreateWrongAnswerCardCommand> commands) {
 		User userRef = userRepositoryPort.getReferenceById(currentUserId);
 
-		Problem newProblem = assembleProblem(currentUserId, userRef, scan, finalUnit, finalTypes, command);
-		Problem savedProblem = problemRepositoryPort.save(newProblem);
+		List<ProblemCreateResponse> results = commands.stream()
+			.map(command -> createSingle(currentUserId, userRef, command))
+			.toList();
+
 		bumpProblemQueryCaches(currentUserId);
+		return new ProblemBulkCreateResponse(results);
+	}
+
+	private ProblemCreateResponse createSingle(
+		Long userId, User userRef, CreateWrongAnswerCardCommand command) {
+		requestValidator.validate(command);
+		ProblemScan scan = loadValidatedScan(userId, command.scanId());
+		Unit finalUnit = curriculumValidator.getFinalUnit(command.finalUnitId());
+		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(userId, command.finalTypeIds());
+		Problem newProblem = assembleProblem(userId, userRef, scan, finalUnit, finalTypes, command);
+		Problem savedProblem = problemRepositoryPort.save(newProblem);
 		return mapper.toResponse(savedProblem);
 	}
 
@@ -105,14 +124,6 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		scanValidator.validateScanIsAiDone(scan);
 		scanValidator.validateProblemNotAlreadyCreated(scanId);
 		return scan;
-	}
-
-	private List<ProblemType> loadFinalTypesOrThrow(Long userId, List<String> finalTypeIds) {
-		List<ProblemType> finalTypes = curriculumValidator.getFinalTypes(userId, finalTypeIds);
-		if (finalTypes == null || finalTypes.isEmpty()) {
-			throw new ProblemException(ErrorCode.INVALID_REQUEST);
-		}
-		return finalTypes;
 	}
 
 	private Problem assembleProblem(
