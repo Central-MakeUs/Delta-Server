@@ -1,19 +1,15 @@
 package cmc.delta.domain.problem.adapter.in.web.scan;
 
-import static cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver.ATTR;
+import static cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
-import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
-import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
-import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
-import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
-import cmc.delta.domain.problem.application.port.in.support.UploadFile;
-import cmc.delta.global.config.security.principal.UserPrincipal;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -21,18 +17,37 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import cmc.delta.domain.problem.adapter.in.web.TestCurrentUserArgumentResolver;
+import cmc.delta.domain.problem.application.port.in.scan.ProblemScanQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.ScanCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.ScanGroupCommandUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.ScanGroupQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.scan.command.CreateScanCommand;
+import cmc.delta.domain.problem.application.port.in.scan.result.ScanCreateResult;
+import cmc.delta.domain.problem.application.port.in.support.UploadFile;
+import cmc.delta.global.config.security.principal.UserPrincipal;
+
 class ProblemScanControllerWebMvcTest {
 
 	private MockMvc mvc;
 	private ScanCommandUseCase scanCommandUseCase;
 	private ProblemScanQueryUseCase problemScanQueryUseCase;
+	private ScanGroupCommandUseCase scanGroupCommandUseCase;
+	private ScanGroupQueryUseCase scanGroupQueryUseCase;
 
 	@BeforeEach
 	void setUp() {
 		scanCommandUseCase = mock(ScanCommandUseCase.class);
 		problemScanQueryUseCase = mock(ProblemScanQueryUseCase.class);
+		scanGroupCommandUseCase = mock(ScanGroupCommandUseCase.class);
+		scanGroupQueryUseCase = mock(ScanGroupQueryUseCase.class);
 
-		ProblemScanController controller = new ProblemScanController(scanCommandUseCase, problemScanQueryUseCase);
+		ProblemScanController controller = new ProblemScanController(
+			scanCommandUseCase,
+			scanGroupCommandUseCase,
+			problemScanQueryUseCase,
+			scanGroupQueryUseCase
+		);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setCustomArgumentResolvers(new TestCurrentUserArgumentResolver())
@@ -53,9 +68,9 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(multipart("/api/v1/problem-scans")
-			.file(file)
-			.requestAttr(ATTR, principal)
-			.contentType(MediaType.MULTIPART_FORM_DATA))
+				.file(file)
+				.requestAttr(ATTR, principal)
+				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
 			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
 
@@ -74,8 +89,8 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(multipart("/api/v1/problem-scans")
-			.requestAttr(ATTR, principal)
-			.contentType(MediaType.MULTIPART_FORM_DATA))
+				.requestAttr(ATTR, principal)
+				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isBadRequest());
 
 		verifyNoInteractions(scanCommandUseCase);
@@ -90,7 +105,7 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problem-scans/{scanId}", 7L)
-			.requestAttr(ATTR, principal))
+				.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(problemScanQueryUseCase).getDetail(10L, 7L);
@@ -105,7 +120,7 @@ class ProblemScanControllerWebMvcTest {
 
 		// when & then
 		mvc.perform(get("/api/v1/problem-scans/{scanId}/summary", 7L)
-			.requestAttr(ATTR, principal))
+				.requestAttr(ATTR, principal))
 			.andExpect(status().isOk());
 
 		verify(problemScanQueryUseCase).getSummary(10L, 7L);

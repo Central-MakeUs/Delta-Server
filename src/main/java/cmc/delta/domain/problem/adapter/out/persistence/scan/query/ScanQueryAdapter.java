@@ -11,6 +11,7 @@ import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.scan.QProblemScan;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -61,5 +62,39 @@ public class ScanQueryAdapter implements ScanQueryPort {
 	@Override
 	public Optional<ScanDetailProjection> findDetail(Long userId, Long scanId) {
 		return scanDetailRepository.findOwnedDetail(scanId, userId);
+	}
+
+	@Override
+	public List<ScanListRow> findListRowsByGroupId(Long userId, Long groupId) {
+		QProblemScan scan = QProblemScan.problemScan;
+		QAsset asset = QAsset.asset;
+
+		QUnit unit = new QUnit("unit");
+		QProblemType type = new QProblemType("type");
+
+		return queryFactory
+			.select(constructor(
+				ScanListRow.class,
+				scan.id,
+				scan.user.id,
+				scan.status,
+				asset.id,
+				asset.storageKey,
+				unit.id,
+				unit.name,
+				type.id,
+				type.name,
+				scan.needsReview,
+				scan.failReason))
+			.from(scan)
+			.join(asset).on(
+				asset.scan.id.eq(scan.id)
+					.and(asset.assetType.eq(AssetType.ORIGINAL)))
+			.leftJoin(scan.predictedUnit, unit)
+			.leftJoin(scan.predictedType, type)
+			.where(
+				scan.scanGroup.id.eq(groupId),
+				scan.user.id.eq(userId))
+			.fetch();
 	}
 }

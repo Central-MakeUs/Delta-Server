@@ -6,6 +6,7 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemComple
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
+import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
@@ -13,6 +14,7 @@ import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionRequestResponse;
+import cmc.delta.domain.problem.application.port.in.problem.result.ProblemBulkCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemCreateResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListItemResponse;
@@ -30,6 +32,7 @@ import cmc.delta.global.config.swagger.ProblemApiDocs;
 import cmc.delta.global.error.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -72,6 +75,27 @@ public class ProblemController {
 		ProblemCreateResponse data = problemCommandUseCase.createWrongAnswerCard(principal.userId(),
 			request.toCommand());
 		return ApiResponses.success(SuccessCode.OK, data);
+	}
+
+	@Operation(summary = "오답카드 다중 생성")
+	@ApiErrorCodeExamples({
+		ErrorCode.AUTHENTICATION_FAILED,
+		ErrorCode.TOKEN_REQUIRED,
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.PROBLEM_SCAN_NOT_FOUND,
+		ErrorCode.PROBLEM_ASSET_NOT_FOUND,
+		ErrorCode.PROBLEM_ALREADY_CREATED,
+		ErrorCode.INTERNAL_ERROR
+	})
+	@PostMapping("/bulk")
+	public ApiResponse<ProblemBulkCreateResponse> createBulkWrongAnswerCards(
+		@CurrentUser UserPrincipal principal,
+		@RequestBody List<ProblemCreateRequest> requests) {
+		List<CreateWrongAnswerCardCommand> commands = requests.stream()
+			.map(ProblemCreateRequest::toCommand)
+			.toList();
+		return ApiResponses.success(SuccessCode.OK,
+			problemCommandUseCase.createBulkWrongAnswerCards(principal.userId(), commands));
 	}
 
 	@Operation(summary = "내 오답 카드 목록 조회", description = ProblemApiDocs.LIST_MY_PROBLEMS)

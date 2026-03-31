@@ -43,6 +43,10 @@ public class ProblemScan extends BaseTimeEntity {
 	@JoinColumn(name = "user_id", nullable = false)
 	private User user;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "scan_group_id")
+	private ProblemScanGroup scanGroup;
+
 	@Enumerated(EnumType.STRING)
 	@Column(nullable = false, length = 20)
 	private ScanStatus status;
@@ -163,6 +167,12 @@ public class ProblemScan extends BaseTimeEntity {
 
 	public static ProblemScan createUploaded(User user) {
 		return uploaded(user);
+	}
+
+	public static ProblemScan uploadedInGroup(User user, ProblemScanGroup group) {
+		ProblemScan s = uploaded(user);
+		s.scanGroup = group;
+		return s;
 	}
 
 	/**

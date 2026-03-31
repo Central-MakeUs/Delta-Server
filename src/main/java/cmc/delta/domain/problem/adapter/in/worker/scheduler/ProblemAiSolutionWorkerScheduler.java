@@ -13,7 +13,7 @@ public class ProblemAiSolutionWorkerScheduler {
 	private final ProblemAiSolutionWorker worker;
 	private final AiSolutionWorkerProperties properties;
 
-	@Scheduled(fixedDelayString = "${worker.ai-solution.fixed-delay-ms:1000}")
+	@Scheduled(fixedDelayString = "${worker.ai-solution.fixed-delay-ms:500}")
 	public void tick() {
 		worker.runBatch(properties.batchSize());
 	}

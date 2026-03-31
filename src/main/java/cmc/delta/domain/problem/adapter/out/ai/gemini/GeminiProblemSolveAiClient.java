@@ -34,6 +34,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private static final int MAX_SAME_LINE_OCCURRENCES = 4;
 	private static final int REPEATED_LINE_RATIO_MIN_LINES = 12;
 	private static final int REPEATED_LINE_RATIO_PERCENT = 35;
+	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
 	private static final String QUERY_KEY = "key";
@@ -62,6 +63,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	@Override
 	public ProblemAiSolveResult solveProblem(ProblemAiSolvePrompt prompt) {
+		long startedAtNanos = System.nanoTime();
 		try {
 			PreparedPrompt preparedPrompt = buildPromptText(prompt);
 			Map<String, Object> requestBody = buildRequestBody(
@@ -91,21 +93,38 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 				rawResponseJson == null ? 0 : rawResponseJson.length(),
 				abbreviate(rawResponseJson));
 
-			return parseResponse(rawResponseJson);
+			ProblemAiSolveResult result = parseResponse(rawResponseJson);
+			log.info("Gemini 풀이 완료 model={} durationMs={}", props.solveModel(), elapsedMillis(startedAtNanos));
+			return result;
 		} catch (RestClientResponseException e) {
-			log.debug(
-				"Gemini 풀이 HTTP 실패 model={} status={} responseBodySnippet={}",
+			log.warn(
+				"Gemini 풀이 HTTP 실패 model={} status={} durationMs={} responseBodySnippet={}",
 				props.solveModel(),
 				e.getRawStatusCode(),
+				elapsedMillis(startedAtNanos),
 				abbreviate(e.getResponseBodyAsString()));
 			throw GeminiAiException.externalCallFailed(e);
 		} catch (GeminiAiException e) {
-			log.debug("Gemini 풀이 GeminiAiException model={} message={}", props.solveModel(), e.getMessage(), e);
+			log.warn(
+				"Gemini 풀이 실패 model={} durationMs={} message={}",
+				props.solveModel(),
+				elapsedMillis(startedAtNanos),
+				e.getMessage(),
+				e);
 			throw e;
 		} catch (Exception e) {
-			log.debug("Gemini 풀이 예외 model={} message={}", props.solveModel(), e.getMessage(), e);
+			log.warn(
+				"Gemini 풀이 예외 model={} durationMs={} message={}",
+				props.solveModel(),
+				elapsedMillis(startedAtNanos),
+				e.getMessage(),
+				e);
 			throw GeminiAiException.responseParseFailed(e);
 		}
+	}
+
+	private long elapsedMillis(long startedAtNanos) {
+		return (System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND;
 	}
 
 	private PreparedPrompt buildPromptText(ProblemAiSolvePrompt prompt) {
@@ -425,7 +444,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private ProblemAiSolveResult extractFromMalformedStructuredText(String normalizedModelText) {
 		String latex = extractMalformedFieldValue(normalizedModelText, KEY_SOLUTION_LATEX, KEY_SOLUTION_TEXT);
 		String text = extractMalformedFieldValue(normalizedModelText, KEY_SOLUTION_TEXT, KEY_FINAL_ANSWER);
-		String finalAnswer = extractMalformedFieldValue(normalizedModelText, KEY_FINAL_ANSWER, null);
 
 		String normalizedLatex = normalizeExtractedValue(latex);
 		String normalizedText = normalizeExtractedValue(text);
@@ -434,8 +452,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			&& (normalizedText == null || normalizedText.isBlank())) {
 			return null;
 		}
-
-		String normalizedFinalAnswer = normalizeExtractedValue(finalAnswer);
 
 		if ((normalizedText == null || normalizedText.isBlank())
 			&& normalizedLatex != null
