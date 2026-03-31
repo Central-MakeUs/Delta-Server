@@ -15,7 +15,7 @@ public class AiWorkerScheduler {
 	private final LockOwnerProvider lockOwnerProvider;
 	private final AiWorkerProperties props;
 
-	@Scheduled(fixedDelayString = "${worker.ai.fixed-delay-ms:2000}")
+	@Scheduled(fixedDelayString = "${worker.ai.fixed-delay-ms:500}")
 	public void tick() {
 		runBatch();
 	}

@@ -7,7 +7,7 @@ public record AiSolutionWorkerProperties(
 	long fixedDelayMs,
 	int batchSize) {
 
-	private static final long DEFAULT_FIXED_DELAY_MS = 1000;
+	private static final long DEFAULT_FIXED_DELAY_MS = 500;
 	private static final int DEFAULT_BATCH_SIZE = 3;
 
 	public AiSolutionWorkerProperties {
