@@ -15,7 +15,7 @@ public class OcrWorkerScheduler {
 	private final LockOwnerProvider lockOwnerProvider;
 	private final OcrWorkerProperties props;
 
-	@Scheduled(fixedDelayString = "${worker.ocr.fixed-delay-ms:2000}")
+	@Scheduled(fixedDelayString = "${worker.ocr.fixed-delay-ms:1000}")
 	public void tick() {
 		runBatch();
 	}

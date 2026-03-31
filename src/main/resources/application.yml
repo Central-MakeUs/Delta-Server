@@ -60,5 +60,5 @@ management:
 
 worker:
   ai-solution:
-    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:2000}
+    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:500}
     batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}

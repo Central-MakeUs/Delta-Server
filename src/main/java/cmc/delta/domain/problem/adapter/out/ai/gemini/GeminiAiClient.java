@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 @EnableConfigurationProperties(GeminiProperties.class)
 public class GeminiAiClient implements AiClient {
@@ -35,6 +37,7 @@ public class GeminiAiClient implements AiClient {
 	private static final Map<String, Object> RESPONSE_SCHEMA = GeminiSchemaFactory.responseSchema();
 
 	private static final int DEFAULT_TEMPERATURE = 0;
+	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
@@ -52,6 +55,7 @@ public class GeminiAiClient implements AiClient {
 
 	@Override
 	public AiCurriculumResult classifyCurriculum(AiCurriculumPrompt prompt) {
+		long startedAtNanos = System.nanoTime();
 		try {
 			String promptText = buildPromptText(prompt);
 			Map<String, Object> requestBody = buildRequestBody(promptText);
@@ -67,15 +71,30 @@ public class GeminiAiClient implements AiClient {
 				.retrieve()
 				.body(String.class);
 
-			return parseResponse(rawResponseJson);
+			AiCurriculumResult result = parseResponse(rawResponseJson);
+			log.info("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
+			return result;
 
 		} catch (RestClientResponseException e) {
+			log.warn(
+				"Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
+				props.model(),
+				e.getRawStatusCode(),
+				elapsedMillis(startedAtNanos));
 			throw GeminiAiException.externalCallFailed(e);
 		} catch (GeminiAiException e) {
+			log.warn("Gemini 분류 실패 model={} reason={} durationMs={}", props.model(), e.getMessage(),
+				elapsedMillis(startedAtNanos));
 			throw e;
 		} catch (Exception e) {
+			log.warn("Gemini 분류 예외 model={} reason={} durationMs={}", props.model(), e.getMessage(),
+				elapsedMillis(startedAtNanos));
 			throw GeminiAiException.responseParseFailed(e);
 		}
+	}
+
+	private long elapsedMillis(long startedAtNanos) {
+		return (System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND;
 	}
 
 	private Map<String, Object> buildRequestBody(String promptText) {
