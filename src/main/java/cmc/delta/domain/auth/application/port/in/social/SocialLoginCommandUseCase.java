@@ -7,6 +7,8 @@ public interface SocialLoginCommandUseCase {
 
 	LoginResult loginApple(String code, String userJson);
 
+	LoginResult loginGoogle(String code);
+
 	record LoginResult(SocialLoginData data, TokenIssuer.IssuedTokens tokens) {
 	}
 }
