@@ -6,11 +6,11 @@ import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemComple
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemCreateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.dto.request.ProblemUpdateRequest;
 import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemListConditionFactory;
-import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionQueryUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemQueryUseCase;
+import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.application.port.in.problem.query.ProblemListCondition;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionDetailResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionRequestResponse;
@@ -89,8 +89,10 @@ public class ProblemController {
 	})
 	@PostMapping("/bulk")
 	public ApiResponse<ProblemBulkCreateResponse> createBulkWrongAnswerCards(
-		@CurrentUser UserPrincipal principal,
-		@RequestBody List<ProblemCreateRequest> requests) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestBody
+		List<ProblemCreateRequest> requests) {
 		List<CreateWrongAnswerCardCommand> commands = requests.stream()
 			.map(ProblemCreateRequest::toCommand)
 			.toList();
