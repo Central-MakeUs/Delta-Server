@@ -1,20 +1,5 @@
 package cmc.delta.domain.problem.application.service.command;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.time.Clock;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.HexFormat;
-import java.util.Map;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import cmc.delta.domain.problem.application.exception.ProblemException;
 import cmc.delta.domain.problem.application.port.in.problem.ProblemAiSolutionCommandUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemAiSolutionRequestResponse;
@@ -28,38 +13,54 @@ import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.problem.ProblemAiSolutionTask;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 나중에 꼭 리팩토리 예정 데모데이가 얼마 남지않아서 급하게 짬
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCommandUseCase {
 
+	// 버전/해싱
 	private static final String PROMPT_VERSION = "v1";
 	private static final String HASH_ALGORITHM = "SHA-256";
 	private static final String NULL_SENTINEL = "<null>";
+
+	// 정답 라인 패턴
 	private static final String ANSWER_LINE_PREFIX = "정답:";
-	private static final String JSON_FIELD_SOLUTION_LATEX = "\"solution_latex\"";
-	private static final String REPEATED_GARBAGE_SENTENCE = "A$ 에서 $M N$ 에 내린 수선은 외접원의 중심 $O$ 를 지난다.";
-	private static final int REPEATED_GARBAGE_THRESHOLD = 10;
+	private static final Pattern FINAL_ANSWER_LINE_PATTERN = Pattern.compile(
+		"^\\s*[\\\\\"']*(?:\\*\\*)?정답(?:\\*\\*)?\\s*[:：].*");
+
+	// MIME 타입
 	private static final String MIME_TYPE_IMAGE_JPEG = "image/jpeg";
 	private static final String MIME_TYPE_IMAGE_PNG = "image/png";
 	private static final String MIME_TYPE_IMAGE_WEBP = "image/webp";
 	private static final String MIME_TYPE_IMAGE_HEIC = "image/heic";
-	private static final Pattern FINAL_ANSWER_LINE_PATTERN = Pattern.compile(
-		"^\\s*[\\\\\"']*(?:\\*\\*)?정답(?:\\*\\*)?\\s*[:：].*");
+
+	// 솔루션 텍스트 정규화 임계값
+	private static final String JSON_FIELD_SOLUTION_LATEX = "\"solution_latex\"";
+	private static final String REPEATED_GARBAGE_SENTENCE = "A$ 에서 $M N$ 에 내린 수선은 외접원의 중심 $O$ 를 지난다.";
+	private static final int REPEATED_GARBAGE_THRESHOLD = 10;
 	private static final int MAX_SAME_LONG_SENTENCE_OCCURRENCES = 1;
 	private static final int LONG_SENTENCE_MIN_LENGTH = 40;
 	private static final int DUPLICATE_LINE_MIN_LENGTH = 20;
 	private static final int LOOP_MARKER_TRUNCATION_MIN_LINES = 12;
 	private static final int LOOP_MARKER_TRUNCATION_THRESHOLD = 2;
- 	private static final Pattern REASONING_LOOP_MARKER_PATTERN = Pattern.compile(
-		"(?i).*(let\\s*'?s\\s+(recheck|reconsider|assume|use)|this is impossible|contradiction|다시\\s*검|재검토|모순|불가능).*"
-	);
+	private static final Pattern REASONING_LOOP_MARKER_PATTERN = Pattern.compile(
+		"(?i).*(let\\s*'?s\\s+(recheck|reconsider|assume|use)|this is impossible|contradiction|다시\\s*검|재검토|모순|불가능).*");
 
 	private final ProblemRepositoryPort problemRepositoryPort;
 	private final ProblemAiSolutionTaskRepositoryPort taskRepositoryPort;
@@ -133,7 +134,8 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 
 	@Transactional
 	public void processNextPendingTask() {
-		Optional<ProblemAiSolutionTask> optionalTask = taskRepositoryPort.findNextPendingForUpdate(LocalDateTime.now(clock));
+		Optional<ProblemAiSolutionTask> optionalTask = taskRepositoryPort
+			.findNextPendingForUpdate(LocalDateTime.now(clock));
 		if (optionalTask.isEmpty()) {
 			return;
 		}
@@ -182,7 +184,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 				exception.getClass().getSimpleName(),
 				exception.getMessage());
 		}
-}
+	}
 
 	private ProblemAiSolutionRequestResponse toRequestResponse(ProblemAiSolutionTask task, boolean reusedExistingTask) {
 		return new ProblemAiSolutionRequestResponse(
@@ -193,13 +195,13 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 	}
 
 	private String normalizeSolutionTextForStorage(String solutionText, ProblemAiSolutionTask task) {
-		String normalizedSolutionText = normalizeSolutionText(solutionText);
-		normalizedSolutionText = deduplicateConsecutiveLines(normalizedSolutionText);
-		normalizedSolutionText = deduplicateGlobalLongLines(normalizedSolutionText);
-		normalizedSolutionText = truncateReasoningLoopTail(normalizedSolutionText);
-		normalizedSolutionText = sanitizeRepeatedSentences(normalizedSolutionText);
-		normalizedSolutionText = collapseDuplicatedLeadingBlock(normalizedSolutionText);
-		return ensureFinalAnswerLine(normalizedSolutionText, task);
+		String text = normalizeSolutionText(solutionText);
+		text = deduplicateConsecutiveLines(text);
+		text = deduplicateGlobalLongLines(text);
+		text = truncateReasoningLoopTail(text);
+		text = sanitizeRepeatedSentences(text);
+		text = collapseDuplicatedLeadingBlock(text);
+		return ensureFinalAnswerLine(text, task);
 	}
 
 	private String extractFailureReason(Exception exception) {
@@ -578,19 +580,15 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 
 	private String resolveImageMimeType(ProblemAiSolutionTask task) {
 		String originalStorageKey = task.getProblem().getOriginalStorageKey();
-		if (originalStorageKey == null || originalStorageKey.isBlank()) {
+		if (originalStorageKey == null || originalStorageKey.isBlank())
 			return MIME_TYPE_IMAGE_JPEG;
-		}
 		String lowerStorageKey = originalStorageKey.toLowerCase();
-		if (lowerStorageKey.endsWith(".png")) {
+		if (lowerStorageKey.endsWith(".png"))
 			return MIME_TYPE_IMAGE_PNG;
-		}
-		if (lowerStorageKey.endsWith(".webp")) {
+		if (lowerStorageKey.endsWith(".webp"))
 			return MIME_TYPE_IMAGE_WEBP;
-		}
-		if (lowerStorageKey.endsWith(".heic") || lowerStorageKey.endsWith(".heif")) {
+		if (lowerStorageKey.endsWith(".heic") || lowerStorageKey.endsWith(".heif"))
 			return MIME_TYPE_IMAGE_HEIC;
-		}
 		return MIME_TYPE_IMAGE_JPEG;
 	}
 
@@ -602,10 +600,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 		if (solutionText == null || solutionText.isBlank()) {
 			return true;
 		}
-		if (looksLikeRawJsonDump(solutionText)) {
-			return true;
-		}
-		return containsSevereKnownRepetition(solutionText);
+		return looksLikeRawJsonDump(solutionText) || containsSevereKnownRepetition(solutionText);
 	}
 
 	private boolean looksLikeRawJsonDump(String solutionText) {
