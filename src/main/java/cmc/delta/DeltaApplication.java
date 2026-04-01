@@ -1,7 +1,7 @@
 package cmc.delta;
 
-import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiSolutionWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.ProblemKeyBackfillWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.PurgeWorkerProperties;
