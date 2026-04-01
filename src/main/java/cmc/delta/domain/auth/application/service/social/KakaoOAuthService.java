@@ -1,5 +1,6 @@
 package cmc.delta.domain.auth.application.service.social;
 
+import cmc.delta.domain.auth.adapter.out.oauth.kakao.KakaoOAuthClient;
 import cmc.delta.domain.auth.application.exception.SocialAuthException;
 import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,7 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class KakaoOAuthService {
 
-	private final SocialOAuthClient kakaoOAuthClient; // 기존 KakaoOAuthClient Bean 주입
+	private final KakaoOAuthClient kakaoOAuthClient;
 
 	public SocialUserInfo fetchUserInfoByCode(String code) {
 		SocialOAuthClient.OAuthToken oauthToken = kakaoOAuthClient.exchangeCode(code);
