@@ -4,7 +4,6 @@ import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPo
 import cmc.delta.domain.problem.model.problem.Problem;
 import java.util.List;
 import java.util.Optional;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -13,15 +12,6 @@ public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, Prob
 	boolean existsByScan_Id(Long scanId);
 
 	boolean existsByOriginalStorageKey(String storageKey);
-
-	@Query("""
-			select p
-			  from Problem p
-			 where (p.originalStorageKey is null or p.originalStorageKey = '')
-			   and p.scan is not null
-			 order by p.id asc
-		""")
-	List<Problem> findKeyBackfillCandidates(Pageable pageable);
 
 	@Query("""
 			select p.originalStorageKey
