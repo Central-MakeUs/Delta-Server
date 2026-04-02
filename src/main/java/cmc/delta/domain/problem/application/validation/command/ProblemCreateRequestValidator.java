@@ -56,22 +56,15 @@ public class ProblemCreateRequestValidator {
 		requireAnswerFormat(answerFormat);
 
 		if (answerFormat == AnswerFormat.CHOICE) {
-			validateChoiceAnswer(answerChoiceNo);
+			if (answerChoiceNo != null && answerChoiceNo < MIN_ANSWER_CHOICE) {
+				throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
+			}
 		}
 	}
 
 	private void requireAnswerFormat(AnswerFormat answerFormat) {
 		if (answerFormat == null) {
 			throw new ProblemValidationException("answerFormat은 필수입니다.");
-		}
-	}
-
-	private void validateChoiceAnswer(Integer answerChoiceNo) {
-		if (answerChoiceNo == null) {
-			throw new ProblemValidationException("객관식은 answerChoiceNo가 필수입니다.");
-		}
-		if (answerChoiceNo < MIN_ANSWER_CHOICE) {
-			throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
 		}
 	}
 }
