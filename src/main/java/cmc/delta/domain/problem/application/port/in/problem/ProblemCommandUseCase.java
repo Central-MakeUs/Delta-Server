@@ -10,7 +10,8 @@ public interface ProblemCommandUseCase {
 
 	ProblemCreateResponse createWrongAnswerCard(Long currentUserId, CreateWrongAnswerCardCommand request);
 
-	ProblemBulkCreateResponse createBulkWrongAnswerCards(Long currentUserId, List<CreateWrongAnswerCardCommand> commands);
+	ProblemBulkCreateResponse createBulkWrongAnswerCards(Long currentUserId,
+		List<CreateWrongAnswerCardCommand> commands);
 
 	void completeWrongAnswerCard(Long currentUserId, Long problemId, String memoText);
 

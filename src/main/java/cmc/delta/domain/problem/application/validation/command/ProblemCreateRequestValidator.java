@@ -1,12 +1,10 @@
 package cmc.delta.domain.problem.application.validation.command;
 
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ProblemCreateRequestValidator {

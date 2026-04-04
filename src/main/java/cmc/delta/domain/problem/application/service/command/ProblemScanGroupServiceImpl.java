@@ -55,7 +55,8 @@ public class ProblemScanGroupServiceImpl implements ScanGroupCommandUseCase {
 		for (UploadFile file : command.files()) {
 			ScanImageUploadPort.UploadResult uploaded = scanImageUploadPort.uploadImage(file, directory);
 			ProblemScan scan = scanRepositoryPort.save(ProblemScan.uploadedInGroup(userRef, group));
-			Asset original = assetRepositoryPort.save(Asset.createOriginal(scan, uploaded.storageKey(), uploaded.width(), uploaded.height()));
+			Asset original = assetRepositoryPort
+				.save(Asset.createOriginal(scan, uploaded.storageKey(), uploaded.width(), uploaded.height()));
 			scans.add(new ScanCreateResult(scan.getId(), original.getId(), scan.getStatus().name()));
 		}
 

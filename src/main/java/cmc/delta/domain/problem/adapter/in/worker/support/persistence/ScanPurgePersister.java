@@ -5,7 +5,6 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.prediction.ProblemScanTypePredictionJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
-import cmc.delta.domain.problem.model.asset.Asset;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.util.Optional;
@@ -63,11 +62,8 @@ public class ScanPurgePersister {
 
 		Problem problem = optionalProblem.get();
 		if (problem.getOriginalStorageKey() == null || problem.getOriginalStorageKey().isBlank()) {
-			Optional<Asset> original = assetJpaRepository.findOriginalByScanId(scanId);
-			if (original.isEmpty()) {
-				return;
-			}
-			problem.attachOriginalStorageKeyIfEmpty(original.get().getStorageKey());
+			assetJpaRepository.findOriginalByScanId(scanId)
+				.ifPresent(asset -> problem.attachOriginalStorageKeyIfEmpty(asset.getStorageKey()));
 		}
 
 		problem.detachScan();

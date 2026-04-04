@@ -32,7 +32,8 @@ import org.junit.jupiter.api.Test;
 class ProblemAiSolutionCommandServiceImplTest {
 
 	private final ProblemRepositoryPort problemRepositoryPort = mock(ProblemRepositoryPort.class);
-	private final ProblemAiSolutionTaskRepositoryPort taskRepositoryPort = mock(ProblemAiSolutionTaskRepositoryPort.class);
+	private final ProblemAiSolutionTaskRepositoryPort taskRepositoryPort = mock(
+		ProblemAiSolutionTaskRepositoryPort.class);
 	private final ProblemSolveAiClient problemSolveAiClient = mock(ProblemSolveAiClient.class);
 	private final ObjectStorageReader objectStorageReader = mock(ObjectStorageReader.class);
 	private final Clock fixedClock = Clock.fixed(Instant.parse("2026-03-05T00:00:00Z"), ZoneOffset.UTC);
@@ -50,7 +51,8 @@ class ProblemAiSolutionCommandServiceImplTest {
 		Problem problem = createProblem("2");
 		when(problemRepositoryPort.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(problem));
 		when(taskRepositoryPort.findByProblemIdForUpdate(10L)).thenReturn(Optional.empty());
-		when(taskRepositoryPort.save(any(ProblemAiSolutionTask.class))).thenAnswer(invocation -> invocation.getArgument(0));
+		when(taskRepositoryPort.save(any(ProblemAiSolutionTask.class)))
+			.thenAnswer(invocation -> invocation.getArgument(0));
 
 		ProblemAiSolutionRequestResponse response = service.requestMyProblemAiSolution(1L, 10L);
 
@@ -80,7 +82,8 @@ class ProblemAiSolutionCommandServiceImplTest {
 		ProblemAiSolutionTask task = pendingTask(createProblem("2"));
 		when(taskRepositoryPort.findNextPendingForUpdate(any(LocalDateTime.class))).thenReturn(Optional.of(task));
 		when(objectStorageReader.readBytes("problems/1.jpg")).thenReturn(new byte[] {1, 2, 3});
-		when(problemSolveAiClient.solveProblem(any(ProblemAiSolvePrompt.class))).thenThrow(new RuntimeException("boom"));
+		when(problemSolveAiClient.solveProblem(any(ProblemAiSolvePrompt.class)))
+			.thenThrow(new RuntimeException("boom"));
 
 		service.processNextPendingTask();
 

@@ -152,8 +152,8 @@ class ProblemScanGroupServiceImplTest {
 		sut.createScanGroup(userId, command);
 
 		// then — clock이 2026-03-25 이므로 디렉토리에 "2026/03/25"와 userId "10" 포함
-		verify(scanImageUploadPort).uploadImage(eq(file), argThat(dir ->
-			dir.contains("2026/03/25") && dir.contains("10")));
+		verify(scanImageUploadPort).uploadImage(eq(file),
+			argThat(dir -> dir.contains("2026/03/25") && dir.contains("10")));
 	}
 
 	// ── helpers ──────────────────────────────────────────────────────────────
