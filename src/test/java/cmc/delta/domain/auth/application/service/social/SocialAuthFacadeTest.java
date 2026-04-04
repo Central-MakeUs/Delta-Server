@@ -22,6 +22,7 @@ class SocialAuthFacadeTest {
 	void loginKakao_ok() {
 		KakaoOAuthService kakao = mock(KakaoOAuthService.class);
 		AppleOAuthService apple = mock(AppleOAuthService.class);
+		GoogleOAuthService google = mock(GoogleOAuthService.class);
 		UserProvisioningUseCase provisioning = mock(UserProvisioningUseCase.class);
 		TokenCommandUseCase tokenUseCase = mock(TokenCommandUseCase.class);
 
@@ -32,7 +33,7 @@ class SocialAuthFacadeTest {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(tokenUseCase.issue(any())).thenReturn(tokens);
 
-		SocialAuthFacade sut = new SocialAuthFacade(kakao, apple, provisioning, tokenUseCase);
+		SocialAuthFacade sut = new SocialAuthFacade(kakao, apple, google, provisioning, tokenUseCase);
 
 		SocialLoginCommandUseCase.LoginResult out = sut.loginKakao("code");
 
@@ -58,6 +59,7 @@ class SocialAuthFacadeTest {
 	void loginApple_ok() {
 		KakaoOAuthService kakao = mock(KakaoOAuthService.class);
 		AppleOAuthService apple = mock(AppleOAuthService.class);
+		GoogleOAuthService google = mock(GoogleOAuthService.class);
 		UserProvisioningUseCase provisioning = mock(UserProvisioningUseCase.class);
 		TokenCommandUseCase tokenUseCase = mock(TokenCommandUseCase.class);
 
@@ -68,7 +70,7 @@ class SocialAuthFacadeTest {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(tokenUseCase.issue(any())).thenReturn(tokens);
 
-		SocialAuthFacade sut = new SocialAuthFacade(kakao, apple, provisioning, tokenUseCase);
+		SocialAuthFacade sut = new SocialAuthFacade(kakao, apple, google, provisioning, tokenUseCase);
 
 		SocialLoginCommandUseCase.LoginResult out = sut.loginApple("code", "user");
 

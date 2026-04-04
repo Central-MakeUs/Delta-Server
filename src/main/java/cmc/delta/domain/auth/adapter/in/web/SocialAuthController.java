@@ -1,6 +1,7 @@
 package cmc.delta.domain.auth.adapter.in.web;
 
 import cmc.delta.domain.auth.adapter.in.support.TokenHeaderWriter;
+import cmc.delta.domain.auth.adapter.in.web.dto.request.GoogleLoginRequest;
 import cmc.delta.domain.auth.adapter.in.web.dto.request.KakaoLoginRequest;
 import cmc.delta.domain.auth.adapter.out.oauth.loginkey.RedisLoginKeyStore;
 import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCase;
@@ -54,6 +55,21 @@ public class SocialAuthController {
 		KakaoLoginRequest request,
 		HttpServletResponse response) {
 		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginKakao(request.code());
+		tokenHeaderWriter.write(response, result.tokens());
+		return ApiResponses.success(SuccessCode.OK, result.data());
+	}
+
+	@Operation(summary = "구글 인가코드로 로그인")
+	@ApiErrorCodeExamples({
+		ErrorCode.INVALID_REQUEST,
+		ErrorCode.AUTHENTICATION_FAILED
+	})
+	@PostMapping("/google")
+	public ApiResponse<SocialLoginData> google(
+		@Valid @RequestBody
+		GoogleLoginRequest request,
+		HttpServletResponse response) {
+		SocialLoginCommandUseCase.LoginResult result = socialLoginCommandUseCase.loginGoogle(request.code());
 		tokenHeaderWriter.write(response, result.tokens());
 		return ApiResponses.success(SuccessCode.OK, result.data());
 	}
