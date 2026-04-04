@@ -3,17 +3,12 @@ package cmc.delta.domain.auth.adapter.out.oauth.kakao;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthClientException;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
 import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 /** 카카오 OAuth 서버와 통신해 토큰 교환/프로필 조회를 수행한다. */
-@Component
-@RequiredArgsConstructor
 public class KakaoOAuthClient implements SocialOAuthClient {
 
 	private static final String PROVIDER_NAME = "kakao";
@@ -25,9 +20,12 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 	private static final String GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code";
 
 	private final KakaoOAuthProperties properties;
+	private final OAuthHttpClient oauthHttpClient;
 
-	// 카카오 전용 OAuthHttpClient Bean 사용
-	private final @Qualifier("kakaoOAuthHttpClient") OAuthHttpClient oauthHttpClient;
+	public KakaoOAuthClient(KakaoOAuthProperties properties, OAuthHttpClient oauthHttpClient) {
+		this.properties = properties;
+		this.oauthHttpClient = oauthHttpClient;
+	}
 
 	@Override
 	public OAuthToken exchangeCode(String code) {

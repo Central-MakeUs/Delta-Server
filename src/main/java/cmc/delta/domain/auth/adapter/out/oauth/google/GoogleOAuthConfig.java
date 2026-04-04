@@ -1,4 +1,4 @@
-package cmc.delta.domain.auth.adapter.out.oauth.kakao;
+package cmc.delta.domain.auth.adapter.out.oauth.google;
 
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthClientExceptionMapper;
 import cmc.delta.domain.auth.adapter.out.oauth.client.OAuthHttpClient;
@@ -10,13 +10,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
-/** 카카오 OAuth 통신용 RestTemplate과 공통 OAuthHttpClient를 구성한다. */
+/** 구글 OAuth 통신용 RestTemplate과 공통 OAuthHttpClient를 구성한다. */
 @Configuration
-@EnableConfigurationProperties(KakaoOAuthProperties.class)
-public class KakaoOAuthConfig {
+@EnableConfigurationProperties(GoogleOAuthProperties.class)
+public class GoogleOAuthConfig {
 
 	@Bean
-	public RestTemplate kakaoRestTemplate(RestTemplateBuilder builder, KakaoOAuthProperties props) {
+	public RestTemplate googleRestTemplate(RestTemplateBuilder builder, GoogleOAuthProperties props) {
 		return builder
 			.connectTimeout(Duration.ofMillis(props.connectTimeoutMs()))
 			.readTimeout(Duration.ofMillis(props.readTimeoutMs()))
@@ -24,18 +24,18 @@ public class KakaoOAuthConfig {
 	}
 
 	@Bean
-	public OAuthHttpClient kakaoOAuthHttpClient(
-		@Qualifier("kakaoRestTemplate")
-		RestTemplate kakaoRestTemplate,
+	public OAuthHttpClient googleOAuthHttpClient(
+		@Qualifier("googleRestTemplate")
+		RestTemplate googleRestTemplate,
 		OAuthClientExceptionMapper exceptionMapper) {
-		return new OAuthHttpClient(kakaoRestTemplate, exceptionMapper);
+		return new OAuthHttpClient(googleRestTemplate, exceptionMapper);
 	}
 
 	@Bean
-	public KakaoOAuthClient kakaoOAuthClient(
-		KakaoOAuthProperties properties,
-		@Qualifier("kakaoOAuthHttpClient")
-		OAuthHttpClient kakaoOAuthHttpClient) {
-		return new KakaoOAuthClient(properties, kakaoOAuthHttpClient);
+	public GoogleOAuthClient googleOAuthClient(
+		GoogleOAuthProperties properties,
+		@Qualifier("googleOAuthHttpClient")
+		OAuthHttpClient googleOAuthHttpClient) {
+		return new GoogleOAuthClient(properties, googleOAuthHttpClient);
 	}
 }

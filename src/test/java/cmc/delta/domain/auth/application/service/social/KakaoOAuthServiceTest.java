@@ -3,6 +3,7 @@ package cmc.delta.domain.auth.application.service.social;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import cmc.delta.domain.auth.adapter.out.oauth.kakao.KakaoOAuthClient;
 import cmc.delta.domain.auth.application.port.out.SocialOAuthClient;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
@@ -14,7 +15,7 @@ class KakaoOAuthServiceTest {
 	@Test
 	@DisplayName("인가코드로 조회: 토큰 교환 후 프로필을 조회하고 userInfo를 반환")
 	void fetchUserInfoByCode_ok() {
-		SocialOAuthClient client = mock(SocialOAuthClient.class);
+		KakaoOAuthClient client = mock(KakaoOAuthClient.class);
 		when(client.exchangeCode("code")).thenReturn(new SocialOAuthClient.OAuthToken("at"));
 		when(client.fetchProfile("at")).thenReturn(new SocialOAuthClient.OAuthProfile("pid", "e@e.com", "nick"));
 
@@ -30,7 +31,7 @@ class KakaoOAuthServiceTest {
 	@Test
 	@DisplayName("인가코드로 조회: 프로필 email이 비어있으면 INVALID_REQUEST")
 	void fetchUserInfoByCode_whenEmailMissing_thenInvalidRequest() {
-		SocialOAuthClient client = mock(SocialOAuthClient.class);
+		KakaoOAuthClient client = mock(KakaoOAuthClient.class);
 		when(client.exchangeCode("code")).thenReturn(new SocialOAuthClient.OAuthToken("at"));
 		when(client.fetchProfile("at")).thenReturn(new SocialOAuthClient.OAuthProfile("pid", " ", "nick"));
 

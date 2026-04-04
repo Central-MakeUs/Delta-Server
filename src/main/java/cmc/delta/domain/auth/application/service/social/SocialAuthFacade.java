@@ -17,6 +17,7 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 
 	private final KakaoOAuthService kakaoOAuthService;
 	private final AppleOAuthService appleOAuthService;
+	private final GoogleOAuthService googleOAuthService;
 
 	private final UserProvisioningUseCase userProvisioningUseCase;
 	private final TokenCommandUseCase tokenCommandUseCase;
@@ -40,6 +41,16 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 			providerUserId,
 			apple.email(),
 			apple.nickname());
+	}
+
+	@Override
+	public LoginResult loginGoogle(String code) {
+		GoogleOAuthService.SocialUserInfo userInfo = googleOAuthService.fetchUserInfoByCode(code);
+		return loginWithProvisionedUser(
+			SocialProvider.GOOGLE,
+			userInfo.providerUserId(),
+			userInfo.email(),
+			userInfo.nickname());
 	}
 
 	private LoginResult loginWithProvisionedUser(
