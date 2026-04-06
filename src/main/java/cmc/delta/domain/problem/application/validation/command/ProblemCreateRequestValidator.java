@@ -1,12 +1,10 @@
 package cmc.delta.domain.problem.application.validation.command;
 
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import cmc.delta.domain.problem.application.exception.ProblemValidationException;
 import cmc.delta.domain.problem.application.port.in.problem.command.CreateWrongAnswerCardCommand;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import java.util.List;
+import org.springframework.stereotype.Component;
 
 @Component
 public class ProblemCreateRequestValidator {
@@ -56,22 +54,15 @@ public class ProblemCreateRequestValidator {
 		requireAnswerFormat(answerFormat);
 
 		if (answerFormat == AnswerFormat.CHOICE) {
-			validateChoiceAnswer(answerChoiceNo);
+			if (answerChoiceNo != null && answerChoiceNo < MIN_ANSWER_CHOICE) {
+				throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
+			}
 		}
 	}
 
 	private void requireAnswerFormat(AnswerFormat answerFormat) {
 		if (answerFormat == null) {
 			throw new ProblemValidationException("answerFormat은 필수입니다.");
-		}
-	}
-
-	private void validateChoiceAnswer(Integer answerChoiceNo) {
-		if (answerChoiceNo == null) {
-			throw new ProblemValidationException("객관식은 answerChoiceNo가 필수입니다.");
-		}
-		if (answerChoiceNo < MIN_ANSWER_CHOICE) {
-			throw new ProblemValidationException("answerChoiceNo는 1 이상이어야 합니다.");
 		}
 	}
 }

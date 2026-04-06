@@ -38,6 +38,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		return uri.startsWith("/api/v1/auth/reissue")
 			|| uri.startsWith("/api/v1/auth/kakao")
 			|| uri.startsWith("/api/v1/auth/apple")
+			|| uri.startsWith("/api/v1/auth/google")
 			|| uri.startsWith("/apple/callback");
 	}
 

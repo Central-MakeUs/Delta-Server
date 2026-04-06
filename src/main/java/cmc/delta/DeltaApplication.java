@@ -1,9 +1,8 @@
 package cmc.delta;
 
-import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.AiSolutionWorkerProperties;
+import cmc.delta.domain.problem.adapter.in.worker.properties.AiWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.OcrWorkerProperties;
-import cmc.delta.domain.problem.adapter.in.worker.properties.ProblemKeyBackfillWorkerProperties;
 import cmc.delta.domain.problem.adapter.in.worker.properties.PurgeWorkerProperties;
 import cmc.delta.domain.user.adapter.in.worker.properties.UserPurgeWorkerProperties;
 import cmc.delta.global.config.FrontendProperties;
@@ -16,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableJpaAuditing
 @EnableConfigurationProperties({OcrWorkerProperties.class, AiWorkerProperties.class, AiSolutionWorkerProperties.class,
-	PurgeWorkerProperties.class, ProblemKeyBackfillWorkerProperties.class, UserPurgeWorkerProperties.class,
+	PurgeWorkerProperties.class, UserPurgeWorkerProperties.class,
 	FrontendProperties.class})
 @SpringBootApplication
 public class DeltaApplication {

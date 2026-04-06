@@ -73,8 +73,10 @@ public class ProblemScanController {
 	})
 	@PostMapping(value = "/groups", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ApiResponse<ProblemScanGroupCreateResponse> createGroup(
-		@CurrentUser UserPrincipal principal,
-		@RequestPart("files") List<MultipartFile> files) {
+		@CurrentUser
+		UserPrincipal principal,
+		@RequestPart("files")
+		List<MultipartFile> files) {
 		List<UploadFile> uploadFiles = files.stream()
 			.map(this::toUploadFile)
 			.toList();
@@ -134,8 +136,10 @@ public class ProblemScanController {
 	})
 	@GetMapping("/groups/{groupId}/summary")
 	public ApiResponse<ProblemScanGroupSummaryResponse> getGroupSummary(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long groupId) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long groupId) {
 		ProblemScanGroupSummaryResponse data = scanGroupQueryUseCase.getGroupSummary(principal.userId(), groupId);
 		return ApiResponses.success(SuccessCode.OK, data);
 	}

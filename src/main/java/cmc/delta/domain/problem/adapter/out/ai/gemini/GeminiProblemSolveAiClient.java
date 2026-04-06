@@ -176,7 +176,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	}
 
 	private ProblemAiSolveResult parseOrFallback(String modelText) {
-		String normalizedModelText = normalizeModelText(modelText);
+		String normalizedModelText = stripMarkdownCodeFence(modelText);
 		String unwrappedModelText = unwrapJsonTextNodeIfNeeded(normalizedModelText);
 		String jsonPayload = extractJsonObject(unwrappedModelText);
 		if (jsonPayload == null) {
@@ -283,6 +283,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		}
 	}
 
+	// TODO: duplicated in OpenAiClient — extract to shared util when file creation is allowed
 	private String readTextOrNull(JsonNode node, String fieldName) {
 		JsonNode valueNode = node.get(fieldName);
 		if (valueNode == null || valueNode.isNull()) {
@@ -302,13 +303,14 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		return value;
 	}
 
-	private String normalizeModelText(String modelText) {
+	// TODO: duplicated in OpenAiClient — extract to shared util when file creation is allowed
+	private String stripMarkdownCodeFence(String modelText) {
 		String trimmed = modelText == null ? "" : modelText.trim();
-		if (trimmed.startsWith("```") && trimmed.endsWith("```")) {
-			String withoutPrefix = trimmed.replaceFirst("^```[a-zA-Z]*\\n", "");
-			return withoutPrefix.replaceFirst("\n```$", "").trim();
+		if (!trimmed.startsWith("```") || !trimmed.endsWith("```")) {
+			return trimmed;
 		}
-		return trimmed;
+		String withoutPrefix = trimmed.replaceFirst("^```[a-zA-Z]*\\n", "");
+		return withoutPrefix.replaceFirst("\\n```$", "").trim();
 	}
 
 	private String extractJsonObject(String text) {
