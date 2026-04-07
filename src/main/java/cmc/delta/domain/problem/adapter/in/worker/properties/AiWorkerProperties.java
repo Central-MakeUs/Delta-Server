@@ -11,6 +11,11 @@ public record AiWorkerProperties(
 	int backlogLogMinutes) {
 
 	public AiWorkerProperties {
+		fixedDelayMs = WorkerPropertiesNormalizer.normalizeFixedDelayMs(fixedDelayMs);
+		batchSize = WorkerPropertiesNormalizer.normalizeBatchSize(batchSize);
+		lockLeaseSeconds = WorkerPropertiesNormalizer.normalizeLockLeaseSeconds(lockLeaseSeconds);
+		concurrency = WorkerPropertiesNormalizer.normalizeConcurrency(concurrency);
 		backlogLogMinutes = WorkerPropertiesNormalizer.normalizeBacklogLogMinutes(backlogLogMinutes);
 	}
+
 }

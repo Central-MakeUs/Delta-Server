@@ -11,6 +11,11 @@ public record OcrWorkerProperties(
 	int backlogLogMinutes) {
 
 	public OcrWorkerProperties {
+		fixedDelayMs = WorkerPropertiesNormalizer.normalizeFixedDelayMs(fixedDelayMs);
+		batchSize = WorkerPropertiesNormalizer.normalizeBatchSize(batchSize);
+		lockLeaseSeconds = WorkerPropertiesNormalizer.normalizeLockLeaseSeconds(lockLeaseSeconds);
+		concurrency = WorkerPropertiesNormalizer.normalizeConcurrency(concurrency);
 		backlogLogMinutes = WorkerPropertiesNormalizer.normalizeBacklogLogMinutes(backlogLogMinutes);
 	}
+
 }
