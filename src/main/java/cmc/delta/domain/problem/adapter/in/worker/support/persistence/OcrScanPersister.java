@@ -7,26 +7,17 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepo
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrResult;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
-public class OcrScanPersister {
-
-	private static final long DEFAULT_RETRY_AFTER_SECONDS = 180L;
-
-	private final TransactionTemplate workerTransactionTemplate;
-	private final ScanWorkRepository scanWorkRepository;
-	private final ScanRepository scanRepository;
+public class OcrScanPersister extends AbstractScanPersister {
 
 	public OcrScanPersister(
-		TransactionTemplate workerTransactionTemplate,
+		TransactionTemplate workerTx,
 		ScanWorkRepository scanWorkRepository,
 		ScanRepository scanRepository) {
-		this.workerTransactionTemplate = workerTransactionTemplate;
-		this.scanWorkRepository = scanWorkRepository;
-		this.scanRepository = scanRepository;
+		super(workerTx, scanWorkRepository, scanRepository);
 	}
 
 	public void persistOcrSucceeded(
@@ -35,10 +26,7 @@ public class OcrScanPersister {
 		String lockToken,
 		OcrResult ocrResult,
 		LocalDateTime completedAt) {
-		inWorkerTxIfLocked(
-			scanId,
-			lockOwner,
-			lockToken,
+		inLockedTx(scanId, lockOwner, lockToken,
 			scan -> scan.markOcrSucceeded(ocrResult.plainText(), ocrResult.rawJson(), completedAt));
 	}
 
@@ -48,26 +36,7 @@ public class OcrScanPersister {
 		String lockToken,
 		FailureDecision decision,
 		LocalDateTime now) {
-		inWorkerTxIfLocked(scanId, lockOwner, lockToken, scan -> applyFailure(scan, decision, now));
-	}
-
-	private void inWorkerTxIfLocked(
-		Long scanId,
-		String lockOwner,
-		String lockToken,
-		java.util.function.Consumer<ProblemScan> action) {
-		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken)) {
-				return;
-			}
-
-			Optional<ProblemScan> optional = scanRepository.findById(scanId);
-			if (optional.isEmpty()) {
-				return;
-			}
-
-			action.accept(optional.get());
-		});
+		inLockedTx(scanId, lockOwner, lockToken, scan -> applyFailure(scan, decision, now));
 	}
 
 	private void applyFailure(ProblemScan scan, FailureDecision decision, LocalDateTime now) {
@@ -85,14 +54,5 @@ public class OcrScanPersister {
 		}
 
 		scan.scheduleNextRetryForOcr(now);
-	}
-
-	private long resolveRetryAfterSeconds(FailureDecision decision) {
-		Long retryAfter = decision.retryAfterSeconds();
-		return retryAfter == null ? DEFAULT_RETRY_AFTER_SECONDS : retryAfter.longValue();
-	}
-
-	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		return scanWorkRepository.existsLockedBy(scanId, lockOwner, lockToken) != null;
 	}
 }

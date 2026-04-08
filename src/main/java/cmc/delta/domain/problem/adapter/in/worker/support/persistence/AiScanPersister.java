@@ -12,19 +12,14 @@ import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.function.Consumer;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
-public class AiScanPersister {
+public class AiScanPersister extends AbstractScanPersister {
 
 	private static final BigDecimal NEEDS_REVIEW_CONFIDENCE_THRESHOLD = BigDecimal.valueOf(0.60);
-	private static final long DEFAULT_RETRY_AFTER_SECONDS = 180L;
 
-	private final TransactionTemplate workerTx;
-	private final ScanWorkRepository scanWorkRepository;
-	private final ScanRepository scanRepository;
 	private final UnitJpaRepository unitRepository;
 	private final ProblemTypeJpaRepository problemTypeRepository;
 
@@ -34,9 +29,7 @@ public class AiScanPersister {
 		ScanRepository scanRepository,
 		UnitJpaRepository unitRepository,
 		ProblemTypeJpaRepository problemTypeRepository) {
-		this.workerTx = workerTx;
-		this.scanWorkRepository = scanWorkRepository;
-		this.scanRepository = scanRepository;
+		super(workerTx, scanWorkRepository, scanRepository);
 		this.unitRepository = unitRepository;
 		this.problemTypeRepository = problemTypeRepository;
 	}
@@ -47,7 +40,7 @@ public class AiScanPersister {
 		String lockToken,
 		AiCurriculumResult aiResult,
 		LocalDateTime completedAt) {
-		workerTx.executeWithoutResult(tx -> inLockedTx(scanId, lockOwner, lockToken, scan -> {
+		inLockedTx(scanId, lockOwner, lockToken, scan -> {
 			AiPersistContext context = buildPersistContext(aiResult);
 			scan.markAiSucceeded(
 				context.predictedUnit(),
@@ -58,7 +51,7 @@ public class AiScanPersister {
 				aiResult.typeCandidatesJson(),
 				aiResult.aiDraftJson(),
 				completedAt);
-		}));
+		});
 	}
 
 	public void persistAiFailed(
@@ -67,7 +60,7 @@ public class AiScanPersister {
 		String lockToken,
 		FailureDecision decision,
 		LocalDateTime now) {
-		workerTx.executeWithoutResult(tx -> inLockedTx(scanId, lockOwner, lockToken, scan -> {
+		inLockedTx(scanId, lockOwner, lockToken, scan -> {
 			String reason = decision.reasonCode().code();
 
 			if (!decision.retryable()) {
@@ -83,34 +76,7 @@ public class AiScanPersister {
 
 			scan.markAiFailed(reason);
 			scan.scheduleNextRetryForAi(now);
-		}));
-	}
-
-	private void inLockedTx(
-		Long scanId,
-		String lockOwner,
-		String lockToken,
-		Consumer<ProblemScan> action) {
-		if (!isLockedByMe(scanId, lockOwner, lockToken)) {
-			return;
-		}
-
-		ProblemScan scan = scanRepository.findById(scanId).orElse(null);
-		if (scan == null) {
-			return;
-		}
-
-		action.accept(scan);
-	}
-
-	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		Integer exists = scanWorkRepository.existsLockedBy(scanId, lockOwner, lockToken);
-		return exists != null;
-	}
-
-	private long resolveRetryAfterSeconds(FailureDecision decision) {
-		Long retryAfter = decision.retryAfterSeconds();
-		return retryAfter == null ? DEFAULT_RETRY_AFTER_SECONDS : retryAfter.longValue();
+		});
 	}
 
 	private AiPersistContext buildPersistContext(AiCurriculumResult aiResult) {

@@ -85,7 +85,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return scanWorkRepository.findClaimedAiIds(lockOwner, lockToken, limit);
+		return scanWorkRepository.findClaimedIds(lockOwner, lockToken, limit);
 	}
 
 	@Override

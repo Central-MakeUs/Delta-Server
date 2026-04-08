@@ -92,22 +92,6 @@ public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 		@Param("limit")
 		int limit);
 
-	@Query(value = """
-		select id
-		  from problem_scan
-		 where lock_owner = :lockOwner
-		   and lock_token = :lockToken
-		 order by created_at asc, id asc
-		 limit :limit
-		""", nativeQuery = true)
-	List<Long> findClaimedOcrIds(
-		@Param("lockOwner")
-		String lockOwner,
-		@Param("lockToken")
-		String lockToken,
-		@Param("limit")
-		int limit);
-
 	@Transactional
 	@Modifying(clearAutomatically = true, flushAutomatically = true)
 	@Query(value = """
@@ -132,22 +116,6 @@ public interface ScanWorkRepository extends Repository<ProblemScan, Long> {
 		String lockToken,
 		@Param("lockedAt")
 		LocalDateTime lockedAt,
-		@Param("limit")
-		int limit);
-
-	@Query(value = """
-		select id
-		  from problem_scan
-		 where lock_owner = :lockOwner
-		   and lock_token = :lockToken
-		 order by created_at asc, id asc
-		 limit :limit
-		""", nativeQuery = true)
-	List<Long> findClaimedAiIds(
-		@Param("lockOwner")
-		String lockOwner,
-		@Param("lockToken")
-		String lockToken,
 		@Param("limit")
 		int limit);
 
