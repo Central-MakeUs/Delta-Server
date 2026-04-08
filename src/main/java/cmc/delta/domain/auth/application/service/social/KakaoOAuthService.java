@@ -21,7 +21,4 @@ public class KakaoOAuthService {
 
 		return new SocialUserInfo(providerUserId, email, nickname);
 	}
-
-	public record SocialUserInfo(String providerUserId, String email, String nickname) {
-	}
 }

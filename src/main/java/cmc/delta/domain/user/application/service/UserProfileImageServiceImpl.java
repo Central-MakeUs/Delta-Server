@@ -1,6 +1,5 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.UserProfileImageUseCase;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;
 import cmc.delta.domain.user.application.port.in.dto.UserProfileImageResult;
@@ -9,13 +8,11 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
-import cmc.delta.global.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -82,20 +79,7 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 	}
 
 	private User findActiveUser(Long userId) {
-		User user = findUserOrThrow(userId);
-		ensureActiveUser(user);
-		return user;
-	}
-
-	private User findUserOrThrow(Long userId) {
-		return userRepositoryPort.findById(userId)
-			.orElseThrow(() -> new UserException(ErrorCode.USER_NOT_FOUND));
-	}
-
-	private void ensureActiveUser(User user) {
-		if (user.isWithdrawn()) {
-			throw new UserException(ErrorCode.USER_WITHDRAWN);
-		}
+		return userRepositoryPort.findActiveById(userId);
 	}
 
 	private void deleteOldBestEffort(String oldKey, String newKey) {
@@ -124,14 +108,6 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 	}
 
 	private void afterCommit(Runnable runnable) {
-		if (!TransactionSynchronizationManager.isSynchronizationActive())
-			return;
-
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				runnable.run();
-			}
-		});
+		TransactionUtils.afterCommitIfActive(runnable);
 	}
 }

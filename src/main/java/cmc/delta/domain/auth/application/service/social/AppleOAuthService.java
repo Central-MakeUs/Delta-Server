@@ -16,7 +16,7 @@ public class AppleOAuthService {
 	private final AppleIdTokenVerifier appleIdTokenVerifier;
 	private final ObjectMapper objectMapper;
 
-	public AppleUserInfo fetchUserInfoByCode(String code, String userJson) {
+	public SocialUserInfo fetchUserInfoByCode(String code, String userJson) {
 		AppleOAuthClient.AppleTokenResponse token = appleOAuthClient.exchangeCode(code);
 
 		AppleIdTokenVerifier.AppleIdClaims verified = appleIdTokenVerifier.verifyAndExtract(token.idToken());
@@ -37,7 +37,7 @@ public class AppleOAuthService {
 			nickname = buildName(form.name().lastName(), form.name().firstName());
 		}
 
-		return new AppleUserInfo(providerUserId, email, nickname);
+		return new SocialUserInfo(providerUserId, email, nickname);
 	}
 
 	private AppleUserFromForm parseUserJsonOrNull(String userJson) {
@@ -64,9 +64,6 @@ public class AppleOAuthService {
 		if (StringUtils.hasText(b))
 			return b.trim();
 		return null;
-	}
-
-	public record AppleUserInfo(String providerUserId, String email, String nickname) {
 	}
 
 	// 애플 form_post의 user JSON 구조

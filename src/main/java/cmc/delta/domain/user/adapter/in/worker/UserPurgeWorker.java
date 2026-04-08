@@ -18,8 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
@@ -107,14 +106,6 @@ public class UserPurgeWorker {
 	}
 
 	private void afterCommit(Runnable runnable) {
-		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-			return;
-		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				runnable.run();
-			}
-		});
+		TransactionUtils.afterCommitIfActive(runnable);
 	}
 }

@@ -1,8 +1,7 @@
 package cmc.delta.domain.problem.application.support.cache;
 
+import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 public abstract class UserCacheEpochStore {
 
@@ -33,16 +32,7 @@ public abstract class UserCacheEpochStore {
 		if (userId == null) {
 			return;
 		}
-		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-			bumpNow(userId);
-			return;
-		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				bumpNow(userId);
-			}
-		});
+		TransactionUtils.afterCommit(() -> bumpNow(userId));
 	}
 
 	private void bumpNow(Long userId) {
