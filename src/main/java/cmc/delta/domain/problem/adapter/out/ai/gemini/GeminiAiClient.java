@@ -1,5 +1,6 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
+import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
 import cmc.delta.domain.problem.application.port.out.ai.AiClient;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
@@ -115,9 +116,9 @@ public class GeminiAiClient implements AiClient {
 
 			boolean isMathProblem = out.path(FIELD_IS_MATH_PROBLEM).asBoolean(false);
 
-			String subjectId = readTextOrNull(out, FIELD_PREDICTED_SUBJECT_ID);
-			String unitId = readTextOrNull(out, FIELD_PREDICTED_UNIT_ID);
-			String typeId = readTextOrNull(out, FIELD_PREDICTED_TYPE_ID);
+			String subjectId = AiResponseParseUtils.readTextOrNull(out, FIELD_PREDICTED_SUBJECT_ID);
+			String unitId = AiResponseParseUtils.readTextOrNull(out, FIELD_PREDICTED_UNIT_ID);
+			String typeId = AiResponseParseUtils.readTextOrNull(out, FIELD_PREDICTED_TYPE_ID);
 			double confidence = out.path(FIELD_CONFIDENCE).asDouble(0.0);
 
 			String subjectCandidatesJson = out.path(FIELD_SUBJECT_CANDIDATES).toString();
@@ -162,14 +163,6 @@ public class GeminiAiClient implements AiClient {
 		} catch (Exception e) {
 			throw GeminiAiException.responseParseFailed(e);
 		}
-	}
-
-	private String readTextOrNull(JsonNode node, String fieldName) {
-		JsonNode v = node.get(fieldName);
-		if (v == null || v.isNull())
-			return null;
-		String text = v.asText(null);
-		return (text == null || text.isBlank()) ? null : text;
 	}
 
 	private String buildPromptText(AiCurriculumPrompt prompt) {

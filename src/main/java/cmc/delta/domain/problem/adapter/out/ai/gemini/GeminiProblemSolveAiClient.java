@@ -1,16 +1,11 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
-import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +13,15 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -176,7 +180,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	}
 
 	private ProblemAiSolveResult parseOrFallback(String modelText) {
-		String normalizedModelText = stripMarkdownCodeFence(modelText);
+		String normalizedModelText = AiResponseParseUtils.stripMarkdownCodeFence(modelText);
 		String unwrappedModelText = unwrapJsonTextNodeIfNeeded(normalizedModelText);
 		String jsonPayload = extractJsonObject(unwrappedModelText);
 		if (jsonPayload == null) {
@@ -186,9 +190,9 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		if (jsonPayload != null) {
 			try {
 				JsonNode root = objectMapper.readTree(jsonPayload);
-				String solutionLatex = readTextOrNull(root, FIELD_SOLUTION_LATEX);
-				String solutionText = readTextOrNull(root, FIELD_SOLUTION_TEXT);
-				String finalAnswer = readTextOrNull(root, FIELD_FINAL_ANSWER);
+				String solutionLatex = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_LATEX);
+				String solutionText = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_TEXT);
+				String finalAnswer = AiResponseParseUtils.readTextOrNull(root, FIELD_FINAL_ANSWER);
 				if (solutionLatex != null || solutionText != null || finalAnswer != null) {
 					return finalizeResult(solutionLatex, solutionText);
 				}
@@ -283,34 +287,11 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		}
 	}
 
-	// TODO: duplicated in OpenAiClient — extract to shared util when file creation is allowed
-	private String readTextOrNull(JsonNode node, String fieldName) {
-		JsonNode valueNode = node.get(fieldName);
-		if (valueNode == null || valueNode.isNull()) {
-			return null;
-		}
-		String text = valueNode.asText(null);
-		if (text == null || text.isBlank()) {
-			return null;
-		}
-		return text;
-	}
-
 	private String safeText(String value) {
 		if (value == null) {
 			return "";
 		}
 		return value;
-	}
-
-	// TODO: duplicated in OpenAiClient — extract to shared util when file creation is allowed
-	private String stripMarkdownCodeFence(String modelText) {
-		String trimmed = modelText == null ? "" : modelText.trim();
-		if (!trimmed.startsWith("```") || !trimmed.endsWith("```")) {
-			return trimmed;
-		}
-		String withoutPrefix = trimmed.replaceFirst("^```[a-zA-Z]*\\n", "");
-		return withoutPrefix.replaceFirst("\\n```$", "").trim();
 	}
 
 	private String extractJsonObject(String text) {
@@ -625,7 +606,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		if (plainText == null || plainText.isBlank()) {
 			plainText = latex;
 		}
-		if (shouldPreferLatexText(latex, plainText)) {
+		if (AiResponseParseUtils.shouldPreferLatexText(latex, plainText)) {
 			plainText = latex;
 		}
 		if (isDegenerateSolveText(plainText)) {
@@ -686,24 +667,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			return null;
 		}
 		return normalized;
-	}
-
-	private boolean shouldPreferLatexText(String latex, String plainText) {
-		if (latex == null || latex.isBlank() || plainText == null || plainText.isBlank()) {
-			return false;
-		}
-		if (hasMathDelimiter(plainText)) {
-			return false;
-		}
-		return containsLatexCommand(plainText) && hasMathDelimiter(latex);
-	}
-
-	private boolean hasMathDelimiter(String text) {
-		return text.contains("$") || text.contains("\\(") || text.contains("\\[");
-	}
-
-	private boolean containsLatexCommand(String text) {
-		return text.matches("(?s).*\\\\[A-Za-z]+.*");
 	}
 
 	private String normalizeDisplayText(String value) {

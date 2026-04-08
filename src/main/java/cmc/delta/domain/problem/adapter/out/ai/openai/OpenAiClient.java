@@ -1,17 +1,10 @@
 package cmc.delta.domain.problem.adapter.out.ai.openai;
 
-import cmc.delta.domain.problem.application.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +12,17 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
 
 @Component
 @EnableConfigurationProperties(OpenAiProperties.class)
@@ -152,9 +156,9 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			JsonNode root = objectMapper.readTree(extractJsonObject(modelText));
 
 			boolean isMathProblem = root.path(FIELD_IS_MATH_PROBLEM).asBoolean(false);
-			String subjectId = readTextOrNull(root, FIELD_PREDICTED_SUBJECT_ID);
-			String unitId = readTextOrNull(root, FIELD_PREDICTED_UNIT_ID);
-			String typeId = readTextOrNull(root, FIELD_PREDICTED_TYPE_ID);
+			String subjectId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_SUBJECT_ID);
+			String unitId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_UNIT_ID);
+			String typeId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_TYPE_ID);
 			double confidence = root.path(FIELD_CONFIDENCE).asDouble(0.0);
 			String subjectCandidatesJson = root.path(FIELD_SUBJECT_CANDIDATES).toString();
 			String unitCandidatesJson = root.path(FIELD_UNIT_CANDIDATES).toString();
@@ -181,9 +185,9 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 		try {
 			String modelText = extractMessageText(rawResponseJson);
 			JsonNode root = objectMapper.readTree(extractJsonObject(modelText));
-			String solutionLatex = readTextOrNull(root, FIELD_SOLUTION_LATEX);
-			String solutionText = readTextOrNull(root, FIELD_SOLUTION_TEXT);
-			if (shouldPreferLatexText(solutionLatex, solutionText)) {
+			String solutionLatex = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_LATEX);
+			String solutionText = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_TEXT);
+			if (AiResponseParseUtils.shouldPreferLatexText(solutionLatex, solutionText)) {
 				solutionText = solutionLatex;
 			}
 			return new ProblemAiSolveResult(solutionLatex, solutionText);
@@ -201,7 +205,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			if (modelText == null || modelText.isBlank()) {
 				throw OpenAiAiException.emptyText();
 			}
-			return stripMarkdownCodeFence(modelText);
+			return AiResponseParseUtils.stripMarkdownCodeFence(modelText);
 		} catch (OpenAiAiException e) {
 			throw e;
 		} catch (Exception e) {
@@ -254,15 +258,6 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 		return textBuilder.toString();
 	}
 
-	private String stripMarkdownCodeFence(String text) {
-		String trimmed = text == null ? "" : text.trim();
-		if (!trimmed.startsWith("```") || !trimmed.endsWith("```")) {
-			return trimmed;
-		}
-		String withoutPrefix = trimmed.replaceFirst("^```[a-zA-Z]*\\n", "");
-		return withoutPrefix.replaceFirst("\\n```$", "").trim();
-	}
-
 	private String extractJsonObject(String text) {
 		if (text == null || text.isBlank()) {
 			throw OpenAiAiException.emptyText();
@@ -275,36 +270,6 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 				new IllegalArgumentException("JSON object is missing in OpenAI response"));
 		}
 		return normalizedText.substring(startIndex, endIndex + 1);
-	}
-
-	private String readTextOrNull(JsonNode node, String fieldName) {
-		JsonNode valueNode = node.get(fieldName);
-		if (valueNode == null || valueNode.isNull()) {
-			return null;
-		}
-		String text = valueNode.asText(null);
-		if (text == null || text.isBlank()) {
-			return null;
-		}
-		return text;
-	}
-
-	private boolean shouldPreferLatexText(String latex, String plainText) {
-		if (latex == null || latex.isBlank() || plainText == null || plainText.isBlank()) {
-			return false;
-		}
-		if (hasMathDelimiter(plainText)) {
-			return false;
-		}
-		return containsLatexCommand(plainText) && hasMathDelimiter(latex);
-	}
-
-	private boolean hasMathDelimiter(String text) {
-		return text.contains("$") || text.contains("\\(") || text.contains("\\[");
-	}
-
-	private boolean containsLatexCommand(String text) {
-		return text.matches("(?s).*\\\\[A-Za-z]+.*");
 	}
 
 	private String buildCurriculumPromptText(AiCurriculumPrompt prompt) {
