@@ -12,42 +12,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Component
-public class ScanPurgePersister {
+public class ScanPurgePersister extends AbstractScanPersister {
 
-	private final TransactionTemplate workerTransactionTemplate;
-	private final ScanWorkRepository scanWorkRepository;
-	private final ScanRepository scanRepository;
 	private final AssetJpaRepository assetJpaRepository;
 	private final ProblemScanTypePredictionJpaRepository predictionRepository;
 	private final ProblemRepositoryPort problemRepository;
 
 	public ScanPurgePersister(
-		TransactionTemplate workerTransactionTemplate,
+		TransactionTemplate workerTx,
 		ScanWorkRepository scanWorkRepository,
 		ScanRepository scanRepository,
 		AssetJpaRepository assetJpaRepository,
 		ProblemScanTypePredictionJpaRepository predictionRepository,
 		ProblemRepositoryPort problemRepository) {
-		this.workerTransactionTemplate = workerTransactionTemplate;
-		this.scanWorkRepository = scanWorkRepository;
-		this.scanRepository = scanRepository;
+		super(workerTx, scanWorkRepository, scanRepository);
 		this.assetJpaRepository = assetJpaRepository;
 		this.predictionRepository = predictionRepository;
 		this.problemRepository = problemRepository;
 	}
 
 	public void purgeIfLocked(Long scanId, String lockOwner, String lockToken) {
-		workerTransactionTemplate.executeWithoutResult(status -> {
-			if (!isLockedByMe(scanId, lockOwner, lockToken)) {
-				return;
-			}
+		inLockedTx(scanId, lockOwner, lockToken, scan -> {
 			detachProblemIfExists(scanId);
-
-			Optional<ProblemScan> optional = scanRepository.findById(scanId);
-			if (optional.isEmpty()) {
-				return;
-			}
-
 			predictionRepository.deleteAllByScan_Id(scanId);
 			assetJpaRepository.deleteAllByScan_Id(scanId);
 			scanRepository.deleteById(scanId);
@@ -70,7 +56,4 @@ public class ScanPurgePersister {
 		problemRepository.save(problem);
 	}
 
-	private boolean isLockedByMe(Long scanId, String lockOwner, String lockToken) {
-		return scanWorkRepository.existsLockedBy(scanId, lockOwner, lockToken) != null;
-	}
 }
