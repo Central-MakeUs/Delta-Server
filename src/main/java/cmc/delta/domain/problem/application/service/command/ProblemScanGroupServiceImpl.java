@@ -17,8 +17,6 @@ import cmc.delta.domain.problem.model.scan.ProblemScanGroup;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import java.time.Clock;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +35,6 @@ public class ProblemScanGroupServiceImpl implements ScanGroupCommandUseCase {
 	private final ProblemCreateScanValidator uploadValidator;
 	private final Clock clock;
 
-	private static final String DATE_FORMAT = "yyyy/MM/dd";
-
 	@Transactional
 	@Override
 	public ScanGroupCreateResult createScanGroup(Long userId, CreateScanGroupCommand command) {
@@ -47,8 +43,7 @@ public class ProblemScanGroupServiceImpl implements ScanGroupCommandUseCase {
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		ProblemScanGroup group = scanGroupRepositoryPort.save(ProblemScanGroup.create(userRef));
 
-		String datePath = LocalDate.now(clock).format(DateTimeFormatter.ofPattern(DATE_FORMAT));
-		String directory = ProblemScanStoragePaths.ORIGINAL_DIR + "/" + datePath + "/" + userId;
+		String directory = ProblemScanStoragePaths.buildOriginalDirectory(clock, userId);
 
 		List<ScanCreateResult> scans = new ArrayList<>();
 		// batch size 설정 필요 (saveAll로 변경도 고려)
