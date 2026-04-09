@@ -5,28 +5,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class OcrFailureDecider extends AbstractHttpFailureDecider {
 
-	@Override
-	protected FailureReason networkErrorReason() {
-		return FailureReason.OCR_NETWORK_ERROR;
-	}
-
-	@Override
-	protected FailureReason rateLimitReason() {
-		return FailureReason.OCR_RATE_LIMIT;
-	}
-
-	@Override
-	protected FailureReason client5xxReason() {
-		return FailureReason.OCR_CLIENT_5XX;
-	}
-
-	@Override
-	protected FailureReason client4xxReason() {
-		return FailureReason.OCR_CLIENT_4XX;
-	}
-
-	@Override
-	protected FailureReason unknownFailureReason() {
-		return FailureReason.OCR_FAILED;
+	public OcrFailureDecider() {
+		super(
+			FailureReason.OCR_NETWORK_ERROR,
+			FailureReason.OCR_RATE_LIMIT,
+			FailureReason.OCR_CLIENT_5XX,
+			FailureReason.OCR_CLIENT_4XX,
+			FailureReason.OCR_FAILED);
 	}
 }
