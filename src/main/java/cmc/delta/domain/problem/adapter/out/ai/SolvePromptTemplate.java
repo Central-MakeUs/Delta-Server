@@ -1,7 +1,9 @@
-package cmc.delta.domain.problem.adapter.out.ai.gemini;
+package cmc.delta.domain.problem.adapter.out.ai;
 
-final class GeminiSolvePromptTemplate {
-	private GeminiSolvePromptTemplate() {}
+public final class SolvePromptTemplate {
+
+	private SolvePromptTemplate() {
+	}
 
 	private static final String TEMPLATE = """
 		너는 한국어 수학 문제 풀이 도우미다.
@@ -16,7 +18,7 @@ final class GeminiSolvePromptTemplate {
 		- solution_latex는 LaTeX 문법만 사용해 핵심 식 전개를 작성한다.
 		- solution_text는 문제 해석, 계산 과정, 결론을 포함하되 수식은 반드시 $...$ 또는 \\(...\\) 형태의 LaTeX 문법으로 작성한다.
 		- final_answer는 반드시 "정답: "으로 시작하는 한 줄로 작성한다.
-		- JSON 문자열 내부 줄바꿈은 반드시 \n 으로 이스케이프한다.
+		- JSON 문자열 내부 줄바꿈은 반드시 \\n 으로 이스케이프한다.
 		- 불필요한 서론/면책 문구는 쓰지 않는다.
 
 		출력 JSON 형식:
@@ -27,7 +29,7 @@ final class GeminiSolvePromptTemplate {
 			}
 		""";
 
-	static String render() {
+	public static String render() {
 		return TEMPLATE;
 	}
 }

@@ -17,6 +17,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import cmc.delta.domain.problem.adapter.out.ai.SolvePromptTemplate;
 import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
 import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
@@ -133,7 +134,7 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	private String buildPromptText() {
 		try {
-			return GeminiSolvePromptTemplate.render();
+			return SolvePromptTemplate.render();
 		} catch (Exception e) {
 			throw GeminiAiException.promptBuildFailed(e);
 		}

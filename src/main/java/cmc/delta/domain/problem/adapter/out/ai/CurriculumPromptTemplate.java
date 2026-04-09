@@ -1,8 +1,14 @@
-package cmc.delta.domain.problem.adapter.out.ai.openai;
+package cmc.delta.domain.problem.adapter.out.ai;
 
-final class OpenAiPromptTemplate {
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-	private OpenAiPromptTemplate() {}
+public final class CurriculumPromptTemplate {
+
+	private CurriculumPromptTemplate() {
+	}
 
 	private static final String TEMPLATE = """
 		너는 한국 고등학교 수학 문제 분류기다.
@@ -54,23 +60,21 @@ final class OpenAiPromptTemplate {
 		%s
 		""";
 
-	static String render(
-		String subjectsJson,
-		String unitsJson,
-		String typesJson,
-		int mathLineCount,
-		int textLineCount,
-		int codeLineCount,
-		int pseudocodeLineCount,
-		String ocrPlainText) {
+	public static String render(AiCurriculumPrompt prompt, ObjectMapper objectMapper)
+		throws JsonProcessingException {
+		String subjectsJson = objectMapper.writeValueAsString(prompt.subjects());
+		String unitsJson = objectMapper.writeValueAsString(prompt.units());
+		String typesJson = objectMapper.writeValueAsString(prompt.types());
+
+		OcrSignalSummary signals = prompt.ocrSignals();
+		int mathLineCount = signals == null ? 0 : signals.mathLineCount();
+		int textLineCount = signals == null ? 0 : signals.textLineCount();
+		int codeLineCount = signals == null ? 0 : signals.codeLineCount();
+		int pseudocodeLineCount = signals == null ? 0 : signals.pseudocodeLineCount();
+
 		return TEMPLATE.formatted(
-			subjectsJson,
-			unitsJson,
-			typesJson,
-			mathLineCount,
-			textLineCount,
-			codeLineCount,
-			pseudocodeLineCount,
-			ocrPlainText);
+			subjectsJson, unitsJson, typesJson,
+			mathLineCount, textLineCount, codeLineCount, pseudocodeLineCount,
+			prompt.ocrPlainText());
 	}
 }
