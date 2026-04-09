@@ -16,7 +16,10 @@ import org.springframework.web.client.RestClientResponseException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cmc.delta.domain.problem.adapter.out.ai.AiCurriculumResponseParser;
 import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import cmc.delta.domain.problem.adapter.out.ai.CurriculumPromptTemplate;
+import cmc.delta.domain.problem.adapter.out.ai.SolvePromptTemplate;
 import cmc.delta.domain.problem.application.port.out.ai.AiClient;
 import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
@@ -30,19 +33,8 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 	private static final String PATH_CHAT_COMPLETIONS = "/v1/chat/completions";
 	private static final String AUTHORIZATION_BEARER_PREFIX = "Bearer ";
-
-	private static final String FIELD_IS_MATH_PROBLEM = "is_math_problem";
-	private static final String FIELD_PREDICTED_SUBJECT_ID = "predicted_subject_id";
-	private static final String FIELD_PREDICTED_UNIT_ID = "predicted_unit_id";
-	private static final String FIELD_PREDICTED_TYPE_ID = "predicted_type_id";
-	private static final String FIELD_CONFIDENCE = "confidence";
-	private static final String FIELD_SUBJECT_CANDIDATES = "subject_candidates";
-	private static final String FIELD_UNIT_CANDIDATES = "unit_candidates";
-	private static final String FIELD_TYPE_CANDIDATES = "type_candidates";
-
 	private static final String FIELD_SOLUTION_LATEX = "solution_latex";
 	private static final String FIELD_SOLUTION_TEXT = "solution_text";
-
 	private static final int TEMPERATURE = 0;
 
 	private final OpenAiProperties properties;
@@ -65,14 +57,10 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 	@Override
 	public AiCurriculumResult classifyCurriculum(AiCurriculumPrompt prompt) {
-		if (!isEnabled()) {
-			throw OpenAiAiException.promptBuildFailed(new IllegalStateException("OPENAI_API_KEY is not configured"));
-		}
-
+		requireEnabled();
 		try {
 			String promptText = buildCurriculumPromptText(prompt);
-			Map<String, Object> requestBody = buildCurriculumRequestBody(promptText);
-			String rawResponseJson = requestOpenAi(requestBody);
+			String rawResponseJson = requestOpenAi(buildCurriculumRequestBody(promptText));
 			return parseCurriculumResponse(rawResponseJson);
 		} catch (RestClientResponseException e) {
 			throw OpenAiAiException.externalCallFailed(e);
@@ -85,15 +73,11 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 	@Override
 	public ProblemAiSolveResult solveProblem(ProblemAiSolvePrompt prompt) {
-		if (!isEnabled()) {
-			throw OpenAiAiException.promptBuildFailed(new IllegalStateException("OPENAI_API_KEY is not configured"));
-		}
-
+		requireEnabled();
 		try {
-			String promptText = buildSolvePromptText(prompt);
-			Map<String, Object> requestBody = buildSolveRequestBody(promptText, prompt.problemImageBytes(),
-				prompt.problemImageMimeType());
-			String rawResponseJson = requestOpenAi(requestBody);
+			String promptText = SolvePromptTemplate.render();
+			String rawResponseJson = requestOpenAi(
+				buildSolveRequestBody(promptText, prompt.problemImageBytes(), prompt.problemImageMimeType()));
 			return parseSolveResponse(rawResponseJson);
 		} catch (RestClientResponseException e) {
 			throw OpenAiAiException.externalCallFailed(e);
@@ -101,6 +85,12 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			throw e;
 		} catch (Exception e) {
 			throw OpenAiAiException.responseParseFailed(e);
+		}
+	}
+
+	private void requireEnabled() {
+		if (!isEnabled()) {
+			throw OpenAiAiException.promptBuildFailed(new IllegalStateException("OPENAI_API_KEY is not configured"));
 		}
 	}
 
@@ -154,26 +144,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 		try {
 			String modelText = extractMessageText(rawResponseJson);
 			JsonNode root = objectMapper.readTree(extractJsonObject(modelText));
-
-			boolean isMathProblem = root.path(FIELD_IS_MATH_PROBLEM).asBoolean(false);
-			String subjectId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_SUBJECT_ID);
-			String unitId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_UNIT_ID);
-			String typeId = AiResponseParseUtils.readTextOrNull(root, FIELD_PREDICTED_TYPE_ID);
-			double confidence = root.path(FIELD_CONFIDENCE).asDouble(0.0);
-			String subjectCandidatesJson = root.path(FIELD_SUBJECT_CANDIDATES).toString();
-			String unitCandidatesJson = root.path(FIELD_UNIT_CANDIDATES).toString();
-			String typeCandidatesJson = root.path(FIELD_TYPE_CANDIDATES).toString();
-
-			return new AiCurriculumResult(
-				isMathProblem,
-				subjectId,
-				unitId,
-				typeId,
-				confidence,
-				subjectCandidatesJson,
-				unitCandidatesJson,
-				typeCandidatesJson,
-				root.toString());
+			return AiCurriculumResponseParser.parse(root, root.toString());
 		} catch (OpenAiAiException e) {
 			throw e;
 		} catch (Exception e) {
@@ -217,7 +188,6 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 		if (!choicesNode.isArray()) {
 			return null;
 		}
-
 		for (JsonNode choiceNode : choicesNode) {
 			JsonNode contentNode = choiceNode.path("message").path("content");
 			String contentText = contentText(contentNode);
@@ -225,7 +195,6 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 				return contentText;
 			}
 		}
-
 		return null;
 	}
 
@@ -242,8 +211,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 		StringBuilder textBuilder = new StringBuilder();
 		for (JsonNode itemNode : contentNode) {
-			String type = itemNode.path("type").asText("");
-			if (!"text".equals(type)) {
+			if (!"text".equals(itemNode.path("type").asText(""))) {
 				continue;
 			}
 			String text = itemNode.path("text").asText(null);
@@ -251,11 +219,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 				textBuilder.append(text);
 			}
 		}
-
-		if (textBuilder.length() == 0) {
-			return null;
-		}
-		return textBuilder.toString();
+		return textBuilder.length() == 0 ? null : textBuilder.toString();
 	}
 
 	private String extractJsonObject(String text) {
@@ -274,31 +238,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 
 	private String buildCurriculumPromptText(AiCurriculumPrompt prompt) {
 		try {
-			String subjectsJson = objectMapper.writeValueAsString(prompt.subjects());
-			String unitsJson = objectMapper.writeValueAsString(prompt.units());
-			String typesJson = objectMapper.writeValueAsString(prompt.types());
-			int mathLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().mathLineCount();
-			int textLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().textLineCount();
-			int codeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().codeLineCount();
-			int pseudocodeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().pseudocodeLineCount();
-
-			return OpenAiPromptTemplate.render(
-				subjectsJson,
-				unitsJson,
-				typesJson,
-				mathLineCount,
-				textLineCount,
-				codeLineCount,
-				pseudocodeLineCount,
-				prompt.ocrPlainText());
-		} catch (Exception e) {
-			throw OpenAiAiException.promptBuildFailed(e);
-		}
-	}
-
-	private String buildSolvePromptText(ProblemAiSolvePrompt prompt) {
-		try {
-			return OpenAiSolvePromptTemplate.render();
+			return CurriculumPromptTemplate.render(prompt, objectMapper);
 		} catch (Exception e) {
 			throw OpenAiAiException.promptBuildFailed(e);
 		}
