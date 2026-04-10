@@ -13,11 +13,16 @@ import org.springframework.web.client.RestClient;
 
 class GeminiProblemSolveAiClientTest {
 
+	private final ObjectMapper objectMapper = new ObjectMapper();
 	private final GeminiProblemSolveAiClient client = new GeminiProblemSolveAiClient(
 		new GeminiProperties("https://generativelanguage.googleapis.com", "test-key", "gemini-2.5-flash-lite",
 			"gemini-2.5-flash-lite"),
-		new ObjectMapper(),
-		mock(RestClient.class));
+		objectMapper,
+		mock(RestClient.class),
+		new GeminiSolveResponseExtractor(objectMapper),
+		new GeminiSolveMalformedParser(new GeminiSolveTextNormalizer()),
+		new GeminiSolveDegenerateDetector(),
+		new GeminiSolveTextNormalizer());
 
 	@Test
 	@DisplayName("정상 JSON 응답은 풀이를 파싱한다")

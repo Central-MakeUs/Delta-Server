@@ -27,7 +27,7 @@ class SocialAuthFacadeTest {
 		TokenCommandUseCase tokenUseCase = mock(TokenCommandUseCase.class);
 
 		when(kakao.fetchUserInfoByCode("code"))
-			.thenReturn(new KakaoOAuthService.SocialUserInfo("pid", "e@e.com", "nick"));
+			.thenReturn(new SocialUserInfo("pid", "e@e.com", "nick"));
 		when(provisioning.provisionSocialUser(any()))
 			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", true));
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
@@ -64,7 +64,7 @@ class SocialAuthFacadeTest {
 		TokenCommandUseCase tokenUseCase = mock(TokenCommandUseCase.class);
 
 		when(apple.fetchUserInfoByCode("code", "user"))
-			.thenReturn(new AppleOAuthService.AppleUserInfo("sub", "e@e.com", "nick"));
+			.thenReturn(new SocialUserInfo("sub", "e@e.com", "nick"));
 		when(provisioning.provisionSocialUser(any()))
 			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", false));
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");

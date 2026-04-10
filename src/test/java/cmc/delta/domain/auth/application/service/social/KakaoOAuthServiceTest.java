@@ -21,7 +21,7 @@ class KakaoOAuthServiceTest {
 
 		KakaoOAuthService sut = new KakaoOAuthService(client);
 
-		KakaoOAuthService.SocialUserInfo out = sut.fetchUserInfoByCode("code");
+		SocialUserInfo out = sut.fetchUserInfoByCode("code");
 
 		assertThat(out.providerUserId()).isEqualTo("pid");
 		assertThat(out.email()).isEqualTo("e@e.com");

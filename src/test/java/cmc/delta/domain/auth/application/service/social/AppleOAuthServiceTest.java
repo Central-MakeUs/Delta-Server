@@ -27,7 +27,7 @@ class AppleOAuthServiceTest {
 		AppleOAuthService sut = new AppleOAuthService(client, verifier, objectMapper);
 
 		String userJson = "{\"email\":\"form@e.com\",\"name\":{\"firstName\":\"Gil\",\"lastName\":\"Hong\"}}";
-		AppleOAuthService.AppleUserInfo out = sut.fetchUserInfoByCode("code", userJson);
+		SocialUserInfo out = sut.fetchUserInfoByCode("code", userJson);
 
 		assertThat(out.providerUserId()).isEqualTo("sub");
 		assertThat(out.email()).isEqualTo("form@e.com");
