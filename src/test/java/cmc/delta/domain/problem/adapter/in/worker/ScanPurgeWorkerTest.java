@@ -8,6 +8,7 @@ import cmc.delta.domain.problem.adapter.in.worker.support.WorkerTestTx;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanLockGuard;
 import cmc.delta.domain.problem.adapter.in.worker.support.lock.ScanUnlocker;
 import cmc.delta.domain.problem.adapter.in.worker.support.logging.BacklogLogger;
+import cmc.delta.domain.problem.adapter.in.worker.support.logging.WorkerLogPolicy;
 import cmc.delta.domain.problem.adapter.in.worker.support.persistence.ScanPurgePersister;
 import cmc.delta.domain.problem.adapter.out.persistence.asset.AssetJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
@@ -66,6 +67,7 @@ class ScanPurgeWorkerTest {
 			lockGuard,
 			unlocker,
 			mock(BacklogLogger.class),
+			mock(WorkerLogPolicy.class),
 			persister);
 	}
 
@@ -161,6 +163,7 @@ class ScanPurgeWorkerTest {
 			ScanLockGuard lockGuard,
 			ScanUnlocker unlocker,
 			BacklogLogger backlogLogger,
+			WorkerLogPolicy logPolicy,
 			ScanPurgePersister persister) {
 			super(
 				clock,
@@ -174,6 +177,7 @@ class ScanPurgeWorkerTest {
 				lockGuard,
 				unlocker,
 				backlogLogger,
+				logPolicy,
 				persister);
 		}
 

@@ -77,9 +77,7 @@ public class UserServiceImpl implements UserUseCase {
 	}
 
 	private User loadActiveUser(long userId) {
-		User user = loadUser(userId);
-		ensureActiveUser(user);
-		return user;
+		return userRepositoryPort.findActiveById(userId);
 	}
 
 	private String extractNickname(UserNicknameUpdateRequest request) {
@@ -90,12 +88,6 @@ public class UserServiceImpl implements UserUseCase {
 	private UserOnboardingRequest validateOnboardingRequest(UserOnboardingRequest request) {
 		userValidator.validate(request);
 		return request;
-	}
-
-	private void ensureActiveUser(User user) {
-		if (user.isWithdrawn()) {
-			throw UserException.userWithdrawn();
-		}
 	}
 
 	private void completeOnboarding(User user, UserOnboardingRequest request) {

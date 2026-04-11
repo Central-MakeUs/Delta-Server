@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;
 import cmc.delta.domain.user.application.port.in.dto.UserProfileImageResult;
 import cmc.delta.domain.user.application.port.out.ProfileImageStoragePort;
+import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
@@ -14,7 +15,6 @@ import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class UserProfileImageServiceImplTest {
 		User user = User.createProvisioned(EMAIL, NICKNAME);
 		setId(user, USER_ID);
 		user.updateProfileImage(OLD_KEY);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findActiveById(USER_ID)).thenReturn(user);
 
 		StorageUploadData uploaded = new StorageUploadData(NEW_KEY, null, CONTENT_TYPE, SIZE_BYTES, null, null);
 		when(storagePort.uploadImage(any(), eq(CONTENT_TYPE), eq(FILE_NAME), any())).thenReturn(uploaded);
@@ -90,7 +90,7 @@ class UserProfileImageServiceImplTest {
 		ProfileImageStoragePort storagePort = mock(ProfileImageStoragePort.class);
 		UserProfileImageServiceImpl sut = new UserProfileImageServiceImpl(userRepository, storagePort);
 
-		when(userRepository.findById(MISSING_USER_ID)).thenReturn(Optional.empty());
+		when(userRepository.findActiveById(MISSING_USER_ID)).thenThrow(UserException.userNotFound());
 
 		// when
 		BusinessException ex = catchThrowableOfType(
@@ -112,7 +112,7 @@ class UserProfileImageServiceImplTest {
 
 		User user = User.createProvisioned(EMAIL, NICKNAME);
 		setId(user, USER_ID);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findActiveById(USER_ID)).thenReturn(user);
 
 		// when
 		UserProfileImageResult result = sut.getMyProfileImage(USER_ID);
@@ -133,7 +133,7 @@ class UserProfileImageServiceImplTest {
 		User user = User.createProvisioned(EMAIL, NICKNAME);
 		setId(user, USER_ID);
 		user.updateProfileImage(OLD_KEY);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findActiveById(USER_ID)).thenReturn(user);
 
 		TransactionSynchronizationManager.initSynchronization();
 
@@ -158,7 +158,7 @@ class UserProfileImageServiceImplTest {
 		User user = User.createProvisioned(EMAIL, NICKNAME);
 		user.withdraw();
 		setId(user, USER_ID);
-		when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+		when(userRepository.findActiveById(USER_ID)).thenThrow(UserException.userWithdrawn());
 
 		// when
 		BusinessException ex = catchThrowableOfType(

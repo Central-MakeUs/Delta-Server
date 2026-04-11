@@ -24,7 +24,6 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -85,7 +84,7 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return scanWorkRepository.findClaimedAiIds(lockOwner, lockToken, limit);
+		return scanWorkRepository.findClaimedIds(lockOwner, lockToken, limit);
 	}
 
 	@Override
@@ -138,10 +137,6 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 	}
 
 	private ProblemScan loadScanOrThrow(Long scanId) {
-		Optional<ProblemScan> optional = scanRepository.findById(scanId);
-		if (optional.isEmpty()) {
-			throw new ProblemScanNotFoundException(scanId);
-		}
-		return optional.get();
+		return scanRepository.findById(scanId).orElseThrow(() -> new ProblemScanNotFoundException(scanId));
 	}
 }

@@ -1,14 +1,9 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
-import cmc.delta.domain.problem.application.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +11,16 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cmc.delta.domain.problem.adapter.out.ai.AiCurriculumResponseParser;
+import cmc.delta.domain.problem.adapter.out.ai.CurriculumPromptTemplate;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -25,19 +30,9 @@ public class GeminiAiClient implements AiClient {
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";
 	private static final String QUERY_KEY = "key";
 
-	private static final String FIELD_IS_MATH_PROBLEM = "is_math_problem";
-	private static final String FIELD_PREDICTED_SUBJECT_ID = "predicted_subject_id";
-	private static final String FIELD_PREDICTED_UNIT_ID = "predicted_unit_id";
-	private static final String FIELD_PREDICTED_TYPE_ID = "predicted_type_id";
-	private static final String FIELD_CONFIDENCE = "confidence";
-	private static final String FIELD_SUBJECT_CANDIDATES = "subject_candidates";
-	private static final String FIELD_UNIT_CANDIDATES = "unit_candidates";
-	private static final String FIELD_TYPE_CANDIDATES = "type_candidates";
+	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
 	private static final Map<String, Object> RESPONSE_SCHEMA = GeminiSchemaFactory.responseSchema();
-
-	private static final int DEFAULT_TEMPERATURE = 0;
-	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
 	private final GeminiProperties props;
 	private final ObjectMapper objectMapper;
@@ -59,42 +54,44 @@ public class GeminiAiClient implements AiClient {
 		try {
 			String promptText = buildPromptText(prompt);
 			Map<String, Object> requestBody = buildRequestBody(promptText);
-
-			String rawResponseJson = geminiRestClient
-				.post()
-				.uri(uriBuilder -> uriBuilder
-					.path(PATH_GENERATE_CONTENT)
-					.queryParam(QUERY_KEY, props.apiKey())
-					.build(props.model()))
-				.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-				.body(requestBody)
-				.retrieve()
-				.body(String.class);
-
+			String rawResponseJson = callApi(requestBody);
 			AiCurriculumResult result = parseResponse(rawResponseJson);
 			log.info("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
 			return result;
-
 		} catch (RestClientResponseException e) {
-			log.warn(
-				"Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
-				props.model(),
-				e.getRawStatusCode(),
-				elapsedMillis(startedAtNanos));
+			log.warn("Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
+				props.model(), e.getRawStatusCode(), elapsedMillis(startedAtNanos));
 			throw GeminiAiException.externalCallFailed(e);
 		} catch (GeminiAiException e) {
-			log.warn("Gemini 분류 실패 model={} reason={} durationMs={}", props.model(), e.getMessage(),
-				elapsedMillis(startedAtNanos));
+			log.warn("Gemini 분류 실패 model={} reason={} durationMs={}",
+				props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
 			throw e;
 		} catch (Exception e) {
-			log.warn("Gemini 분류 예외 model={} reason={} durationMs={}", props.model(), e.getMessage(),
-				elapsedMillis(startedAtNanos));
+			log.warn("Gemini 분류 예외 model={} reason={} durationMs={}",
+				props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
 			throw GeminiAiException.responseParseFailed(e);
 		}
 	}
 
-	private long elapsedMillis(long startedAtNanos) {
-		return (System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND;
+	private String callApi(Map<String, Object> requestBody) {
+		return geminiRestClient
+			.post()
+			.uri(uriBuilder -> uriBuilder
+				.path(PATH_GENERATE_CONTENT)
+				.queryParam(QUERY_KEY, props.apiKey())
+				.build(props.model()))
+			.header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+			.body(requestBody)
+			.retrieve()
+			.body(String.class);
+	}
+
+	private String buildPromptText(AiCurriculumPrompt prompt) {
+		try {
+			return CurriculumPromptTemplate.render(prompt, objectMapper);
+		} catch (Exception e) {
+			throw GeminiAiException.promptBuildFailed(e);
+		}
 	}
 
 	private Map<String, Object> buildRequestBody(String promptText) {
@@ -111,29 +108,8 @@ public class GeminiAiClient implements AiClient {
 	private AiCurriculumResult parseResponse(String rawResponseJson) {
 		try {
 			String modelJsonText = extractModelJsonText(rawResponseJson);
-			JsonNode out = objectMapper.readTree(modelJsonText);
-
-			boolean isMathProblem = out.path(FIELD_IS_MATH_PROBLEM).asBoolean(false);
-
-			String subjectId = readTextOrNull(out, FIELD_PREDICTED_SUBJECT_ID);
-			String unitId = readTextOrNull(out, FIELD_PREDICTED_UNIT_ID);
-			String typeId = readTextOrNull(out, FIELD_PREDICTED_TYPE_ID);
-			double confidence = out.path(FIELD_CONFIDENCE).asDouble(0.0);
-
-			String subjectCandidatesJson = out.path(FIELD_SUBJECT_CANDIDATES).toString();
-			String unitCandidatesJson = out.path(FIELD_UNIT_CANDIDATES).toString();
-			String typeCandidatesJson = out.path(FIELD_TYPE_CANDIDATES).toString();
-
-			return new AiCurriculumResult(
-				isMathProblem,
-				subjectId,
-				unitId,
-				typeId,
-				confidence,
-				subjectCandidatesJson,
-				unitCandidatesJson,
-				typeCandidatesJson,
-				modelJsonText);
+			JsonNode root = objectMapper.readTree(modelJsonText);
+			return AiCurriculumResponseParser.parse(root, modelJsonText);
 		} catch (GeminiAiException e) {
 			throw e;
 		} catch (Exception e) {
@@ -156,7 +132,6 @@ public class GeminiAiClient implements AiClient {
 				throw GeminiAiException.emptyText();
 			}
 			return modelText;
-
 		} catch (GeminiAiException e) {
 			throw e;
 		} catch (Exception e) {
@@ -164,35 +139,7 @@ public class GeminiAiClient implements AiClient {
 		}
 	}
 
-	private String readTextOrNull(JsonNode node, String fieldName) {
-		JsonNode v = node.get(fieldName);
-		if (v == null || v.isNull())
-			return null;
-		String text = v.asText(null);
-		return (text == null || text.isBlank()) ? null : text;
-	}
-
-	private String buildPromptText(AiCurriculumPrompt prompt) {
-		try {
-			String subjectsJson = objectMapper.writeValueAsString(prompt.subjects());
-			String unitsJson = objectMapper.writeValueAsString(prompt.units());
-			String typesJson = objectMapper.writeValueAsString(prompt.types());
-			int mathLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().mathLineCount();
-			int textLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().textLineCount();
-			int codeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().codeLineCount();
-			int pseudocodeLineCount = prompt.ocrSignals() == null ? 0 : prompt.ocrSignals().pseudocodeLineCount();
-
-			return GeminiPromptTemplate.render(
-				subjectsJson,
-				unitsJson,
-				typesJson,
-				mathLineCount,
-				textLineCount,
-				codeLineCount,
-				pseudocodeLineCount,
-				prompt.ocrPlainText());
-		} catch (Exception e) {
-			throw GeminiAiException.promptBuildFailed(e);
-		}
+	private long elapsedMillis(long startedAtNanos) {
+		return (System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND;
 	}
 }

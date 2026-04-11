@@ -24,32 +24,22 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 
 	@Override
 	public LoginResult loginKakao(String code) {
-		KakaoOAuthService.SocialUserInfo userInfo = kakaoOAuthService.fetchUserInfoByCode(code);
-		return loginWithProvisionedUser(
-			SocialProvider.KAKAO,
-			userInfo.providerUserId(),
-			userInfo.email(),
+		SocialUserInfo userInfo = kakaoOAuthService.fetchUserInfoByCode(code);
+		return loginWithProvisionedUser(SocialProvider.KAKAO, userInfo.providerUserId(), userInfo.email(),
 			userInfo.nickname());
 	}
 
 	@Override
 	public LoginResult loginApple(String code, String userJson) {
-		AppleOAuthService.AppleUserInfo apple = appleOAuthService.fetchUserInfoByCode(code, userJson);
-		String providerUserId = apple.providerUserId(); // sub (토큰의 sub 클레임)
-		return loginWithProvisionedUser(
-			SocialProvider.APPLE,
-			providerUserId,
-			apple.email(),
-			apple.nickname());
+		SocialUserInfo userInfo = appleOAuthService.fetchUserInfoByCode(code, userJson);
+		return loginWithProvisionedUser(SocialProvider.APPLE, userInfo.providerUserId(), userInfo.email(),
+			userInfo.nickname());
 	}
 
 	@Override
 	public LoginResult loginGoogle(String code) {
-		GoogleOAuthService.SocialUserInfo userInfo = googleOAuthService.fetchUserInfoByCode(code);
-		return loginWithProvisionedUser(
-			SocialProvider.GOOGLE,
-			userInfo.providerUserId(),
-			userInfo.email(),
+		SocialUserInfo userInfo = googleOAuthService.fetchUserInfoByCode(code);
+		return loginWithProvisionedUser(SocialProvider.GOOGLE, userInfo.providerUserId(), userInfo.email(),
 			userInfo.nickname());
 	}
 

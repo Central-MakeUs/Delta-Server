@@ -88,7 +88,7 @@ public class OcrScanWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected List<Long> findClaimedIds(String lockOwner, String lockToken, int limit) {
-		return scanWorkRepository.findClaimedOcrIds(lockOwner, lockToken, limit);
+		return scanWorkRepository.findClaimedIds(lockOwner, lockToken, limit);
 	}
 
 	@Override

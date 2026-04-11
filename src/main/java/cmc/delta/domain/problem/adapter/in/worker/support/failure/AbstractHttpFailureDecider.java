@@ -1,10 +1,11 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.failure;
 
-import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
+
+import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 
 public abstract class AbstractHttpFailureDecider {
 
@@ -16,55 +17,57 @@ public abstract class AbstractHttpFailureDecider {
 	private static final int HTTP_STATUS_TOO_MANY_REQUESTS = HttpStatus.TOO_MANY_REQUESTS.value();
 	private static final String RETRY_AFTER_HEADER = "Retry-After";
 
+	private final FailureReason networkErrorReason;
+	private final FailureReason rateLimitReason;
+	private final FailureReason client5xxReason;
+	private final FailureReason client4xxReason;
+	private final FailureReason unknownFailureReason;
+
+	protected AbstractHttpFailureDecider(
+		FailureReason networkErrorReason,
+		FailureReason rateLimitReason,
+		FailureReason client5xxReason,
+		FailureReason client4xxReason,
+		FailureReason unknownFailureReason) {
+		this.networkErrorReason = networkErrorReason;
+		this.rateLimitReason = rateLimitReason;
+		this.client5xxReason = client5xxReason;
+		this.client4xxReason = client4xxReason;
+		this.unknownFailureReason = unknownFailureReason;
+	}
+
 	public final FailureDecision decide(Exception exception) {
 		if (exception instanceof ProblemScanWorkerException workerException) {
 			return FailureDecision.nonRetryable(workerException.failureReason());
 		}
-
 		if (exception instanceof ResourceAccessException) {
-			return FailureDecision.retryable(networkErrorReason());
+			return FailureDecision.retryable(networkErrorReason);
 		}
-
 		if (exception instanceof RestClientResponseException rest) {
 			int statusCode = rest.getRawStatusCode();
-
 			if (statusCode == HTTP_STATUS_TOO_MANY_REQUESTS) {
-				Long retryAfterSeconds = extractRetryAfterSeconds(rest);
-				Long delaySeconds = computeRateLimitDelaySeconds(retryAfterSeconds);
-				return new FailureDecision(rateLimitReason(), true, delaySeconds);
+				Long delaySeconds = computeRateLimitDelaySeconds(extractRetryAfterSeconds(rest));
+				return new FailureDecision(rateLimitReason, true, delaySeconds);
 			}
 			if (statusCode >= HTTP_STATUS_5XX_START) {
-				return FailureDecision.retryable(client5xxReason());
+				return FailureDecision.retryable(client5xxReason);
 			}
 			if (statusCode >= HTTP_STATUS_4XX_START) {
-				return FailureDecision.nonRetryable(client4xxReason());
+				return FailureDecision.nonRetryable(client4xxReason);
 			}
 		}
-
-		return FailureDecision.retryable(unknownFailureReason());
+		return FailureDecision.retryable(unknownFailureReason);
 	}
-
-	protected abstract FailureReason networkErrorReason();
-
-	protected abstract FailureReason rateLimitReason();
-
-	protected abstract FailureReason client5xxReason();
-
-	protected abstract FailureReason client4xxReason();
-
-	protected abstract FailureReason unknownFailureReason();
 
 	private Long extractRetryAfterSeconds(RestClientResponseException rest) {
 		HttpHeaders headers = rest.getResponseHeaders();
 		if (headers == null) {
 			return null;
 		}
-
 		String retryAfterValue = headers.getFirst(RETRY_AFTER_HEADER);
 		if (retryAfterValue == null || retryAfterValue.isBlank()) {
 			return null;
 		}
-
 		try {
 			return Long.parseLong(retryAfterValue.trim());
 		} catch (NumberFormatException ignore) {

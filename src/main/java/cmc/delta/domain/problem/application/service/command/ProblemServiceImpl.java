@@ -32,9 +32,8 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -173,17 +172,7 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 		if (storageKey == null || storageKey.isBlank()) {
 			return;
 		}
-		Runnable deleteTask = () -> deleteOriginalImageBestEffort(storageKey);
-		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-			deleteTask.run();
-			return;
-		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				deleteTask.run();
-			}
-		});
+		TransactionUtils.afterCommit(() -> deleteOriginalImageBestEffort(storageKey));
 	}
 
 	private void deleteOriginalImageBestEffort(String storageKey) {
