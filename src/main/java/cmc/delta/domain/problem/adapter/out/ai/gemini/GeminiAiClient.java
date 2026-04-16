@@ -56,7 +56,7 @@ public class GeminiAiClient implements AiClient {
 			Map<String, Object> requestBody = buildRequestBody(promptText);
 			String rawResponseJson = callApi(requestBody);
 			AiCurriculumResult result = parseResponse(rawResponseJson);
-			log.info("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
+			log.debug("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
 			return result;
 		} catch (RestClientResponseException e) {
 			log.warn("Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
