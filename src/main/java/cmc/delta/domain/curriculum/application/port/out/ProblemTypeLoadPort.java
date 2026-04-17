@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface ProblemTypeLoadPort {
 	Optional<ProblemType> findById(String typeId);
 
+	List<ProblemType> findByIds(List<String> typeIds);
+
 	Optional<ProblemType> findActiveVisibleById(Long userId, String typeId);
 
 	List<ProblemType> findActiveVisibleByIds(Long userId, List<String> typeIds);
