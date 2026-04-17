@@ -37,7 +37,7 @@ public class ScanPurgeWorker extends AbstractExternalCallScanWorker {
 	private final PurgeWorkerProperties properties;
 	private final ScanPurgePersister persister;
 
-	private volatile int lastRetentionDays;
+	private static final ThreadLocal<Integer> retentionDaysHolder = new ThreadLocal<>();
 
 	public ScanPurgeWorker(
 		Clock clock,
@@ -61,18 +61,21 @@ public class ScanPurgeWorker extends AbstractExternalCallScanWorker {
 		this.problemRepository = problemRepository;
 		this.properties = properties;
 		this.persister = persister;
-		this.lastRetentionDays = properties.retentionDays();
 	}
 
 	public void runBatch(String lockOwner, int batchSize, long lockLeaseSeconds, int retentionDays) {
-		this.lastRetentionDays = retentionDays;
-		super.runBatch(lockOwner, batchSize, lockLeaseSeconds);
+		retentionDaysHolder.set(retentionDays);
+		try {
+			super.runBatch(lockOwner, batchSize, lockLeaseSeconds);
+		} finally {
+			retentionDaysHolder.remove();
+		}
 	}
 
 	@Override
 	protected int claim(LocalDateTime now, LocalDateTime staleBefore, String lockOwner, String lockToken,
 		LocalDateTime lockedAt, int limit) {
-		LocalDateTime cutoffCreatedAt = now.minusDays(lastRetentionDays);
+		LocalDateTime cutoffCreatedAt = now.minusDays(currentRetentionDays());
 		return scanWorkRepository.claimPurgeCandidates(cutoffCreatedAt, staleBefore, lockOwner, lockToken, lockedAt,
 			limit);
 	}
@@ -89,8 +92,13 @@ public class ScanPurgeWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected long countBacklog(LocalDateTime now, LocalDateTime staleBefore) {
-		LocalDateTime cutoffCreatedAt = now.minusDays(lastRetentionDays);
+		LocalDateTime cutoffCreatedAt = now.minusDays(currentRetentionDays());
 		return scanWorkRepository.countPurgeBacklog(cutoffCreatedAt, staleBefore);
+	}
+
+	private int currentRetentionDays() {
+		Integer days = retentionDaysHolder.get();
+		return days != null ? days : properties.retentionDays();
 	}
 
 	@Override

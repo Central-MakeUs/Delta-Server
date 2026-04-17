@@ -4,6 +4,8 @@ import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.model.User;
 import java.util.Optional;
 
+import cmc.delta.domain.user.model.User;
+
 public interface UserRepositoryPort {
 	Optional<User> findById(Long id);
 
@@ -20,4 +22,5 @@ public interface UserRepositoryPort {
 		}
 		return user;
 	}
+	long count();
 }
