@@ -97,11 +97,9 @@ class ScanTypePredictionPersistenceAdapterTest {
 		// T4는 없는 타입
 		ProblemType t5 = mockType("T5");
 
-		when(typeReader.findById("T1")).thenReturn(Optional.of(t1));
-		when(typeReader.findById("T2")).thenReturn(Optional.of(t2));
-		when(typeReader.findById("T3")).thenReturn(Optional.of(t3));
-		when(typeReader.findById("T4")).thenReturn(Optional.empty());
-		when(typeReader.findById("T5")).thenReturn(Optional.of(t5));
+		// 구현체는 findByIds로 IN절 일괄 조회 — T4는 결과에 포함되지 않음
+		when(typeReader.findByIds(List.of("T1", "T2", "T3", "T4", "T5")))
+			.thenReturn(List.of(t1, t2, t3, t5));
 		// T6는 호출되면 안 됨(상위 5개 제한)
 
 		@SuppressWarnings("unchecked") org.mockito.ArgumentCaptor<List<ProblemScanTypePrediction>> captor = org.mockito.ArgumentCaptor

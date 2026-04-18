@@ -46,55 +46,44 @@ public class JwtTokenProvider {
 		if (token == null || token.isBlank()) {
 			throw new JwtAuthenticationException(ErrorCode.TOKEN_REQUIRED);
 		}
-
-		try {
-			Claims claims = parseClaims(token);
-			validateTokenType(claims, TYP_ACCESS, ErrorCode.INVALID_TOKEN);
-
-			Long userId = parseUserId(claims.getSubject(), ErrorCode.INVALID_TOKEN);
-			String role = claims.get(CLAIM_ROLE, String.class);
-			String jti = claims.getId();
-			Instant expiresAt = toInstant(claims.getExpiration(), ErrorCode.INVALID_TOKEN);
-
-			validateRequiredFields(role, jti, expiresAt, ErrorCode.INVALID_TOKEN);
-
-			return new ParsedAccessToken(new UserPrincipal(userId, role), jti, expiresAt);
-
-		} catch (ExpiredJwtException e) {
-			throw new JwtAuthenticationException(ErrorCode.EXPIRED_TOKEN);
-		} catch (JwtAuthenticationException e) {
-			throw e;
-		} catch (JwtException | IllegalArgumentException e) {
-			throw new JwtAuthenticationException(ErrorCode.INVALID_TOKEN);
-		}
+		return parseAndBuild(token, TYP_ACCESS, ErrorCode.INVALID_TOKEN, ErrorCode.EXPIRED_TOKEN,
+			ParsedAccessToken::new);
 	}
 
 	public ParsedRefreshToken parseRefreshTokenOrThrow(String token) {
 		if (token == null || token.isBlank()) {
 			throw new JwtAuthenticationException(ErrorCode.REFRESH_TOKEN_REQUIRED);
 		}
+		return parseAndBuild(token, TYP_REFRESH, ErrorCode.INVALID_REFRESH_TOKEN, ErrorCode.INVALID_REFRESH_TOKEN,
+			ParsedRefreshToken::new);
+	}
 
+	private <T> T parseAndBuild(String token, String expectedTyp, ErrorCode invalidCode, ErrorCode expiredCode,
+		TokenFactory<T> factory) {
 		try {
-			Claims claims = parseClaims(token);
-			validateTokenType(claims, TYP_REFRESH, ErrorCode.INVALID_REFRESH_TOKEN);
+			Claims claims = parseVerifiedClaims(token);
+			validateTokenType(claims, expectedTyp, invalidCode);
 
-			Long userId = parseUserId(claims.getSubject(), ErrorCode.INVALID_REFRESH_TOKEN);
+			Long userId = parseUserId(claims.getSubject(), invalidCode);
 			String role = claims.get(CLAIM_ROLE, String.class);
 			String jti = claims.getId();
-			Instant expiresAt = toInstant(claims.getExpiration(), ErrorCode.INVALID_REFRESH_TOKEN);
+			Instant expiresAt = toInstant(claims.getExpiration(), invalidCode);
 
-			validateRequiredFields(role, jti, expiresAt, ErrorCode.INVALID_REFRESH_TOKEN);
-
-			return new ParsedRefreshToken(new UserPrincipal(userId, role), jti, expiresAt);
+			validateRequiredFields(role, jti, expiresAt, invalidCode);
+			return factory.create(new UserPrincipal(userId, role), jti, expiresAt);
 
 		} catch (ExpiredJwtException e) {
-			// refresh 만료 전용 코드가 없으니 정책상 INVALID_REFRESH_TOKEN로 처리
-			throw new JwtAuthenticationException(ErrorCode.INVALID_REFRESH_TOKEN);
+			throw new JwtAuthenticationException(expiredCode);
 		} catch (JwtAuthenticationException e) {
 			throw e;
 		} catch (JwtException | IllegalArgumentException e) {
-			throw new JwtAuthenticationException(ErrorCode.INVALID_REFRESH_TOKEN);
+			throw new JwtAuthenticationException(invalidCode);
 		}
+	}
+
+	@FunctionalInterface
+	private interface TokenFactory<T> {
+		T create(UserPrincipal principal, String jti, Instant expiresAt);
 	}
 
 	private String issueToken(UserPrincipal principal, String typ, long ttlSeconds) {
@@ -114,7 +103,7 @@ public class JwtTokenProvider {
 			.compact();
 	}
 
-	private Claims parseClaims(String token) {
+	private Claims parseVerifiedClaims(String token) {
 		Jws<Claims> jws = Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token);
 		return jws.getPayload();
 	}

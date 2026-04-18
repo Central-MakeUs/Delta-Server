@@ -37,19 +37,16 @@ public class FakeTokenIssuer implements TokenIssuer {
 	}
 
 	@Override
-	public String extractJtiFromAccessToken(String accessToken) {
+	public AccessTokenInfo parseAccessTokenInfo(String accessToken) {
 		String[] parts = accessToken.split(":");
-		return parts[2];
+		String jti = parts[2];
+		long expEpochSecond = Long.parseLong(parts[3]);
+		long remain = expEpochSecond - clock.instant().getEpochSecond();
+		Duration ttl = Duration.ofSeconds(Math.max(remain, 0));
+		return new AccessTokenInfo(jti, ttl);
 	}
 
-	@Override
-	public Duration remainingAccessTtl(String accessToken) {
-		String[] parts = accessToken.split(":");
-		long expEpochSecond = Long.parseLong(parts[3]);
-
-		long nowEpochSecond = clock.instant().getEpochSecond();
-		long remain = expEpochSecond - nowEpochSecond;
-
-		return Duration.ofSeconds(Math.max(remain, 0));
+	public String extractJtiFromAccessToken(String accessToken) {
+		return parseAccessTokenInfo(accessToken).jti();
 	}
 }

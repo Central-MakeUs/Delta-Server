@@ -130,11 +130,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			ProblemAiSolvePrompt prompt = new ProblemAiSolvePrompt(imageBytes, imageMimeType, null, null, null);
 			ProblemAiSolveResult solveResult = problemSolveAiClient.solveProblem(prompt);
 
-			String normalizedText = SolutionTextNormalizer.normalize(
-				solveResult.solutionText(),
-				task.getAnswerValue(),
-				task.getAnswerFormat() == null ? null : task.getAnswerFormat().name(),
-				task.getAnswerChoiceNo());
+			String normalizedText = SolutionTextNormalizer.normalize(solveResult.solutionText());
 
 			LocalDateTime completedAt = LocalDateTime.now(clock);
 			task.markReady(solveResult.solutionLatex(), normalizedText, completedAt);

@@ -1,9 +1,8 @@
 package cmc.delta.domain.user.application.port.out;
 
-import cmc.delta.domain.user.application.exception.UserException;
-import cmc.delta.domain.user.model.User;
 import java.util.Optional;
 
+import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.model.User;
 
 public interface UserRepositoryPort {
@@ -15,6 +14,8 @@ public interface UserRepositoryPort {
 
 	void delete(User user);
 
+	long count();
+
 	default User findActiveById(Long id) {
 		User user = findById(id).orElseThrow(UserException::userNotFound);
 		if (user.isWithdrawn()) {
@@ -22,5 +23,4 @@ public interface UserRepositoryPort {
 		}
 		return user;
 	}
-	long count();
 }

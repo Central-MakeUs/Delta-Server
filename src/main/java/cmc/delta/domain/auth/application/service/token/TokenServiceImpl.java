@@ -88,13 +88,8 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 
 	private void validateRefreshTokenMatchOrThrow(long userId, String refreshToken, String action) {
 		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
-		RotationResult check = refreshTokenStore.refreshRotate(
-			userId,
-			DEFAULT_SESSION_ID,
-			expectedHash,
-			expectedHash,
-			DEFAULT_REFRESH_TTL);
-		if (check == RotationResult.MISMATCH) {
+		boolean exists = refreshTokenStore.refreshExists(userId, DEFAULT_SESSION_ID, expectedHash);
+		if (!exists) {
 			auditLogger.refreshMismatch(
 				userId,
 				DEFAULT_SESSION_ID,
@@ -131,12 +126,11 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		}
 
 		try {
-			String jti = tokenIssuer.extractJtiFromAccessToken(accessTokenOrNull);
-			Duration ttl = tokenIssuer.remainingAccessTtl(accessTokenOrNull);
+			TokenIssuer.AccessTokenInfo info = tokenIssuer.parseAccessTokenInfo(accessTokenOrNull);
 
-			if (ttl != null && !ttl.isNegative() && !ttl.isZero()) {
-				accessBlacklistStore.blacklist(jti, ttl);
-				return BlacklistResult.blacklisted(ttl.getSeconds());
+			if (!info.remainingTtl().isZero()) {
+				accessBlacklistStore.blacklist(info.jti(), info.remainingTtl());
+				return BlacklistResult.blacklisted(info.remainingTtl().getSeconds());
 			}
 			return BlacklistResult.notBlacklisted();
 
