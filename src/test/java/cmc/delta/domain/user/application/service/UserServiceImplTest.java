@@ -9,6 +9,7 @@ import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
 import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;
@@ -21,18 +22,14 @@ class UserServiceImplTest {
 	private static final long USER_ID = 999L;
 	private static final String NICKNAME_KIM = "김철수";
 	private static final String NICKNAME_HONG = "홍길동";
-	private static final String PROVIDER_USER_ID = "pid";
 
 	private FakeUserRepositoryPort userRepositoryPort;
-	private cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort socialAccountRepositoryPort;
 	private UserServiceImpl userService;
 
 	@BeforeEach
 	void setUp() {
 		userRepositoryPort = FakeUserRepositoryPort.create();
-		socialAccountRepositoryPort = cmc.delta.domain.auth.application.support.FakeSocialAccountRepositoryPort
-			.create();
-		userService = new UserServiceImpl(userRepositoryPort, socialAccountRepositoryPort, new UserValidator());
+		userService = new UserServiceImpl(userRepositoryPort, new UserValidator());
 	}
 
 	@Test
@@ -52,16 +49,12 @@ class UserServiceImplTest {
 	@DisplayName("내 프로필 조회: 소셜 계정이 연결되어 있으면 oauthProvider를 반환함")
 	void getMyProfile_whenSocialAccountExists_thenReturnsProvider() {
 		User user = givenActiveUser();
-		cmc.delta.domain.auth.model.SocialAccount account = cmc.delta.domain.auth.model.SocialAccount.link(
-			cmc.delta.domain.auth.model.SocialProvider.KAKAO,
-			PROVIDER_USER_ID,
-			user);
-		socialAccountRepositoryPort.put(account);
+		userRepositoryPort.putProvider(user.getId(), SocialProvider.KAKAO);
 
 		UserMeData result = userService.getMyProfile(user.getId());
 
 		assertThat(result.userId()).isEqualTo(user.getId());
-		assertThat(result.oauthProvider()).isEqualTo(cmc.delta.domain.auth.model.SocialProvider.KAKAO);
+		assertThat(result.oauthProvider()).isEqualTo(SocialProvider.KAKAO);
 	}
 
 	@Test
