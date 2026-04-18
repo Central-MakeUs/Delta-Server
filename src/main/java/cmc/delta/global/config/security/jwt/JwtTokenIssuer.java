@@ -30,19 +30,9 @@ public class JwtTokenIssuer implements TokenIssuer {
 	}
 
 	@Override
-	public String extractJtiFromAccessToken(String accessToken) {
+	public AccessTokenInfo parseAccessTokenInfo(String accessToken) {
 		JwtTokenProvider.ParsedAccessToken parsed = jwtTokenProvider.parseAccessTokenOrThrow(accessToken);
-		return parsed.jti();
-	}
-
-	@Override
-	public Duration remainingAccessTtl(String accessToken) {
-		JwtTokenProvider.ParsedAccessToken parsed = jwtTokenProvider.parseAccessTokenOrThrow(accessToken);
-
 		Duration ttl = Duration.between(Instant.now(), parsed.expiresAt());
-		if (ttl.isNegative() || ttl.isZero()) {
-			return Duration.ZERO;
-		}
-		return ttl;
+		return new AccessTokenInfo(parsed.jti(), ttl.isNegative() ? Duration.ZERO : ttl);
 	}
 }

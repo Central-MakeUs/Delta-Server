@@ -21,11 +21,11 @@ public final class WorkerFixtures {
 	}
 
 	public static ProblemScan uploaded(User user) {
-		return ProblemScan.createUploaded(user);
+		return ProblemScan.uploaded(user);
 	}
 
 	public static ProblemScan ocrDone(User user, String text) {
-		ProblemScan scan = ProblemScan.createUploaded(user);
+		ProblemScan scan = ProblemScan.uploaded(user);
 		scan.markOcrSucceeded(text, "{}", LocalDateTime.now());
 		return scan;
 	}

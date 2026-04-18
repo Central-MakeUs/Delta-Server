@@ -1,6 +1,7 @@
 package cmc.delta.global.config.security.jwt;
 
 import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
+import cmc.delta.global.config.security.SecurityConfig;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import cmc.delta.global.error.ErrorCode;
 import jakarta.servlet.FilterChain;
@@ -35,11 +36,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String uri = request.getRequestURI();
-		return uri.startsWith("/api/v1/auth/reissue")
-			|| uri.startsWith("/api/v1/auth/kakao")
-			|| uri.startsWith("/api/v1/auth/apple")
-			|| uri.startsWith("/api/v1/auth/google")
-			|| uri.startsWith("/apple/callback");
+		for (String path : SecurityConfig.JWT_SKIP_PATHS) {
+			if (uri.startsWith(path)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public JwtAuthenticationFilter(

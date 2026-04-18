@@ -29,8 +29,8 @@ import lombok.extern.slf4j.Slf4j;
 public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	private static final int LOG_TEXT_LIMIT = 1200;
-	private static final int SOLVE_MAX_OUTPUT_TOKENS = 8192;
-	private static final int SOLVE_THINKING_BUDGET = 0;
+	private static final int SOLVE_MAX_OUTPUT_TOKENS = 4096;
+	private static final int SOLVE_THINKING_BUDGET = -1;
 	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
 
 	private static final String PATH_GENERATE_CONTENT = "/v1beta/models/{model}:generateContent";

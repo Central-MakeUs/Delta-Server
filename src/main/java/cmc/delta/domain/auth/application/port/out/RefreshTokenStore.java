@@ -10,6 +10,8 @@ public interface RefreshTokenStore {
 	RotationResult refreshRotate(
 		Long userId, String sessionId, String expectedHash, String newHash, Duration ttl);
 
+	boolean refreshExists(Long userId, String sessionId, String expectedHash);
+
 	void refreshDelete(Long userId, String sessionId);
 
 	enum RotationResult {

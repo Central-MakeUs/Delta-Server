@@ -20,6 +20,11 @@ public class ProblemTypeLoadJpaAdapter implements ProblemTypeLoadPort {
 	}
 
 	@Override
+	public List<ProblemType> findByIds(List<String> typeIds) {
+		return repository.findByIdIn(typeIds);
+	}
+
+	@Override
 	public Optional<ProblemType> findActiveVisibleById(Long userId, String typeId) {
 		return repository.findActiveVisibleById(userId, typeId);
 	}

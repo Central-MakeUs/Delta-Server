@@ -11,25 +11,24 @@ public final class CurriculumPromptTemplate {
 	}
 
 	private static final String TEMPLATE = """
-		너는 한국 고등학교 수학 문제 분류기다.
-		입력 OCR 텍스트를 보고, 아래의 후보 목록 중에서
-		1) 과목(subject)
-		2) 단원(unit)
-		3) 유형(type)
-		을 각각 하나씩 고른다.
+		You are a Korean high school math problem classifier.
+		Given the OCR text below, select one each from the candidate lists:
+		1) subject
+		2) unit
+		3) type
 
-		먼저, 이 OCR 텍스트가 '수학 문제'인지 판단한다.
-		- 수학 문제가 아니면 is_math_problem=false
-		- 수학 문제면 is_math_problem=true
+		First, decide whether the OCR text is a math problem.
+		- If not a math problem: is_math_problem=false
+		- If it is a math problem: is_math_problem=true
 
-		규칙:
-		- 반드시 후보 목록의 id만 사용한다.
-		- 손글씨/낙서로 보이는 부분은 무시하고, 인쇄된 문제 내용 중심으로 판단한다.
-		- 확신이 낮으면 confidence를 낮게 주고, 각 분류마다 후보 3개를 score와 함께 추천한다.
-		- 출력은 반드시 JSON 한 덩어리만 반환한다(설명 문장 금지).
-		- is_math_problem=false인 경우에도 출력 JSON 형식은 유지하되, 분류 id는 빈 문자열로 두고 confidence는 0으로 둔다.
+		Rules:
+		- Use only ids from the candidate lists.
+		- Ignore handwriting or scribbles; focus on the printed problem content.
+		- If confidence is low, set a lower confidence value and recommend 3 candidates per category with scores.
+		- Return exactly one JSON object, no explanation.
+		- If is_math_problem=false, keep the JSON format but set classification ids to empty string and confidence to 0.
 
-		[출력 JSON 형식]
+		[Output JSON format]
 		{
 		  "is_math_problem": true,
 		  "predicted_subject_id": "subject_id",
@@ -41,22 +40,22 @@ public final class CurriculumPromptTemplate {
 		  "type_candidates": [{"id":"...", "score":0.0},{"id":"...", "score":0.0},{"id":"...", "score":0.0}]
 		}
 
-		[후보 과목 목록]
+		[Subject candidates]
 		%s
 
-		[후보 단원 목록]
+		[Unit candidates]
 		%s
 
-		[후보 유형 목록]
+		[Type candidates]
 		%s
 
-		[OCR 구조화 신호]
+		[OCR structured signals]
 		- math_line_count: %d
 		- text_line_count: %d
 		- code_line_count: %d
 		- pseudocode_line_count: %d
 
-		[OCR 텍스트]
+		[OCR text]
 		%s
 		""";
 
