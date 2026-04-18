@@ -214,16 +214,7 @@ public final class SolutionTextNormalizer {
 
 	private static String resolveDisplayAnswer(String trailingAnswer, String answerValue, String answerFormat,
 		Integer answerChoiceNo) {
-		if (trailingAnswer != null) {
-			return trailingAnswer;
-		}
-		if (answerChoiceNo != null) {
-			return String.valueOf(answerChoiceNo);
-		}
-		if (answerValue != null && !answerValue.isBlank()) {
-			return answerValue;
-		}
-		return null;
+		return trailingAnswer;
 	}
 
 	private static TrailingAnswerStripResult stripTrailingAnswerLines(String solutionText) {
