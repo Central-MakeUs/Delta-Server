@@ -25,15 +25,14 @@ public final class SolutionTextNormalizer {
 	 * AI 풀이 텍스트를 저장 전 정규화하는 파이프라인.
 	 * 중복 라인/문장 제거 → 추론 루프 꼬리 제거 → 반복 문장 제거 → 앞부분 중복 블록 제거 → 정답 라인 정규화.
 	 */
-	public static String normalize(String solutionText, String answerValue, String answerFormat,
-		Integer answerChoiceNo) {
+	public static String normalize(String solutionText) {
 		String text = normalizeWhitespace(solutionText);
 		text = deduplicateConsecutiveLines(text);
 		text = deduplicateGlobalLongLines(text);
 		text = truncateReasoningLoopTail(text);
 		text = sanitizeRepeatedSentences(text);
 		text = collapseDuplicatedLeadingBlock(text);
-		return ensureFinalAnswerLine(text, answerValue, answerFormat, answerChoiceNo);
+		return ensureFinalAnswerLine(text);
 	}
 
 	public static String normalizeWhitespace(String solutionText) {
@@ -195,13 +194,11 @@ public final class SolutionTextNormalizer {
 		return firstBlock;
 	}
 
-	private static String ensureFinalAnswerLine(String solutionText, String answerValue, String answerFormat,
-		Integer answerChoiceNo) {
+	private static String ensureFinalAnswerLine(String solutionText) {
 		String normalized = normalizeWhitespace(solutionText);
 		TrailingAnswerStripResult stripResult = stripTrailingAnswerLines(normalized);
 
-		String finalAnswer = resolveDisplayAnswer(stripResult.trailingAnswer(), answerValue, answerFormat,
-			answerChoiceNo);
+		String finalAnswer = stripResult.trailingAnswer();
 
 		if (finalAnswer == null) {
 			return stripResult.body();
@@ -210,11 +207,6 @@ public final class SolutionTextNormalizer {
 			return ANSWER_LINE_PREFIX + " " + finalAnswer;
 		}
 		return stripResult.body() + "\n\n" + ANSWER_LINE_PREFIX + " " + finalAnswer;
-	}
-
-	private static String resolveDisplayAnswer(String trailingAnswer, String answerValue, String answerFormat,
-		Integer answerChoiceNo) {
-		return trailingAnswer;
 	}
 
 	private static TrailingAnswerStripResult stripTrailingAnswerLines(String solutionText) {
