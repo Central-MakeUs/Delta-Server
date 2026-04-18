@@ -11,10 +11,12 @@ import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.global.config.WebhookConfig;
 import cmc.delta.global.error.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.mock;
 
 class UserProvisioningServiceImplTest {
 
@@ -27,7 +29,7 @@ class UserProvisioningServiceImplTest {
 		userRepositoryPort = FakeUserRepositoryPort.create();
 		socialAccountRepositoryPort = FakeSocialAccountRepositoryPort.create();
 		sut = new UserProvisioningServiceImpl(userRepositoryPort, socialAccountRepositoryPort,
-			new SocialUserProvisionValidator());
+			new SocialUserProvisionValidator(), mock(WebhookConfig.class));
 	}
 
 	@Test

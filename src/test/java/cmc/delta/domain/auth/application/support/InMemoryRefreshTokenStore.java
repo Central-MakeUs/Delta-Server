@@ -56,6 +56,16 @@ public class InMemoryRefreshTokenStore implements RefreshTokenStore {
 	}
 
 	@Override
+	public boolean refreshExists(Long userId, String sessionId, String expectedHash) {
+		if (userId == null || isBlank(expectedHash))
+			return false;
+		Entry entry = store.get(key(userId, sessionId));
+		if (entry == null || entry.isExpired(clock.instant()))
+			return false;
+		return entry.hash.equals(expectedHash);
+	}
+
+	@Override
 	public void refreshDelete(Long userId, String sessionId) {
 		if (userId == null)
 			return;
