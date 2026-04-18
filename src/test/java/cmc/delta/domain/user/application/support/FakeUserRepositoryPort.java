@@ -54,6 +54,11 @@ public final class FakeUserRepositoryPort implements UserRepositoryPort {
 		store.remove(user.getId());
 	}
 
+	@Override
+	public long count() {
+		return store.size();
+	}
+
 	public int deleteCallCount() {
 		return deleteCallCount;
 	}

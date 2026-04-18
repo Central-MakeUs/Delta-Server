@@ -9,6 +9,9 @@ import cmc.delta.domain.problem.model.scan.ProblemScan;
 import cmc.delta.domain.problem.model.scan.ProblemScanTypePrediction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,10 +38,14 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 		List<TypePrediction> top = predictions == null ? List.of()
 			: predictions.stream().limit(MAX_PREDICTED_TYPES).toList();
 
+		List<String> typeIds = top.stream().map(TypePrediction::typeId).toList();
+		Map<String, ProblemType> typeMap = problemTypeReader.findByIds(typeIds).stream()
+			.collect(Collectors.toMap(ProblemType::getId, Function.identity()));
+
 		List<ProblemScanTypePrediction> rows = new ArrayList<>();
 		int rank = 1;
 		for (TypePrediction p : top) {
-			ProblemType type = problemTypeReader.findById(p.typeId()).orElse(null);
+			ProblemType type = typeMap.get(p.typeId());
 			if (type == null)
 				continue;
 

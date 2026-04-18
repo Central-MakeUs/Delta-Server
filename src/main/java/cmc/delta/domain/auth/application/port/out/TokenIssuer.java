@@ -9,9 +9,10 @@ public interface TokenIssuer {
 
 	Long extractUserIdFromRefreshToken(String refreshToken);
 
-	String extractJtiFromAccessToken(String accessToken);
+	AccessTokenInfo parseAccessTokenInfo(String accessToken);
 
-	Duration remainingAccessTtl(String accessToken);
+	record AccessTokenInfo(String jti, Duration remainingTtl) {}
+
 
 	record IssuedTokens(String accessToken, String refreshToken, String tokenType) {
 		public String authorizationHeaderValue() {

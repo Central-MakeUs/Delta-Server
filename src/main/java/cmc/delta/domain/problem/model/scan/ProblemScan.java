@@ -165,10 +165,6 @@ public class ProblemScan extends BaseTimeEntity {
 		return s;
 	}
 
-	public static ProblemScan createUploaded(User user) {
-		return uploaded(user);
-	}
-
 	public static ProblemScan uploadedInGroup(User user, ProblemScanGroup group) {
 		ProblemScan s = uploaded(user);
 		s.scanGroup = group;

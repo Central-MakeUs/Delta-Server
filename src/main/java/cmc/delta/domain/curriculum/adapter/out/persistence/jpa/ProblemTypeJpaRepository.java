@@ -77,6 +77,8 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 	int findMaxSortOrderVisibleForUser(@Param("userId")
 	Long userId);
 
+	List<ProblemType> findByIdIn(List<String> typeIds);
+
 	@Query("""
 		select t
 		from ProblemType t

@@ -43,6 +43,11 @@ public class SecurityConfig {
 		"/api/v1/auth/**"
 	};
 
+	public static final String[] JWT_SKIP_PATHS = {
+		"/api/v1/auth/",
+		"/apple/callback"
+	};
+
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
 	private final RestAccessDeniedHandler restAccessDeniedHandler;

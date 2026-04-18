@@ -49,6 +49,15 @@ public class RedisRefreshTokenStore implements RefreshTokenStore {
 	}
 
 	@Override
+	public boolean refreshExists(Long userId, String sessionId, String expectedHash) {
+		if (expectedHash == null || expectedHash.isBlank()) {
+			return false;
+		}
+		String stored = redis.opsForValue().get(key(userId, sessionId));
+		return expectedHash.equals(stored);
+	}
+
+	@Override
 	public void refreshDelete(Long userId, String sessionId) {
 		redis.delete(key(userId, sessionId));
 	}
