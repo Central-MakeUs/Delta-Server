@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.application.support;
 
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.user.model.UserWithProvider;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +24,11 @@ public final class FakeUserRepositoryPort implements UserRepositoryPort {
 	@Override
 	public Optional<User> findById(Long id) {
 		return Optional.ofNullable(store.get(id));
+	}
+
+	@Override
+	public Optional<UserWithProvider> findWithProviderById(Long id) {
+		return findById(id).map(u -> new UserWithProvider(u, null));
 	}
 
 	@Override

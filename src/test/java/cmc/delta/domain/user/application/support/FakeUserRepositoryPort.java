@@ -1,7 +1,9 @@
 package cmc.delta.domain.user.application.support;
 
+import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.user.model.UserWithProvider;
 import jakarta.persistence.EntityNotFoundException;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -10,6 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class FakeUserRepositoryPort implements UserRepositoryPort {
 
 	private final Map<Long, User> store = new HashMap<>();
+	private final Map<Long, SocialProvider> providerStore = new HashMap<>();
 	private final AtomicLong seq = new AtomicLong(0);
 
 	private int deleteCallCount = 0;
@@ -24,6 +27,15 @@ public final class FakeUserRepositoryPort implements UserRepositoryPort {
 	@Override
 	public Optional<User> findById(Long id) {
 		return Optional.ofNullable(store.get(id));
+	}
+
+	@Override
+	public Optional<UserWithProvider> findWithProviderById(Long id) {
+		return findById(id).map(u -> new UserWithProvider(u, providerStore.get(id)));
+	}
+
+	public void putProvider(Long userId, SocialProvider provider) {
+		providerStore.put(userId, provider);
 	}
 
 	@Override
