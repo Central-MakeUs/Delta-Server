@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.user.model.UserWithProvider;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
@@ -20,6 +21,11 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 	@Override
 	public Optional<User> findById(Long id) {
 		return jpaRepository.findById(id);
+	}
+
+	@Override
+	public Optional<UserWithProvider> findWithProviderById(Long id) {
+		return jpaRepository.findWithProviderById(id);
 	}
 
 	@Override
