@@ -43,6 +43,9 @@ public interface ProblemAiSolutionTaskJpaRepository
 
 	void deleteByProblem_Id(Long problemId);
 
+	@Query("select count(t) from ProblemAiSolutionTask t where t.requestedAt between :from and :to")
+	long countByRequestedAtBetween(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to);
+
 	@Override
 	default Optional<ProblemAiSolutionTask> findByProblemId(Long problemId) {
 		return findByProblem_Id(problemId);
