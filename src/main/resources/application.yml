@@ -64,4 +64,9 @@ worker:
 discord:
   webhook:
     bot_toekn_url: ${DISCORD_BOT_TOKEN}
+    bot_token_stats: ${DISCORD_BOT_TOKEN_STATS}
+
+stats:
+  daily:
+    cron: ${STATS_DAILY_CRON:0 0 21 * * *}
 

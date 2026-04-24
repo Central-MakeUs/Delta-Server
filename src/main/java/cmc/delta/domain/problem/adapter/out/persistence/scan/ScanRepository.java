@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.adapter.out.persistence.scan;
 
 import cmc.delta.domain.problem.model.scan.ProblemScan;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -11,6 +12,8 @@ import org.springframework.data.repository.query.Param;
 public interface ScanRepository extends JpaRepository<ProblemScan, Long> {
 
 	Optional<ProblemScan> findByIdAndUserId(Long id, Long userId);
+
+	long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("""

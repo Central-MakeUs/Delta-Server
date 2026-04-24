@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.adapter.out.persistence.problem;
 
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.model.problem.Problem;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,8 @@ public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, Prob
 	List<String> findOriginalStorageKeysByUserId(Long userId);
 
 	Optional<Problem> findByScan_Id(Long scanId);
+
+	long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 
 	@Override
 	Optional<Problem> findByIdAndUserId(Long id, Long userId);

@@ -1,10 +1,10 @@
 package cmc.delta.domain.user.adapter.out.persistence.jpa;
 
-import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.UserWithProvider;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +36,6 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 		@Param("cutoff")
 		Instant cutoff,
 		Pageable pageable);
+
+	long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
 }
