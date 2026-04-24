@@ -1,8 +1,5 @@
 package cmc.delta.domain.user.application.service;
 
-import cmc.delta.domain.auth.application.port.out.SocialAccountRepositoryPort;
-import cmc.delta.domain.auth.model.SocialAccount;
-import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
@@ -11,8 +8,8 @@ import cmc.delta.domain.user.application.port.in.UserUseCase;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
+import cmc.delta.domain.user.model.UserWithProvider;
 import java.time.Instant;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,19 +22,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserUseCase {
 
 	private final UserRepositoryPort userRepositoryPort;
-	private final SocialAccountRepositoryPort socialAccountRepositoryPort;
 	private final UserValidator userValidator;
 
 	@Override
 	@Transactional(readOnly = true)
 	public UserMeData getMyProfile(long userId) {
-		User user = loadUser(userId);
-		return buildMyProfile(user);
+		UserWithProvider uwp = userRepositoryPort.findWithProviderById(userId)
+			.orElseThrow(UserException::userNotFound);
+		return new UserMeData(
+			uwp.user().getId(),
+			uwp.user().getEmail(),
+			uwp.user().getNickname(),
+			uwp.provider());
 	}
 
 	@Override
 	public void withdrawAccount(Long userId) {
-		User user = loadUser(userId);
+		User user = userRepositoryPort.findById(userId).orElseThrow(UserException::userNotFound);
 		withdrawUser(user);
 		logUserWithdrawn(userId);
 	}
@@ -57,23 +58,6 @@ public class UserServiceImpl implements UserUseCase {
 		User user = loadActiveUser(userId);
 		updateNickname(user, nickname);
 		logNicknameUpdated(userId);
-	}
-
-	private UserMeData buildMyProfile(User user) {
-		Optional<SocialAccount> socialAccount = socialAccountRepositoryPort.findByUser(user);
-		SocialProvider provider = socialAccount
-			.map(a -> a.getProvider())
-			.orElse(null);
-		return new UserMeData(
-			user.getId(),
-			user.getEmail(),
-			user.getNickname(),
-			provider);
-	}
-
-	private User loadUser(long userId) {
-		return userRepositoryPort.findById(userId)
-			.orElseThrow(UserException::userNotFound);
 	}
 
 	private User loadActiveUser(long userId) {
