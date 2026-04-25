@@ -17,7 +17,7 @@ public class DailyStatsScheduler {
 	private final DailyStatsQueryService statsQueryService;
 	private final DailyStatsDiscordNotifier discordNotifier;
 
-	@Scheduled(cron = "${stats.daily.cron:0 0 21 * * *}", zone = "Asia/Seoul")
+	@Scheduled(cron = "${stats.daily.cron:0 38 15 * * *}", zone = "Asia/Seoul")
 	public void tick() {
 		log.info("일일 통계 배치 시작");
 		DailyStatsReport report = statsQueryService.generate();

@@ -9,8 +9,8 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaReposi
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.stats.application.dto.DailyStatsReport;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
+import cmc.delta.domain.user.model.enums.UserStatus;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,12 +43,13 @@ class DailyStatsQueryServiceTest {
 	private DailyStatsQueryService sut;
 
 	private static final LocalDateTime FIXED_NOW = LocalDateTime.of(2026, 4, 24, 21, 0, 0);
-	private static final LocalDate FIXED_TODAY = FIXED_NOW.toLocalDate();
 
 	@BeforeEach
 	void setUp() {
 		given(clock.instant()).willReturn(FIXED_NOW.atZone(ZoneId.systemDefault()).toInstant());
 		given(clock.getZone()).willReturn(ZoneId.systemDefault());
+		given(userJpaRepository.count()).willReturn(0L);
+		given(userJpaRepository.countByStatus(UserStatus.WITHDRAWN)).willReturn(0L);
 		given(userJpaRepository.countByCreatedAtBetween(any(), any())).willReturn(0L);
 		given(scanRepository.countByCreatedAtBetween(any(), any())).willReturn(0L);
 		given(problemJpaRepository.countByCreatedAtBetween(any(), any())).willReturn(0L);
@@ -75,30 +76,30 @@ class DailyStatsQueryServiceTest {
 	}
 
 	@Test
-	@DisplayName("오늘 기간의 from/to 날짜가 모두 오늘이다")
+	@DisplayName("오늘 기간의 from은 어제 00:00, to는 지금이다")
 	void generate_todayPeriod_fromAndToAreToday() {
 		DailyStatsReport report = sut.generate();
 
-		assertThat(report.today().from()).isEqualTo(FIXED_TODAY);
-		assertThat(report.today().to()).isEqualTo(FIXED_TODAY);
+		assertThat(report.today().from()).isEqualTo(FIXED_TODAY.minusDays(1).atStartOfDay());
+		assertThat(report.today().to()).isEqualTo(FIXED_NOW);
 	}
 
 	@Test
-	@DisplayName("최근 3일 기간의 from은 2일 전, to는 오늘이다")
+	@DisplayName("최근 3일 기간의 from은 3일 전 00:00, to는 지금이다")
 	void generate_last3DaysPeriod_hasCorrectDateRange() {
 		DailyStatsReport report = sut.generate();
 
-		assertThat(report.last3Days().from()).isEqualTo(FIXED_TODAY.minusDays(2));
-		assertThat(report.last3Days().to()).isEqualTo(FIXED_TODAY);
+		assertThat(report.last3Days().from()).isEqualTo(FIXED_TODAY.minusDays(3).atStartOfDay());
+		assertThat(report.last3Days().to()).isEqualTo(FIXED_NOW);
 	}
 
 	@Test
-	@DisplayName("최근 7일 기간의 from은 6일 전, to는 오늘이다")
+	@DisplayName("최근 7일 기간의 from은 7일 전 00:00, to는 지금이다")
 	void generate_last7DaysPeriod_hasCorrectDateRange() {
 		DailyStatsReport report = sut.generate();
 
-		assertThat(report.last7Days().from()).isEqualTo(FIXED_TODAY.minusDays(6));
-		assertThat(report.last7Days().to()).isEqualTo(FIXED_TODAY);
+		assertThat(report.last7Days().from()).isEqualTo(FIXED_TODAY.minusDays(7).atStartOfDay());
+		assertThat(report.last7Days().to()).isEqualTo(FIXED_NOW);
 	}
 
 	@Test

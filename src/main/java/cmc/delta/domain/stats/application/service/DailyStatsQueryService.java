@@ -6,8 +6,8 @@ import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemJpaReposi
 import cmc.delta.domain.problem.adapter.out.persistence.problem.ProblemAiSolutionTaskJpaRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
+import cmc.delta.domain.user.model.enums.UserStatus;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
@@ -31,24 +31,24 @@ public class DailyStatsQueryService {
 	@Transactional(readOnly = true)
 	public DailyStatsReport generate() {
 		LocalDateTime now = LocalDateTime.now(clock);
-		LocalDate today = now.toLocalDate();
 
 		return new DailyStatsReport(
 			now,
-			queryPeriod(today, PERIOD_TODAY_DAYS),
-			queryPeriod(today, PERIOD_LAST_3_DAYS),
-			queryPeriod(today, PERIOD_LAST_7_DAYS)
+			userJpaRepository.count(),
+			userJpaRepository.countByStatus(UserStatus.WITHDRAWN),
+			queryPeriod(now, PERIOD_TODAY_DAYS),
+			queryPeriod(now, PERIOD_LAST_3_DAYS),
+			queryPeriod(now, PERIOD_LAST_7_DAYS)
 		);
 	}
 
-	private PeriodStats queryPeriod(LocalDate today, int days) {
-		LocalDate periodStart = today.minusDays(days - 1L);
-		LocalDateTime periodStartAt = periodStart.atStartOfDay();
-		LocalDateTime periodEndAt = today.atTime(LocalTime.MAX);
+	private PeriodStats queryPeriod(LocalDateTime now, int days) {
+		LocalDateTime periodStartAt = now.minusDays(days).with(LocalTime.MIN);
+		LocalDateTime periodEndAt = now;
 
 		return new PeriodStats(
-			periodStart,
-			today,
+			periodStartAt,
+			periodEndAt,
 			userJpaRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
 			scanRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
 			problemJpaRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
