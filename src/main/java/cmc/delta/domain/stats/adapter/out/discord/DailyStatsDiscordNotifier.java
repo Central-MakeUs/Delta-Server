@@ -83,7 +83,7 @@ public class DailyStatsDiscordNotifier {
 		"> AI 풀이 **%d번**. 7일 동안 이만큼 물어봤어요. 내가 또 증명해내는 거 봤어요?";
 
 	@Value("${discord.webhook.bot_token_stats}")
-	private String discordWebhookUrl;
+	private String statsWebhookUrl;
 
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
@@ -145,21 +145,21 @@ public class DailyStatsDiscordNotifier {
 		ClassPathResource imageResource = new ClassPathResource(SWINGS_IMAGE_RESOURCE);
 
 		try (InputStream imageStream = imageResource.getInputStream()) {
-			byte[] imageBytes = imageStream.readAllBytes();
+			byte[] imageData = imageStream.readAllBytes();
 
-			String payload = objectMapper.writeValueAsString(Map.of(DISCORD_FIELD_CONTENT, message));
+			String jsonPayload = objectMapper.writeValueAsString(Map.of(DISCORD_FIELD_CONTENT, message));
 
-			HttpHeaders multipartHeaders = new HttpHeaders();
-			multipartHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+			HttpHeaders requestHeaders = new HttpHeaders();
+			requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-			MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-			body.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(payload,
+			MultiValueMap<String, Object> multipartBody = new LinkedMultiValueMap<>();
+			multipartBody.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(jsonPayload,
 				headersWithContentType(MediaType.APPLICATION_JSON)));
-			body.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageBytes,
+			multipartBody.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageData,
 				headersWithFilename(SWINGS_IMAGE_RESOURCE, MediaType.IMAGE_PNG)));
 
-			restTemplate.postForEntity(discordWebhookUrl,
-				new HttpEntity<>(body, multipartHeaders), String.class);
+			restTemplate.postForEntity(statsWebhookUrl,
+				new HttpEntity<>(multipartBody, requestHeaders), String.class);
 		}
 	}
 

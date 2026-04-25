@@ -42,17 +42,17 @@ public class DailyStatsQueryService {
 	}
 
 	private PeriodStats queryPeriod(LocalDate today, int days) {
-		LocalDate fromDate = today.minusDays(days - 1L);
-		LocalDateTime from = fromDate.atStartOfDay();
-		LocalDateTime to = today.atTime(LocalTime.MAX);
+		LocalDate periodStart = today.minusDays(days - 1L);
+		LocalDateTime periodStartAt = periodStart.atStartOfDay();
+		LocalDateTime periodEndAt = today.atTime(LocalTime.MAX);
 
 		return new PeriodStats(
-			fromDate,
+			periodStart,
 			today,
-			userJpaRepository.countByCreatedAtBetween(from, to),
-			scanRepository.countByCreatedAtBetween(from, to),
-			problemJpaRepository.countByCreatedAtBetween(from, to),
-			aiSolutionTaskJpaRepository.countByRequestedAtBetween(from, to)
+			userJpaRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
+			scanRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
+			problemJpaRepository.countByCreatedAtBetween(periodStartAt, periodEndAt),
+			aiSolutionTaskJpaRepository.countByRequestedAtBetween(periodStartAt, periodEndAt)
 		);
 	}
 }
