@@ -68,5 +68,5 @@ discord:
 
 stats:
   daily:
-    cron: ${STATS_DAILY_CRON:0 56 15 * * *}
+    cron: ${STATS_DAILY_CRON:0 59 23 * * *}
 
