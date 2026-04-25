@@ -56,7 +56,6 @@ public class DailyStatsDiscordNotifier {
 
 	private static final String PERIOD_HEADER_FORMAT = "**%s** `%s ~ %s` — %s";
 
-	// 오늘 말투 — 담담하게
 	private static final String TODAY_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 환영은 니들이 해요. 난 바빠요.";
 	private static final String TODAY_SCANS_FORMAT =
@@ -66,7 +65,6 @@ public class DailyStatsDiscordNotifier {
 	private static final String TODAY_AI_SOLUTION_FORMAT =
 		"> AI 풀이 **%d번**. 존나 웃기네. 귀엽네. 근데 스스로도 좀 생각해요.";
 
-	// 3일 말투 — 좀 더 냉소적으로
 	private static final String LAST_3_DAYS_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 근데 얼마나 남을지는 두고 봐야죠.";
 	private static final String LAST_3_DAYS_SCANS_FORMAT =
@@ -76,7 +74,6 @@ public class DailyStatsDiscordNotifier {
 	private static final String LAST_3_DAYS_AI_SOLUTION_FORMAT =
 		"> AI 풀이 **%d번**. 선빵은 항상 실력이에요. AI가 쳐줄 것 같아요?";
 
-	// 7일 말투 — 총평하듯 단호하게
 	private static final String LAST_7_DAYS_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 일주일 기준이에요. 성장하고 있어요, 아직은.";
 	private static final String LAST_7_DAYS_SCANS_FORMAT =
