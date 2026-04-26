@@ -157,30 +157,22 @@ public class DailyStatsDiscordNotifier {
 
 			String jsonPayload = objectMapper.writeValueAsString(Map.of(DISCORD_FIELD_CONTENT, message));
 
+			HttpHeaders jsonHeaders = new HttpHeaders();
+			jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpHeaders fileHeaders = new HttpHeaders();
+			fileHeaders.setContentType(MediaType.IMAGE_PNG);
+			fileHeaders.setContentDispositionFormData("file", imageResource);
+
 			HttpHeaders requestHeaders = new HttpHeaders();
 			requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
 
 			MultiValueMap<String, Object> multipartBody = new LinkedMultiValueMap<>();
-			multipartBody.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(jsonPayload,
-				headersWithContentType(MediaType.APPLICATION_JSON)));
-			multipartBody.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageData,
-				headersWithFilename(imageResource, MediaType.IMAGE_PNG)));
+			multipartBody.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(jsonPayload, jsonHeaders));
+			multipartBody.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageData, fileHeaders));
 
 			restTemplate.postForEntity(statsWebhookUrl,
 				new HttpEntity<>(multipartBody, requestHeaders), String.class);
 		}
-	}
-
-	private HttpHeaders headersWithContentType(MediaType mediaType) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(mediaType);
-		return headers;
-	}
-
-	private HttpHeaders headersWithFilename(String filename, MediaType mediaType) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(mediaType);
-		headers.setContentDispositionFormData("file", filename);
-		return headers;
 	}
 }
