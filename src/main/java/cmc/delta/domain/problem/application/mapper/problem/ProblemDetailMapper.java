@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.application.mapper.problem;
 
 import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
+import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -20,7 +21,7 @@ public interface ProblemDetailMapper extends ProblemCurriculumItemSupport {
 	@Mapping(target = "subject", expression = "java(toItem(row.subjectId(), row.subjectName()))")
 	@Mapping(target = "unit", expression = "java(toItem(row.unitId(), row.unitName()))")
 
-	@Mapping(target = "types", expression = "java(List.of())")
+	@Mapping(target = "types", expression = "java(row.types().stream().filter(t -> t.typeId() != null).map(t -> new CurriculumItemResponse(t.typeId(), t.typeName())).toList())")
 
 	@Mapping(target = "originalImage", expression = "java(new ProblemDetailResponse.OriginalImageResponse(viewUrl))")
 	@Mapping(target = "completed", expression = "java(row.completedAt() != null)")

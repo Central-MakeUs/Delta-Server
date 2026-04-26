@@ -38,4 +38,8 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 		Pageable pageable);
 
 	long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+	long count();
+
+	long countByStatus(UserStatus status);
 }

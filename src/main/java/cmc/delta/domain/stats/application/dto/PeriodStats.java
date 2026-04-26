@@ -1,10 +1,10 @@
 package cmc.delta.domain.stats.application.dto;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record PeriodStats(
-	LocalDate from,
-	LocalDate to,
+	LocalDateTime from,
+	LocalDateTime to,
 	long newUsers,
 	long scans,
 	long wrongAnswerCards,
