@@ -7,6 +7,10 @@ import java.util.Optional;
 public interface ProblemTypeRepositoryPort {
 	List<ProblemType> findAllActiveForUser(Long userId);
 
+	List<ProblemType> findAllActiveFixed();
+
+	List<ProblemType> findActiveCustomByUserId(Long userId);
+
 	List<ProblemType> findAllForUser(Long userId);
 
 	Optional<ProblemType> findOwnedCustomById(Long userId, String typeId);

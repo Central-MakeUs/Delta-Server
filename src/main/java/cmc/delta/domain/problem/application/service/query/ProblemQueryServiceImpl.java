@@ -2,7 +2,6 @@ package cmc.delta.domain.problem.application.service.query;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -90,16 +89,8 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
-		CompletableFuture<String> viewUrlFuture = CompletableFuture.supplyAsync(
-			() -> storagePort.issueReadUrl(row.storageKey()));
-		CompletableFuture<List<CurriculumItemResponse>> typesFuture = CompletableFuture.supplyAsync(
-			() -> loadTypeItems(problemId));
-
-		String viewUrl = viewUrlFuture.join();
-		List<CurriculumItemResponse> types = typesFuture.join();
-
-		ProblemDetailResponse base = problemDetailMapper.toResponse(row, viewUrl);
-		return withTypes(base, types);
+		String viewUrl = storagePort.issueReadUrl(row.storageKey());
+		return problemDetailMapper.toResponse(row, viewUrl);
 	}
 
 	private void validatePagination(PageQuery pageQuery) {
@@ -171,30 +162,8 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 			.toList();
 	}
 
-	private List<CurriculumItemResponse> loadTypeItems(Long problemId) {
-		return problemTypeTagQueryPort.findTypeTagsByProblemId(problemId).stream()
-			.map(this::toTypeItem)
-			.toList();
-	}
-
 	private CurriculumItemResponse toTypeItem(ProblemTypeTagRow r) {
 		return new CurriculumItemResponse(r.typeId(), r.typeName());
-	}
-
-	private ProblemDetailResponse withTypes(ProblemDetailResponse base, List<CurriculumItemResponse> types) {
-		return new ProblemDetailResponse(
-			base.problemId(),
-			base.subject(),
-			base.unit(),
-			types,
-			base.originalImage(),
-			base.answerFormat(),
-			base.answerChoiceNo(),
-			base.answerValue(),
-			base.memoText(),
-			base.completed(),
-			base.completedAt(),
-			base.createdAt());
 	}
 
 	private PagedResponse<ProblemListItemResponse> buildPagedResponse(

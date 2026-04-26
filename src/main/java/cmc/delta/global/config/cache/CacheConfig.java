@@ -42,6 +42,7 @@ public class CacheConfig {
 		RedisCacheConfiguration problemStatsTypes = base.entryTtl(Duration.ofMinutes(3));
 		RedisCacheConfiguration problemStatsMonthly = base.entryTtl(Duration.ofMinutes(10));
 		RedisCacheConfiguration proCheckoutStats = base.entryTtl(Duration.ofMinutes(1));
+		RedisCacheConfiguration customProblemTypes = base.entryTtl(Duration.ofHours(1));
 
 		return RedisCacheManager.builder(connectionFactory)
 			.cacheDefaults(base)
@@ -50,6 +51,7 @@ public class CacheConfig {
 			.withCacheConfiguration(CacheNames.PROBLEM_STATS_TYPES, problemStatsTypes)
 			.withCacheConfiguration(CacheNames.PROBLEM_STATS_MONTHLY, problemStatsMonthly)
 			.withCacheConfiguration(CacheNames.PRO_CHECKOUT_STATS, proCheckoutStats)
+			.withCacheConfiguration(CacheNames.CUSTOM_PROBLEM_TYPES, customProblemTypes)
 			.transactionAware()
 			.build();
 	}
