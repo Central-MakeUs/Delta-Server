@@ -2,6 +2,7 @@ package cmc.delta.domain.problem.application.port.out.problem.query.dto;
 
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProblemDetailRow(
 	Long problemId,
@@ -12,8 +13,6 @@ public record ProblemDetailRow(
 	String unitId,
 	String unitName,
 
-	String typeId,
-	String typeName,
 	String storageKey,
 
 	AnswerFormat answerFormat,
@@ -22,5 +21,7 @@ public record ProblemDetailRow(
 	String memoText,
 
 	LocalDateTime completedAt,
-	LocalDateTime createdAt) {
+	LocalDateTime createdAt,
+
+	List<ProblemTypeTagRow> types) {
 }

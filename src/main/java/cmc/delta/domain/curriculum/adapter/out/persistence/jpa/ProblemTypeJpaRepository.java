@@ -77,6 +77,25 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 	int findMaxSortOrderVisibleForUser(@Param("userId")
 	Long userId);
 
+	@Query("""
+		select t
+		from ProblemType t
+		where t.active = true
+		  and t.custom = false
+		order by t.sortOrder asc, t.id asc
+		""")
+	List<ProblemType> findAllActiveFixed();
+
+	@Query("""
+		select t
+		from ProblemType t
+		where t.active = true
+		  and t.custom = true
+		  and t.createdByUser.id = :userId
+		order by t.sortOrder asc, t.id asc
+		""")
+	List<ProblemType> findActiveCustomByUserId(@Param("userId") Long userId);
+
 	List<ProblemType> findByIdIn(List<String> typeIds);
 
 	@Query("""

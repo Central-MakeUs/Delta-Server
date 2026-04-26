@@ -1,19 +1,22 @@
 package cmc.delta.domain.user.adapter.out.persistence;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import cmc.delta.domain.stats.application.port.out.StatsUserQueryPort;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.UserWithProvider;
+import cmc.delta.domain.user.model.enums.UserStatus;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class UserRepositoryAdapter implements UserRepositoryPort {
+public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQueryPort {
 
 	private final UserJpaRepository jpaRepository;
 	private final EntityManager em;
@@ -46,5 +49,20 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 	@Override
 	public long count() {
 		return jpaRepository.count();
+	}
+
+	@Override
+	public long countAll() {
+		return jpaRepository.count();
+	}
+
+	@Override
+	public long countByStatus(UserStatus status) {
+		return jpaRepository.countByStatus(status);
+	}
+
+	@Override
+	public long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to) {
+		return jpaRepository.countByCreatedAtBetween(from, to);
 	}
 }

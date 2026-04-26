@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class PresignedUrlCache {
 
 	private static final int MAX_ENTRIES = 10_000;
-	private static final long MAX_AGE_MS = 30_000; // keep short; URL TTL can be 10min+
+	private static final long EXPIRY_BUFFER_MS = 60_000; // URL 만료 60초 전에 캐시 선제 무효화
 
 	private final ConcurrentHashMap<CacheKey, CacheEntry> cache = new ConcurrentHashMap<>();
 
@@ -22,7 +22,9 @@ public class PresignedUrlCache {
 
 	public void put(String storageKey, int ttlSeconds, String url) {
 		evictIfNeeded();
-		long expiresAtMs = System.currentTimeMillis() + Math.min(MAX_AGE_MS, (long)ttlSeconds * 1000L);
+		long urlLifetimeMs = (long) ttlSeconds * 1000L;
+		long cacheLifetimeMs = Math.max(0, urlLifetimeMs - EXPIRY_BUFFER_MS);
+		long expiresAtMs = System.currentTimeMillis() + cacheLifetimeMs;
 		cache.put(new CacheKey(storageKey, ttlSeconds), new CacheEntry(url, expiresAtMs));
 	}
 

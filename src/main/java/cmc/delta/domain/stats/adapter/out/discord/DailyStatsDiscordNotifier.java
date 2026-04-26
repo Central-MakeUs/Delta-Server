@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -29,10 +30,10 @@ public class DailyStatsDiscordNotifier {
 
 	private static final DateTimeFormatter TIMESTAMP_FORMATTER =
 		DateTimeFormatter.ofPattern("yyyy년 MM월 dd일 HH:mm");
-	private static final DateTimeFormatter DATE_FORMATTER =
-		DateTimeFormatter.ofPattern("MM월 dd일");
+	private static final DateTimeFormatter DATETIME_FORMATTER =
+		DateTimeFormatter.ofPattern("MM월 dd일 HH:mm");
 
-	private static final String SWINGS_IMAGE_RESOURCE = "swings.png";
+	private static final String[] SWINGS_IMAGES = {"swings.png", "swings2.png", "swings3.png"};
 	private static final String DIVIDER = "━━━━━━━━━━━━━━━━━━━━━━";
 
 	private static final String DISCORD_FIELD_PAYLOAD = "payload_json";
@@ -48,11 +49,13 @@ public class DailyStatsDiscordNotifier {
 		+ "근거 없이 자신을 믿으세요. 근데 숫자는 거짓말 안 해요.\n";
 
 	private static final String FOOTER =
-		"끝까지 가는 사람이 무조건 이겨요. 올해는 우리 꺼.";
+		"끝까지 가는 사람이 무조건 이겨요. 우사인볼트, 우사인볼트가 왜 빠른지 알죠?";
+
+	private static final String TOTAL_USERS_FORMAT =
+		"> 현재까지 총 **%d명**이 가입했어요. 탈퇴한 사람은 **%d명**이에요.\n";
 
 	private static final String PERIOD_HEADER_FORMAT = "**%s** `%s ~ %s` — %s";
 
-	// 오늘 말투 — 담담하게
 	private static final String TODAY_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 환영은 니들이 해요. 난 바빠요.";
 	private static final String TODAY_SCANS_FORMAT =
@@ -62,7 +65,6 @@ public class DailyStatsDiscordNotifier {
 	private static final String TODAY_AI_SOLUTION_FORMAT =
 		"> AI 풀이 **%d번**. 존나 웃기네. 귀엽네. 근데 스스로도 좀 생각해요.";
 
-	// 3일 말투 — 좀 더 냉소적으로
 	private static final String LAST_3_DAYS_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 근데 얼마나 남을지는 두고 봐야죠.";
 	private static final String LAST_3_DAYS_SCANS_FORMAT =
@@ -72,7 +74,6 @@ public class DailyStatsDiscordNotifier {
 	private static final String LAST_3_DAYS_AI_SOLUTION_FORMAT =
 		"> AI 풀이 **%d번**. 선빵은 항상 실력이에요. AI가 쳐줄 것 같아요?";
 
-	// 7일 말투 — 총평하듯 단호하게
 	private static final String LAST_7_DAYS_NEW_USERS_FORMAT =
 		"> 신규 가입자 **%d명**. 일주일 기준이에요. 성장하고 있어요, 아직은.";
 	private static final String LAST_7_DAYS_SCANS_FORMAT =
@@ -83,7 +84,7 @@ public class DailyStatsDiscordNotifier {
 		"> AI 풀이 **%d번**. 7일 동안 이만큼 물어봤어요. 내가 또 증명해내는 거 봤어요?";
 
 	@Value("${discord.webhook.bot_token_stats}")
-	private String discordWebhookUrl;
+	private String statsWebhookUrl;
 
 	private final RestTemplate restTemplate;
 	private final ObjectMapper objectMapper;
@@ -101,6 +102,7 @@ public class DailyStatsDiscordNotifier {
 		String timestamp = report.generatedAt().format(TIMESTAMP_FORMATTER);
 
 		return HEADER_FORMAT.formatted(timestamp)
+			+ TOTAL_USERS_FORMAT.formatted(report.totalUsers(), report.withdrawnUsers())
 			+ "\n" + DIVIDER + "\n"
 			+ periodHeader(PERIOD_LABEL_TODAY, report.today(), "증명해낸 거 봤어요?") + "\n"
 			+ formatToday(report.today())
@@ -115,8 +117,8 @@ public class DailyStatsDiscordNotifier {
 	}
 
 	private String periodHeader(String label, PeriodStats stats, String comment) {
-		String from = stats.from().format(DATE_FORMATTER);
-		String to = stats.to().format(DATE_FORMATTER);
+		String from = stats.from().format(DATETIME_FORMATTER);
+		String to = stats.to().format(DATETIME_FORMATTER);
 		return PERIOD_HEADER_FORMAT.formatted(label, from, to, comment);
 	}
 
@@ -142,37 +144,35 @@ public class DailyStatsDiscordNotifier {
 	}
 
 	private void postWithImage(String message) throws IOException {
-		ClassPathResource imageResource = new ClassPathResource(SWINGS_IMAGE_RESOURCE);
+		String imageResource = SWINGS_IMAGES[ThreadLocalRandom.current().nextInt(SWINGS_IMAGES.length)];
+		ClassPathResource resource = new ClassPathResource(imageResource);
 
-		try (InputStream imageStream = imageResource.getInputStream()) {
-			byte[] imageBytes = imageStream.readAllBytes();
-
-			String payload = objectMapper.writeValueAsString(Map.of(DISCORD_FIELD_CONTENT, message));
-
-			HttpHeaders multipartHeaders = new HttpHeaders();
-			multipartHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-			MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-			body.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(payload,
-				headersWithContentType(MediaType.APPLICATION_JSON)));
-			body.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageBytes,
-				headersWithFilename(SWINGS_IMAGE_RESOURCE, MediaType.IMAGE_PNG)));
-
-			restTemplate.postForEntity(discordWebhookUrl,
-				new HttpEntity<>(body, multipartHeaders), String.class);
+		if (!resource.exists()) {
+			resource = new ClassPathResource(SWINGS_IMAGES[0]);
+			imageResource = SWINGS_IMAGES[0];
 		}
-	}
 
-	private HttpHeaders headersWithContentType(MediaType mediaType) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(mediaType);
-		return headers;
-	}
+		try (InputStream imageStream = resource.getInputStream()) {
+			byte[] imageData = imageStream.readAllBytes();
 
-	private HttpHeaders headersWithFilename(String filename, MediaType mediaType) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(mediaType);
-		headers.setContentDispositionFormData("file", filename);
-		return headers;
+			String jsonPayload = objectMapper.writeValueAsString(Map.of(DISCORD_FIELD_CONTENT, message));
+
+			HttpHeaders jsonHeaders = new HttpHeaders();
+			jsonHeaders.setContentType(MediaType.APPLICATION_JSON);
+
+			HttpHeaders fileHeaders = new HttpHeaders();
+			fileHeaders.setContentType(MediaType.IMAGE_PNG);
+			fileHeaders.setContentDispositionFormData("file", imageResource);
+
+			HttpHeaders requestHeaders = new HttpHeaders();
+			requestHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+			MultiValueMap<String, Object> multipartBody = new LinkedMultiValueMap<>();
+			multipartBody.add(DISCORD_FIELD_PAYLOAD, new HttpEntity<>(jsonPayload, jsonHeaders));
+			multipartBody.add(DISCORD_FIELD_FILE, new HttpEntity<>(imageData, fileHeaders));
+
+			restTemplate.postForEntity(statsWebhookUrl,
+				new HttpEntity<>(multipartBody, requestHeaders), String.class);
+		}
 	}
 }

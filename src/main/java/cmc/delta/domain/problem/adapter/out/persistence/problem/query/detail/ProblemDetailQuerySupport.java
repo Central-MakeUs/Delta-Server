@@ -1,15 +1,21 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail;
 
-import static com.querydsl.core.types.Projections.constructor;
+import static com.querydsl.core.types.Projections.*;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
+import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import cmc.delta.domain.curriculum.model.QProblemType;
 import cmc.delta.domain.curriculum.model.QUnit;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
+import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.model.problem.QProblem;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.util.Optional;
+import cmc.delta.domain.problem.model.problem.QProblemTypeTag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -21,39 +27,43 @@ public class ProblemDetailQuerySupport {
 		QProblem problem = QProblem.problem;
 		QUnit unit = QUnit.unit;
 		QUnit subject = new QUnit("subject");
+		QProblemTypeTag tag = QProblemTypeTag.problemTypeTag;
 		QProblemType type = QProblemType.problemType;
 
-		ProblemDetailRow row = queryFactory
+		List<ProblemDetailFlatRow> rows = queryFactory
 			.select(constructor(
-				ProblemDetailRow.class,
+				ProblemDetailFlatRow.class,
 				problem.id,
-
-				subject.id,
-				subject.name,
-
-				unit.id,
-				unit.name,
-
-				type.id,
-				type.name,
+				subject.id, subject.name,
+				unit.id, unit.name,
 				problem.originalStorageKey,
-
 				problem.answerFormat,
 				problem.answerChoiceNo,
 				problem.answerValue,
 				problem.memoText,
-
 				problem.completedAt,
-				problem.createdAt))
+				problem.createdAt,
+				type.id, type.name))
 			.from(problem)
 			.join(problem.finalUnit, unit)
 			.leftJoin(unit.parent, subject)
-			.join(problem.finalType, type)
+			.leftJoin(tag).on(tag.problem.id.eq(problem.id))
+			.leftJoin(tag.type, type)
 			.where(
 				problem.user.id.eq(userId),
 				problem.id.eq(problemId))
-			.fetchOne();
+			.orderBy(type.sortOrder.asc(), type.id.asc())
+			.fetch();
 
-		return Optional.ofNullable(row);
+		if (rows.isEmpty()) {
+			return Optional.empty();
+		}
+
+		List<ProblemTypeTagRow> types = rows.stream()
+			.filter(r -> r.typeId() != null)
+			.map(r -> new ProblemTypeTagRow(problemId, r.typeId(), r.typeName()))
+			.toList();
+
+		return Optional.of(rows.get(0).toProblemDetailRow(types));
 	}
 }
