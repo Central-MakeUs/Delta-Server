@@ -12,45 +12,11 @@ spring:
   data:
     redis:
       host: localhost
-      port: 6379
-      password: ${REDIS_PASSWORD}
-      ssl:
-        enabled: false
-      timeout: 2s
 
-storage:
-  s3:
-    bucket: ${S3_BUCKET}
-    region: ${S3_REGION:ap-northeast-2}
-    key-prefix: ${S3_KEY_PREFIX:delta}
-    presign-get-ttl-seconds: ${S3_PRESIGN_GET_TTL_SECONDS:600}
-    max-upload-bytes: ${S3_MAX_UPLOAD_BYTES:10485760}
-    access-key: ${AWS_ACCESS_KEY_ID}
-    secret-key: ${AWS_SECRET_ACCESS_KEY}
-
-oauth:
-  kakao:
-    client-id: ${KAKAO_CLIENT_ID}
-    client-secret: ${KAKAO_CLIENT_SECRET}
-    redirect-uri: ${KAKAO_REDIRECT_URI}
-    connect-timeout-ms: 2000
-    read-timeout-ms: 4000
-
-  apple:
-    client-id: ${APPLE_CLIENT_ID}
-    team-id: ${APPLE_TEAM_ID}
-    key-id: ${APPLE_KEY_ID}
-    redirect-uri: ${APPLE_REDIRECT_URI}
-    private-key: ${APPLE_PRIVATE_KEY_PEM}
-    connect-timeout-ms: 2000
-    read-timeout-ms: 4000
-
-  google:
-    client-id: ${GOOGLE_CLIENT_ID}
-    client-secret: ${GOOGLE_CLIENT_SECRET}
-    redirect-uri: ${GOOGLE_REDIRECT_URI}
-    connect-timeout-ms: 2000
-    read-timeout-ms: 4000
+management:
+  metrics:
+    tags:
+      env: local
 
 worker:
   ocr:
