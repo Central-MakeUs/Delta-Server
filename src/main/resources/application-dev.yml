@@ -1,13 +1,13 @@
 spring:
   config:
     activate:
-      on-profile: prod
+      on-profile: dev
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${PROD_DB_URL}
-    username: ${PROD_DB_USERNAME}
-    password: ${PROD_DB_PASSWORD}
+    url: ${DEV_DB_URL}
+    username: ${DEV_DB_USERNAME}
+    password: ${DEV_DB_PASSWORD}
 
   data:
     redis:
@@ -22,4 +22,4 @@ frontend:
 management:
   metrics:
     tags:
-      env: prod
+      env: dev

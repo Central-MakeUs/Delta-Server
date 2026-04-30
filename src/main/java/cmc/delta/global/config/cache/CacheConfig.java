@@ -53,6 +53,7 @@ public class CacheConfig {
 			.withCacheConfiguration(CacheNames.PRO_CHECKOUT_STATS, proCheckoutStats)
 			.withCacheConfiguration(CacheNames.CUSTOM_PROBLEM_TYPES, customProblemTypes)
 			.transactionAware()
+			.enableStatistics()
 			.build();
 	}
 
