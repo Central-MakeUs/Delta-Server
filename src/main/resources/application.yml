@@ -1,4 +1,6 @@
 spring:
+  profiles:
+    active: local # 기본값
   jpa:
     properties:
       hibernate:
@@ -18,6 +20,67 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
+
+  # Redis 공통 설정
+  data:
+    redis:
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: false
+      timeout: 2s
+
+# 공통 비즈니스 설정
+storage:
+  s3:
+    bucket: ${S3_BUCKET}
+    region: ${S3_REGION:ap-northeast-2}
+    key-prefix: ${S3_KEY_PREFIX:delta}
+    presign-get-ttl-seconds: ${S3_PRESIGN_GET_TTL_SECONDS:600}
+    max-upload-bytes: ${S3_MAX_UPLOAD_BYTES:10485760}
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 4000
+  apple:
+    client-id: ${APPLE_CLIENT_ID}
+    team-id: ${APPLE_TEAM_ID}
+    key-id: ${APPLE_KEY_ID}
+    redirect-uri: ${APPLE_REDIRECT_URI}
+    private-key: ${APPLE_PRIVATE_KEY_PEM}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 4000
+  google:
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
+    connect-timeout-ms: 2000
+    read-timeout-ms: 4000
+
+worker:
+  ocr:
+    fixed-delay-ms: ${WORKER_OCR_FIXED_DELAY_MS:1000}
+    batch-size: ${WORKER_OCR_BATCH_SIZE:10}
+    lock-lease-seconds: ${WORKER_OCR_LOCK_LEASE_SECONDS:600}
+    concurrency: ${WORKER_OCR_CONCURRENCY:5}
+    backlog-log-minutes: ${WORKER_OCR_BACKLOG_LOG_MINUTES:7}
+
+  ai:
+    fixed-delay-ms: ${WORKER_AI_FIXED_DELAY_MS:500}
+    batch-size: ${WORKER_AI_BATCH_SIZE:5}
+    lock-lease-seconds: ${WORKER_AI_LOCK_LEASE_SECONDS:600}
+    concurrency: ${WORKER_AI_CONCURRENCY:3}
+    backlog-log-minutes: ${WORKER_AI_BACKLOG_LOG_MINUTES:7}
+
+  ai-solution:
+    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:500}
+    batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}
 
 jwt:
   issuer: cmc-delta
@@ -43,7 +106,6 @@ openai:
   model: ${OPENAI_MODEL:gpt-4o-mini}
   solve-model: ${OPENAI_SOLVE_MODEL:${OPENAI_MODEL:gpt-4o-mini}}
 
-
 logging:
   pattern:
     console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} traceId=%X{traceId} - %msg%n"
@@ -51,15 +113,20 @@ logging:
     cmc.delta: INFO
 
 management:
+  server:
+    port: 8080
   endpoints:
     web:
       exposure:
-        include: health,prometheus
-
-worker:
-  ai-solution:
-    fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:500}
-    batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}
+        include: "health,prometheus"
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: delta-backend
 
 discord:
   webhook:
@@ -69,4 +136,3 @@ discord:
 stats:
   daily:
     cron: ${STATS_DAILY_CRON:0 59 23 * * *}
-
