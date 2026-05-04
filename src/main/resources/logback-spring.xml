@@ -83,27 +83,37 @@
         <logger name="io.netty.resolver.dns.DnsServerAddressStreamProviders" level="OFF"/>
     </springProfile>
 
-    <springProfile name="dev,default">
+    <springProfile name="dev,default,prod">
+        <appender name="WARN_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <file>${LOG_PATH}/${APP_NAME}-warn.log</file>
+            <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+                <level>WARN</level>
+            </filter>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_PATH}/${APP_NAME}-warn.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>500MB</totalSizeCap>
+                <cleanHistoryOnStart>true</cleanHistoryOnStart>
+            </rollingPolicy>
+            <encoder>
+                <pattern>${PATTERN_FILE}</pattern>
+            </encoder>
+        </appender>
+
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>
+            <appender-ref ref="WARN_FILE"/>
         </root>
 
-        <logger name="cmc.delta" level="DEBUG"/>
-		<logger name="cmc.delta.global.logging.HttpAccessLogFilter" level="INFO"/>
-		<logger name="cmc.delta.global.storage.application.StorageService" level="INFO"/>
+        <logger name="cmc.delta" level="INFO"/>
         <logger name="org.hibernate" level="WARN"/>
-        <logger name="com.zaxxer.hikari" level="INFO"/>
-    </springProfile>
-
-    <springProfile name="prod">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
-        </root>
-
-        <logger name="org.hibernate" level="WARN"/>
-        <logger name="com.zaxxer.hikari" level="INFO"/>
+        <logger name="com.zaxxer.hikari" level="WARN"/>
+        <logger name="io.netty" level="WARN"/>
+        <logger name="reactor.netty" level="WARN"/>
+        <logger name="org.springframework.security" level="WARN"/>
+        <logger name="org.springframework.web" level="WARN"/>
     </springProfile>
 
 </configuration>
