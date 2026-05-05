@@ -17,10 +17,18 @@ public class StatsCountQueryAdapter implements StatsCountQueryPort {
 	public PeriodStatsCountResult countAll(LocalDateTime from, LocalDateTime to) {
 		Object[] row = (Object[]) em.createNativeQuery("""
 			SELECT
-			  (SELECT COUNT(*) FROM users                    WHERE created_at   BETWEEN :from AND :to),
-			  (SELECT COUNT(*) FROM problem_scan             WHERE created_at   BETWEEN :from AND :to),
-			  (SELECT COUNT(*) FROM problem                  WHERE created_at   BETWEEN :from AND :to),
-			  (SELECT COUNT(*) FROM problem_ai_solution_task WHERE requested_at BETWEEN :from AND :to)
+			  (SELECT COUNT(*) FROM users u
+			   WHERE u.created_at BETWEEN :from AND :to AND u.role != 'ADMIN'),
+			  (SELECT COUNT(*) FROM problem_scan ps
+			   JOIN users u ON u.id = ps.user_id
+			   WHERE ps.created_at BETWEEN :from AND :to AND u.role != 'ADMIN'),
+			  (SELECT COUNT(*) FROM problem p
+			   JOIN users u ON u.id = p.user_id
+			   WHERE p.created_at BETWEEN :from AND :to AND u.role != 'ADMIN'),
+			  (SELECT COUNT(*) FROM problem_ai_solution_task t
+			   JOIN problem p ON p.id = t.problem_id
+			   JOIN users u ON u.id = p.user_id
+			   WHERE t.requested_at BETWEEN :from AND :to AND u.role != 'ADMIN')
 			""")
 			.setParameter("from", from)
 			.setParameter("to", to)
