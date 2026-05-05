@@ -10,6 +10,7 @@ import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.UserWithProvider;
+import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -64,5 +65,20 @@ public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQuery
 	@Override
 	public long countByCreatedAtBetween(LocalDateTime from, LocalDateTime to) {
 		return jpaRepository.countByCreatedAtBetween(from, to);
+	}
+
+	@Override
+	public long countAllExcludingAdmin() {
+		return jpaRepository.countByRoleNot(UserRole.ADMIN);
+	}
+
+	@Override
+	public long countByStatusExcludingAdmin(UserStatus status) {
+		return jpaRepository.countByStatusAndRoleNot(status, UserRole.ADMIN);
+	}
+
+	@Override
+	public long countByCreatedAtBetweenExcludingAdmin(LocalDateTime from, LocalDateTime to) {
+		return jpaRepository.countByRoleNotAndCreatedAtBetween(UserRole.ADMIN, from, to);
 	}
 }
