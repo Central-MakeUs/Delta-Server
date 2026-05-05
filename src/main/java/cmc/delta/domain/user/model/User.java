@@ -1,5 +1,6 @@
 package cmc.delta.domain.user.model;
 
+import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.persistence.BaseTimeEntity;
 import jakarta.persistence.Column;
@@ -51,6 +52,10 @@ public class User extends BaseTimeEntity {
 
 	@Column(name = "withdrawn_at")
 	private Instant withdrawnAt;
+
+	@Enumerated(EnumType.STRING)
+	@Column(name = "role", nullable = false, columnDefinition = "varchar(20) default 'USER'")
+	private UserRole role = UserRole.USER;
 
 	private User(String email, String nickname, UserStatus status) {
 		this.email = normalize(email);

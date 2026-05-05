@@ -7,6 +7,7 @@ CREATE TABLE users (
 	terms_agreed_at TIMESTAMP(6) NULL,
 	profile_image_storage_key VARCHAR(512) NULL,
 	withdrawn_at TIMESTAMP(6) NULL,
+	role VARCHAR(20) NOT NULL DEFAULT 'USER',
 	created_at DATETIME(6) NOT NULL,
 	updated_at DATETIME(6) NOT NULL,
 	PRIMARY KEY (id),
