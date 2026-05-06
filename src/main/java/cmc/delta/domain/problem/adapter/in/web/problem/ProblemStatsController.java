@@ -9,6 +9,7 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemMonthl
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemTypeStatsItemResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemUnitStatsItemResponse;
+import cmc.delta.domain.stats.application.port.in.RecordUserAccessUseCase;
 import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import cmc.delta.global.api.response.SuccessCode;
@@ -30,6 +31,7 @@ public class ProblemStatsController {
 
 	private final ProblemStatsUseCase statsUseCase;
 	private final ProblemStatsConditionFactory statsConditionFactory;
+	private final RecordUserAccessUseCase recordUserAccessUseCase;
 
 	@Operation(summary = "단원별 오답 통계(완료/미완료)", description = ProblemApiDocs.STATS_BY_UNIT)
 	@ApiErrorCodeExamples({
@@ -86,6 +88,7 @@ public class ProblemStatsController {
 		UserPrincipal principal,
 		@ModelAttribute
 		ProblemMonthlyProgressRequest query) {
+		recordUserAccessUseCase.record(principal.userId());
 		ProblemMonthlyProgressResponse data = statsUseCase.getMonthlyProgress(
 			principal.userId(),
 			query.year(),
