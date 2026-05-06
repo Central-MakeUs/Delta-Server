@@ -8,6 +8,7 @@ import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.stats.model.QUserDailyAccess;
 import cmc.delta.domain.user.model.QUser;
 import cmc.delta.domain.user.model.enums.UserRole;
+import org.springframework.data.domain.Pageable;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort 
 	private final JPAQueryFactory queryFactory;
 
 	@Override
-	public List<DashboardUserItem> findUsers(int page, int size) {
+	public List<DashboardUserItem> findUsers(Pageable pageable) {
 		QUser user = QUser.user;
 		QUserDailyAccess access = QUserDailyAccess.userDailyAccess;
 		QProblem problem = QProblem.problem;
@@ -39,8 +40,8 @@ public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort 
 			.where(user.role.ne(UserRole.ADMIN))
 			.groupBy(user.id, user.nickname)
 			.orderBy(user.id.desc())
-			.offset((long) page * size)
-			.limit(size)
+			.offset(pageable.getOffset())
+			.limit(pageable.getPageSize())
 			.fetch();
 	}
 
