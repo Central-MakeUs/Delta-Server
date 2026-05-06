@@ -38,7 +38,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 
 	private ProvisioningResult toExistingUserResult(SocialAccount account) {
 		User user = requireActive(account.getUser());
-		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), user.getRole(), false);
 	}
 
 	private ProvisioningResult createOrSyncByRaceCondition(SocialUserProvisionCommand command) {
@@ -54,7 +54,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 		webhookConfig.sendDiscordNotification(user.getId());
 		SocialAccount account = SocialAccount.link(command.provider(), command.providerUserId(), user);
 		socialAccountRepositoryPort.save(account);
-		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), true);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), user.getRole(), true);
 	}
 
 	private ProvisioningResult syncExistingAfterDuplicate(
@@ -73,7 +73,7 @@ public class UserProvisioningServiceImpl implements UserProvisioningUseCase {
 			user.syncProfile(email, nickname);
 		}
 
-		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), false);
+		return new ProvisioningResult(user.getId(), user.getEmail(), user.getNickname(), user.getRole(), false);
 	}
 
 	// NOTE:
