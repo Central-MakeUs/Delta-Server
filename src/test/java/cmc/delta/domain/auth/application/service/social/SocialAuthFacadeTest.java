@@ -10,6 +10,7 @@ import cmc.delta.domain.auth.application.port.in.social.SocialLoginCommandUseCas
 import cmc.delta.domain.auth.application.port.in.token.TokenCommandUseCase;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 import cmc.delta.domain.auth.model.SocialProvider;
+import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ class SocialAuthFacadeTest {
 		when(kakao.fetchUserInfoByCode("code"))
 			.thenReturn(new SocialUserInfo("pid", "e@e.com", "nick"));
 		when(provisioning.provisionSocialUser(any()))
-			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", true));
+			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", UserRole.USER, true));
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(tokenUseCase.issue(any())).thenReturn(tokens);
 
@@ -66,7 +67,7 @@ class SocialAuthFacadeTest {
 		when(apple.fetchUserInfoByCode("code", "user"))
 			.thenReturn(new SocialUserInfo("sub", "e@e.com", "nick"));
 		when(provisioning.provisionSocialUser(any()))
-			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", false));
+			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", UserRole.USER, false));
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
 		when(tokenUseCase.issue(any())).thenReturn(tokens);
 
