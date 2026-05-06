@@ -79,6 +79,7 @@ public class SecurityConfig {
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
 				.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
+				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 				.anyRequest().authenticated());
 
 		return http.build();
