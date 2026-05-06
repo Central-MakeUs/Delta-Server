@@ -7,7 +7,7 @@ public interface TokenIssuer {
 
 	IssuedTokens issue(UserPrincipal principal);
 
-	Long extractUserIdFromRefreshToken(String refreshToken);
+	UserPrincipal extractPrincipalFromRefreshToken(String refreshToken);
 
 	AccessTokenInfo parseAccessTokenInfo(String accessToken);
 

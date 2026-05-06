@@ -6,7 +6,6 @@ import cmc.delta.domain.auth.application.port.out.AccessBlacklistStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore;
 import cmc.delta.domain.auth.application.port.out.RefreshTokenStore.RotationResult;
 import cmc.delta.domain.auth.application.port.out.TokenIssuer;
-import cmc.delta.domain.auth.application.support.AuthPrincipalFactory;
 import cmc.delta.domain.auth.application.support.RefreshTokenHasher;
 import cmc.delta.domain.auth.application.support.TokenConstants;
 import cmc.delta.global.config.security.principal.UserPrincipal;
@@ -46,14 +45,14 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 	public TokenIssuer.IssuedTokens reissue(String refreshToken) {
 		validateRefreshProvided(refreshToken);
 
-		Long userId = tokenIssuer.extractUserIdFromRefreshToken(refreshToken);
+		UserPrincipal principal = tokenIssuer.extractPrincipalFromRefreshToken(refreshToken);
 		String expectedHash = RefreshTokenHasher.sha256(refreshToken);
 
-		TokenIssuer.IssuedTokens newTokens = tokenIssuer.issue(AuthPrincipalFactory.principalOf(userId));
+		TokenIssuer.IssuedTokens newTokens = tokenIssuer.issue(principal);
 		String newRefreshToken = extractRefreshTokenOrThrow(newTokens, REISSUE_REFRESH_FAILED_MESSAGE);
 		String newHash = RefreshTokenHasher.sha256(newRefreshToken);
 
-		rotateRefreshOrThrow(userId, expectedHash, newHash);
+		rotateRefreshOrThrow(principal.userId(), expectedHash, newHash);
 		return newTokens;
 	}
 
