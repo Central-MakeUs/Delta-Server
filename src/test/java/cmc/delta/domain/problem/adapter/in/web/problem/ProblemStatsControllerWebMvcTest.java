@@ -11,6 +11,7 @@ import cmc.delta.domain.problem.adapter.in.web.problem.support.ProblemStatsCondi
 import cmc.delta.domain.problem.application.port.in.problem.ProblemStatsUseCase;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemMonthlyProgressResponse;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemStatsResponse;
+import cmc.delta.domain.stats.application.port.in.RecordUserAccessUseCase;
 import cmc.delta.global.config.security.principal.UserPrincipal;
 import java.util.List;
 import org.junit.jupiter.api.*;
@@ -24,13 +25,15 @@ class ProblemStatsControllerWebMvcTest {
 
 	private ProblemStatsUseCase statsUseCase;
 	private ProblemStatsConditionFactory statsConditionFactory;
+	private RecordUserAccessUseCase recordUserAccessUseCase;
 
 	@BeforeEach
 	void setUp() {
 		statsUseCase = mock(ProblemStatsUseCase.class);
 		statsConditionFactory = mock(ProblemStatsConditionFactory.class);
+		recordUserAccessUseCase = mock(RecordUserAccessUseCase.class);
 
-		ProblemStatsController controller = new ProblemStatsController(statsUseCase, statsConditionFactory);
+		ProblemStatsController controller = new ProblemStatsController(statsUseCase, statsConditionFactory, recordUserAccessUseCase);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setCustomArgumentResolvers(new TestCurrentUserArgumentResolver())
