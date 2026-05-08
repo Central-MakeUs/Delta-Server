@@ -27,7 +27,7 @@ public class DashboardMonthlyAccessQueryRepositoryImpl implements DashboardMonth
 		return queryFactory
 			.select(constructor(DashboardDailyAccessItem.class,
 				access.accessDate,
-				access.user.id.countDistinct()))
+				access.userId.countDistinct()))
 			.from(access)
 			.where(access.accessDate.between(start, end))
 			.groupBy(access.accessDate)

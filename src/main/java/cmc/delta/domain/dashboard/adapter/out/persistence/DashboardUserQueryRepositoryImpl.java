@@ -35,7 +35,7 @@ public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort 
 				access.accessDate.max(),
 				problem.id.countDistinct()))
 			.from(user)
-			.leftJoin(access).on(access.user.id.eq(user.id))
+			.leftJoin(access).on(access.userId.eq(user.id))
 			.leftJoin(problem).on(problem.user.id.eq(user.id))
 			.where(user.role.ne(UserRole.ADMIN))
 			.groupBy(user.id, user.nickname)
