@@ -102,13 +102,12 @@ class ProblemQueryServiceImplTest {
 		when(problemQueryPort.findMyProblemDetail(10L, 1L)).thenReturn(java.util.Optional.of(row));
 
 		when(storagePort.issueReadUrl("s3/d.png")).thenReturn("https://read/s3/d.png");
-		when(problemTypeTagQueryPort.findTypeTagsByProblemId(1L)).thenReturn(List.of());
 
 		ProblemDetailResponse base = new ProblemDetailResponse(
 			1L,
 			new CurriculumItemResponse("S1", "subject"),
 			new CurriculumItemResponse("U1", "unit"),
-			List.of(new CurriculumItemResponse("T0", "old")),
+			List.of(new CurriculumItemResponse("T0", "유형A")),
 			new ProblemDetailResponse.OriginalImageResponse("https://read/s3/d.png"),
 			cmc.delta.domain.problem.model.enums.AnswerFormat.TEXT,
 			null,
@@ -123,6 +122,6 @@ class ProblemQueryServiceImplTest {
 		ProblemDetailResponse res = sut.getMyProblemDetail(10L, 1L);
 
 		// then
-		assertThat(res.types()).isEmpty();
+		assertThat(res.types()).containsExactly(new CurriculumItemResponse("T0", "유형A"));
 	}
 }

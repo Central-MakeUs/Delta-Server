@@ -3,8 +3,8 @@ package cmc.delta.domain.problem.adapter.in.worker.support.prompt;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.ProblemTypeJpaRepository;
 import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
+import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
 import cmc.delta.domain.curriculum.model.ProblemType;
 import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
@@ -20,7 +20,7 @@ class AiCurriculumPromptBuilderTest {
 	void build_mapsUnitsAndTypesToOptions() {
 		// given
 		UnitJpaRepository unitRepository = mock(UnitJpaRepository.class);
-		ProblemTypeJpaRepository typeRepository = mock(ProblemTypeJpaRepository.class);
+		ProblemTypeRepositoryPort typeRepository = mock(ProblemTypeRepositoryPort.class);
 		AiCurriculumPromptBuilder sut = new AiCurriculumPromptBuilder(unitRepository, typeRepository);
 
 		when(unitRepository.findAllRootUnitsActive())
@@ -28,8 +28,12 @@ class AiCurriculumPromptBuilderTest {
 		when(unitRepository.findAllChildUnitsActive())
 			.thenReturn(List.of(new Unit("U1", "소단원", null, 1, true)));
 
-		when(typeRepository.findAllActiveForUser(10L))
+		when(typeRepository.findAllActiveFixed())
 			.thenReturn(List.of(new ProblemType("T1", "유형", 1, true, null, false)));
+		when(typeRepository.findActiveCustomByUserId(10L))
+			.thenReturn(List.of());
+
+		sut.init();
 
 		// when
 		OcrSignalSummary signals = new OcrSignalSummary(1, 2, 0, 0);
