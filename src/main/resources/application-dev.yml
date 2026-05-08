@@ -23,3 +23,7 @@ management:
   metrics:
     tags:
       env: dev
+
+stats:
+  daily:
+    cron: "-"
