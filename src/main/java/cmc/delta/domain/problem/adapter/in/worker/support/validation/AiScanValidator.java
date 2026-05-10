@@ -1,6 +1,7 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.validation;
 
 import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
+import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextTooShortException;
 import cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class AiScanValidator {
 
+	private static final int OCR_TEXT_MIN_CHARS = 15;
 	private static final int OCR_TEXT_MAX_CHARS = 3000;
 	private static final String EMPTY = "";
 	private static final String WHITESPACE_PATTERN = "\\s+";
@@ -27,6 +29,9 @@ public class AiScanValidator {
 
 		if (normalizedOcrText.isBlank()) {
 			throw new OcrTextEmptyException(scanId);
+		}
+		if (normalizedOcrText.length() < OCR_TEXT_MIN_CHARS) {
+			throw new OcrTextTooShortException(scanId);
 		}
 		return new AiValidatedInput(userId, normalizedOcrText, ocrSignals);
 	}
