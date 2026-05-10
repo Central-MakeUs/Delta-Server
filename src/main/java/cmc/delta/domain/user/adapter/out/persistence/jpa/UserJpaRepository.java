@@ -2,6 +2,7 @@ package cmc.delta.domain.user.adapter.out.persistence.jpa;
 
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.UserWithProvider;
+import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -42,4 +43,12 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 	long count();
 
 	long countByStatus(UserStatus status);
+
+	long countByRoleNot(UserRole role);
+
+	long countByStatusAndRoleNot(UserStatus status, UserRole role);
+
+	long countByRoleNotAndCreatedAtBetween(UserRole role, LocalDateTime from, LocalDateTime to);
+
+	Optional<User> findByEmailAndRole(String email, UserRole role);
 }

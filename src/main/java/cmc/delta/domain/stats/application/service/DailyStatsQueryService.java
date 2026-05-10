@@ -34,8 +34,8 @@ public class DailyStatsQueryService {
 
 		return new DailyStatsReport(
 			now,
-			userQueryPort.countAll(),
-			userQueryPort.countByStatus(UserStatus.WITHDRAWN),
+			userQueryPort.countAllExcludingAdmin(),
+			userQueryPort.countByStatusExcludingAdmin(UserStatus.WITHDRAWN),
 			queryPeriod(now, PERIOD_TODAY),
 			queryPeriod(now, PERIOD_LAST_3_DAYS),
 			queryPeriod(now, PERIOD_LAST_7_DAYS)

@@ -1,0 +1,29 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${DEV_DB_URL}
+    username: ${DEV_DB_USERNAME}
+    password: ${DEV_DB_PASSWORD}
+
+  data:
+    redis:
+      host: redis
+
+server:
+  forward-headers-strategy: framework
+
+frontend:
+  base-url: ${FRONTEND_BASE_URL:https://semo-xi.vercel.app}
+
+management:
+  metrics:
+    tags:
+      env: dev
+
+stats:
+  daily:
+    cron: "-"

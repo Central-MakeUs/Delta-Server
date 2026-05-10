@@ -25,15 +25,17 @@ public class FakeTokenIssuer implements TokenIssuer {
 		Instant exp = now.plus(accessTtl);
 
 		String access = "at:" + principal.userId() + ":" + jti + ":" + exp.getEpochSecond();
-		String refresh = "rt:" + principal.userId() + ":" + UUID.randomUUID() + ":" + now.getEpochSecond();
+		String refresh = "rt:" + principal.userId() + ":" + principal.role() + ":" + UUID.randomUUID() + ":" + now.getEpochSecond();
 
 		return new IssuedTokens(access, refresh, "Bearer");
 	}
 
 	@Override
-	public Long extractUserIdFromRefreshToken(String refreshToken) {
+	public UserPrincipal extractPrincipalFromRefreshToken(String refreshToken) {
 		String[] parts = refreshToken.split(":");
-		return Long.parseLong(parts[1]);
+		long userId = Long.parseLong(parts[1]);
+		String role = parts[2];
+		return new UserPrincipal(userId, role);
 	}
 
 	@Override

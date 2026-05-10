@@ -24,9 +24,9 @@ public class JwtTokenIssuer implements TokenIssuer {
 	}
 
 	@Override
-	public Long extractUserIdFromRefreshToken(String refreshToken) {
+	public UserPrincipal extractPrincipalFromRefreshToken(String refreshToken) {
 		JwtTokenProvider.ParsedRefreshToken parsed = jwtTokenProvider.parseRefreshTokenOrThrow(refreshToken);
-		return parsed.principal().userId();
+		return parsed.principal();
 	}
 
 	@Override

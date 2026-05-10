@@ -45,8 +45,8 @@ class DailyStatsQueryServiceTest {
 	void setUp() {
 		given(clock.instant()).willReturn(FIXED_NOW.atZone(ZoneId.systemDefault()).toInstant());
 		given(clock.getZone()).willReturn(ZoneId.systemDefault());
-		given(userQueryPort.countAll()).willReturn(0L);
-		given(userQueryPort.countByStatus(UserStatus.WITHDRAWN)).willReturn(0L);
+		given(userQueryPort.countAllExcludingAdmin()).willReturn(0L);
+		given(userQueryPort.countByStatusExcludingAdmin(UserStatus.WITHDRAWN)).willReturn(0L);
 		given(countQueryPort.countAll(any(), any())).willReturn(ZERO_COUNTS);
 	}
 
