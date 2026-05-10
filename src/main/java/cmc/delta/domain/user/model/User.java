@@ -57,6 +57,9 @@ public class User extends BaseTimeEntity {
 	@Column(name = "role", nullable = false, columnDefinition = "varchar(20) default 'USER'")
 	private UserRole role = UserRole.USER;
 
+	@Column(name = "password", length = 256)
+	private String password;
+
 	private User(String email, String nickname, UserStatus status) {
 		this.email = normalize(email);
 		this.nickname = normalize(nickname);

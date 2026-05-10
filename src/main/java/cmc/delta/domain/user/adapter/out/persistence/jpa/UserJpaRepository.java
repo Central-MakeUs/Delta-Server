@@ -49,4 +49,6 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 	long countByStatusAndRoleNot(UserStatus status, UserRole role);
 
 	long countByRoleNotAndCreatedAtBetween(UserRole role, LocalDateTime from, LocalDateTime to);
+
+	Optional<User> findByEmailAndRole(String email, UserRole role);
 }
