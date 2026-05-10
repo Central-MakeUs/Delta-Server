@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
+import cmc.delta.domain.auth.application.port.out.AdminUserQueryPort;
 import cmc.delta.domain.stats.application.port.out.StatsUserQueryPort;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
@@ -17,7 +18,7 @@ import lombok.RequiredArgsConstructor;
 
 @Repository
 @RequiredArgsConstructor
-public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQueryPort {
+public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQueryPort, AdminUserQueryPort {
 
 	private final UserJpaRepository jpaRepository;
 	private final EntityManager em;
@@ -80,5 +81,10 @@ public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQuery
 	@Override
 	public long countByCreatedAtBetweenExcludingAdmin(LocalDateTime from, LocalDateTime to) {
 		return jpaRepository.countByRoleNotAndCreatedAtBetween(UserRole.ADMIN, from, to);
+	}
+
+	@Override
+	public Optional<User> findAdminByUsername(String username) {
+		return jpaRepository.findByEmailAndRole(username, UserRole.ADMIN);
 	}
 }
