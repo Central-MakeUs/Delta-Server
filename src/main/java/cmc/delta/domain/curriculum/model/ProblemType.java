@@ -1,6 +1,7 @@
 package cmc.delta.domain.curriculum.model;
 
 import cmc.delta.domain.user.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -30,6 +31,7 @@ public class ProblemType {
 	@Column(name = "is_active", nullable = false)
 	private boolean active;
 
+	@JsonIgnore
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "created_by_user_id")
 	private User createdByUser;
