@@ -3,6 +3,7 @@ package cmc.delta.domain.problem.adapter.in.worker.support.validation;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextEmptyException;
+import cmc.delta.domain.problem.adapter.in.worker.exception.OcrTextTooShortException;
 import cmc.delta.domain.problem.adapter.in.worker.support.WorkerFixtures;
 import cmc.delta.domain.problem.adapter.in.worker.support.ocr.LineDataSignalExtractor;
 import cmc.delta.domain.problem.model.scan.ProblemScan;
@@ -18,13 +19,13 @@ class AiScanValidatorTest {
 	@DisplayName("OCR 텍스트는 공백을 하나로 정규화하고 trim한다")
 	void normalize_whitespace() {
 		// given
-		ProblemScan scan = WorkerFixtures.ocrDone(WorkerFixtures.user(1L), "  a \n  b\t\tc  ");
+		ProblemScan scan = WorkerFixtures.ocrDone(WorkerFixtures.user(1L), "  삼각형의 넓이를 구하시오 정답은  ");
 
 		// when
 		AiScanValidator.AiValidatedInput out = sut.validateAndNormalize(1L, scan);
 
 		// then
-		assertThat(out.normalizedOcrText()).isEqualTo("a b c");
+		assertThat(out.normalizedOcrText()).isEqualTo("삼각형의 넓이를 구하시오 정답은");
 	}
 
 	@Test
@@ -36,5 +37,16 @@ class AiScanValidatorTest {
 		// when & then
 		assertThatThrownBy(() -> sut.validateAndNormalize(1L, scan))
 			.isInstanceOf(OcrTextEmptyException.class);
+	}
+
+	@Test
+	@DisplayName("OCR 텍스트가 15글자 미만이면 OcrTextTooShortException")
+	void too_short_throws() {
+		// given
+		ProblemScan scan = WorkerFixtures.ocrDone(WorkerFixtures.user(1L), "$\\tilde{G}$");
+
+		// when & then
+		assertThatThrownBy(() -> sut.validateAndNormalize(1L, scan))
+			.isInstanceOf(OcrTextTooShortException.class);
 	}
 }
