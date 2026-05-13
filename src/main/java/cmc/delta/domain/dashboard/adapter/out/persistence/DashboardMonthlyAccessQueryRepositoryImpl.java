@@ -25,13 +25,18 @@ public class DashboardMonthlyAccessQueryRepositoryImpl implements DashboardMonth
 	@Override
 	public Map<LocalDate, Long> findDailyAccessByMonth(YearMonth yearMonth) {
 		QUserDailyAccess access = QUserDailyAccess.userDailyAccess;
+		QUser user = QUser.user;
 		LocalDate start = yearMonth.atDay(1);
 		LocalDate end = yearMonth.atEndOfMonth();
 
 		return queryFactory
 			.select(access.accessDate, access.userId.countDistinct())
 			.from(access)
-			.where(access.accessDate.between(start, end))
+			.join(user).on(user.id.eq(access.userId))
+			.where(
+				access.accessDate.between(start, end),
+				user.role.ne(UserRole.ADMIN)
+			)
 			.groupBy(access.accessDate)
 			.fetch()
 			.stream()
