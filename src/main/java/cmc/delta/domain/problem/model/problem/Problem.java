@@ -79,6 +79,12 @@ public class Problem extends BaseTimeEntity {
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
 
+	@Column(name = "view_count", nullable = false)
+	private int viewCount;
+
+	@Column(name = "ai_solution_count", nullable = false)
+	private int aiSolutionCount;
+
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemChoice> choices = new ArrayList<>();
 
@@ -132,6 +138,14 @@ public class Problem extends BaseTimeEntity {
 	public void complete(String memoText, java.time.LocalDateTime now) {
 		updateMemoText(memoText);
 		markCompletedAtIfEmpty(now);
+	}
+
+	public void incrementViewCount() {
+		this.viewCount += 1;
+	}
+
+	public void incrementAiSolutionCount() {
+		this.aiSolutionCount += 1;
 	}
 
 	public void updateAnswer(Integer answerChoiceNo, String answerValue) {
