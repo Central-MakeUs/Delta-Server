@@ -35,4 +35,27 @@ public final class DashboardApiDocs {
 		- totalElements: 전체 사용자 수
 		- totalPages: 전체 페이지 수
 		""";
+
+	public static final String GET_PROBLEMS = """
+		관리자 대시보드의 문제 등록 현황 목록을 조회합니다.
+
+		요청 파라미터:
+		- page: 페이지 번호 (기본값 0)
+		- size: 페이지 크기 (기본값 20, 최대 100)
+
+		응답 필드:
+		- content: 문제 목록
+		  - problemId: 문제 ID
+		  - problemName: 문제명 (problem의 final unit 명)
+		  - unitName: 단원명 (final unit의 parent unit 명, root unit이면 null)
+		  - problemType: 문제 유형명
+		  - aiSolutionCount: AI 풀이 진행 횟수 (task가 존재하면 1, 없으면 0)
+		  - registeredAt: 문제 등록 일시
+		  - wrongAnswerCompleted: 오답 완료 여부 (completedAt 존재 여부)
+		  - userRole: 등록한 사용자 권한 (USER / ADMIN)
+		- page: 현재 페이지 번호
+		- size: 페이지 크기
+		- totalElements: 전체 문제 수
+		- totalPages: 전체 페이지 수
+		""";
 }
