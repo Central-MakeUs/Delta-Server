@@ -9,6 +9,7 @@ public record DashboardProblemItem(
 	String unitName,
 	String problemType,
 	long aiSolutionCount,
+	long viewCount,
 	LocalDateTime registeredAt,
 	boolean wrongAnswerCompleted,
 	UserRole userRole

@@ -49,7 +49,8 @@ public final class DashboardApiDocs {
 		  - problemName: 문제명 (problem의 final unit 명)
 		  - unitName: 단원명 (final unit의 parent unit 명, root unit이면 null)
 		  - problemType: 문제 유형명
-		  - aiSolutionCount: AI 풀이 진행 횟수 (task가 존재하면 1, 없으면 0)
+		  - aiSolutionCount: AI 풀이 요청 API 누적 호출 수 (캐시 적중 포함, 호출마다 +1)
+		  - viewCount: 문제 상세조회 API 누적 호출 수
 		  - registeredAt: 문제 등록 일시
 		  - wrongAnswerCompleted: 오답 완료 여부 (completedAt 존재 여부)
 		  - userRole: 등록한 사용자 권한 (USER / ADMIN)
