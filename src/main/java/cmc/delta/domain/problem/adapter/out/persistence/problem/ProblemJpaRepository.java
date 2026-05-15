@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, ProblemRepositoryPort {
@@ -39,4 +40,14 @@ public interface ProblemJpaRepository extends JpaRepository<Problem, Long>, Prob
 	default Optional<Problem> findByScanId(Long scanId) {
 		return findByScan_Id(scanId);
 	}
+
+	@Override
+	@Modifying
+	@Query("update Problem p set p.viewCount = p.viewCount + 1 where p.id = :id")
+	void incrementViewCount(Long id);
+
+	@Override
+	@Modifying
+	@Query("update Problem p set p.aiSolutionCount = p.aiSolutionCount + 1 where p.id = :id")
+	void incrementAiSolutionCount(Long id);
 }

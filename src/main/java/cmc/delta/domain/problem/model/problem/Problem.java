@@ -140,14 +140,6 @@ public class Problem extends BaseTimeEntity {
 		markCompletedAtIfEmpty(now);
 	}
 
-	public void incrementViewCount() {
-		this.viewCount += 1;
-	}
-
-	public void incrementAiSolutionCount() {
-		this.aiSolutionCount += 1;
-	}
-
 	public void updateAnswer(Integer answerChoiceNo, String answerValue) {
 		AnswerFormat format = requireAnswerFormat();
 		if (format == AnswerFormat.CHOICE) {

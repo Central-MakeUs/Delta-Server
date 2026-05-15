@@ -18,4 +18,8 @@ public interface ProblemRepositoryPort {
 	boolean existsByOriginalStorageKey(String storageKey);
 
 	boolean existsByScanId(Long scanId);
+
+	void incrementViewCount(Long id);
+
+	void incrementAiSolutionCount(Long id);
 }

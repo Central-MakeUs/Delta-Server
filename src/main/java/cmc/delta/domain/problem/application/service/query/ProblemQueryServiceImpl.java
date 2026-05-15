@@ -20,7 +20,6 @@ import cmc.delta.domain.problem.application.port.in.support.PageQuery;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
-import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemListRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
@@ -93,8 +92,7 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
-		problemRepositoryPort.findById(row.problemId())
-			.ifPresent(Problem::incrementViewCount);
+		problemRepositoryPort.incrementViewCount(row.problemId());
 
 		String viewUrl = storagePort.issueReadUrl(row.storageKey());
 		return problemDetailMapper.toResponse(row, viewUrl);
