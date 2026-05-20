@@ -17,7 +17,6 @@ import cmc.delta.domain.problem.application.port.in.problem.result.ProblemListIt
 import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.in.support.CursorQuery;
 import cmc.delta.domain.problem.application.port.in.support.PageQuery;
-import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.ProblemTypeTagQueryPort;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
@@ -38,7 +37,6 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 
 	private final ProblemListRequestValidator requestValidator;
 	private final ProblemQueryPort problemQueryPort;
-	private final ProblemRepositoryPort problemRepositoryPort;
 	private final ProblemTypeTagQueryPort problemTypeTagQueryPort;
 	private final StoragePort storagePort;
 	private final ProblemScrollQueryService scrollQueryService;
@@ -87,12 +85,9 @@ public class ProblemQueryServiceImpl implements ProblemQueryUseCase {
 	}
 
 	@Override
-	@Transactional
 	public ProblemDetailResponse getMyProblemDetail(Long userId, Long problemId) {
 		ProblemDetailRow row = problemQueryPort.findMyProblemDetail(userId, problemId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
-
-		problemRepositoryPort.incrementViewCount(row.problemId());
 
 		String viewUrl = storagePort.issueReadUrl(row.storageKey());
 		return problemDetailMapper.toResponse(row, viewUrl);

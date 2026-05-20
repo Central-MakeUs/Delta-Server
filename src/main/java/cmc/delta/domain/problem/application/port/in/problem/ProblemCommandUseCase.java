@@ -18,4 +18,6 @@ public interface ProblemCommandUseCase {
 	void updateWrongAnswerCard(Long currentUserId, Long problemId, UpdateWrongAnswerCardCommand request);
 
 	void deleteWrongAnswerCard(Long currentUserId, Long problemId);
+
+	void incrementViewCount(Long problemId);
 }

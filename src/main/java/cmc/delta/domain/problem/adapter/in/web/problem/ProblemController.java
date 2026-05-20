@@ -186,6 +186,8 @@ public class ProblemController {
 		UserPrincipal principal,
 		@PathVariable
 		Long problemId) {
+		problemCommandUseCase.incrementViewCount(problemId);
+
 		ProblemDetailResponse data = problemQueryUseCase.getMyProblemDetail(principal.userId(), problemId);
 
 		return ApiResponses.success(SuccessCode.OK, data);

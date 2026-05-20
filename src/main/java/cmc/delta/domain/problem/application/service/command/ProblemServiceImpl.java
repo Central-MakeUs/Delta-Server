@@ -110,6 +110,12 @@ public class ProblemServiceImpl implements ProblemCommandUseCase {
 
 	@Override
 	@Transactional
+	public void incrementViewCount(Long problemId) {
+		problemRepositoryPort.incrementViewCount(problemId);
+	}
+
+	@Override
+	@Transactional
 	public void deleteWrongAnswerCard(Long currentUserId, Long problemId) {
 		Problem problem = loadProblemOrThrow(problemId, currentUserId);
 		String originalStorageKey = problem.getOriginalStorageKey();
