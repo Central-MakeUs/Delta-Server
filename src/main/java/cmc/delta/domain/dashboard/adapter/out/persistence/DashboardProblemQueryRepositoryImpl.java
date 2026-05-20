@@ -8,6 +8,8 @@ import cmc.delta.domain.dashboard.application.dto.DashboardProblemItem;
 import cmc.delta.domain.dashboard.application.port.out.DashboardProblemQueryPort;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.user.model.QUser;
+
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,7 @@ public class DashboardProblemQueryRepositoryImpl implements DashboardProblemQuer
 			.leftJoin(unit.parent, parentUnit)
 			.leftJoin(problem.finalType, type)
 			.leftJoin(problem.user, user)
+			.where(getCommonWhereConditions())
 			.orderBy(problem.id.desc())
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
@@ -57,8 +60,17 @@ public class DashboardProblemQueryRepositoryImpl implements DashboardProblemQuer
 		Long count = queryFactory
 			.select(problem.id.count())
 			.from(problem)
+			.where(getCommonWhereConditions())
 			.fetchOne();
 
 		return count != null ? count : 0L;
+	}
+
+	private BooleanExpression[] getCommonWhereConditions() {
+		QProblem problem = QProblem.problem;
+
+		return new BooleanExpression[] {
+			// 지금은 조건이 없으므로 빈 배열을 반환하거나 null을 반환하도록 설계합니다.
+		};
 	}
 }
