@@ -29,13 +29,19 @@ public class DashboardMonthlyAccessQueryRepositoryImpl implements DashboardMonth
 		LocalDate start = yearMonth.atDay(1);
 		LocalDate end = yearMonth.atEndOfMonth();
 
+		// 1. ADMIN ID 목록 선조회
+		List<Long> adminIds = queryFactory
+			.select(user.id)
+			.from(user)
+			.where(user.role.eq(UserRole.ADMIN))
+			.fetch();
+
 		return queryFactory
 			.select(access.accessDate, access.userId.countDistinct())
 			.from(access)
-			.join(user).on(user.id.eq(access.userId))
 			.where(
 				access.accessDate.between(start, end),
-				user.role.ne(UserRole.ADMIN)
+				adminIds.isEmpty() ? null : access.userId.notIn(adminIds)
 			)
 			.groupBy(access.accessDate)
 			.fetch()
