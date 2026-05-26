@@ -16,7 +16,9 @@ import org.springframework.web.client.RestTemplate;
  * - 접근 로그(provider/operation/status/duration)
  * - 예외를 OAuthClientExceptionMapper로 위임해 "정책 기반" 변환
  *
- * - code/access_token/refresh_token/id_token 등 민감정보 로깅 금지
+ * 로깅 정책:
+ * - 성공: provider/operation/status/duration 만 DEBUG 로 기록 (응답 body 절대 미기록).
+ * - 실패: provider 응답 body 를 WARN 으로 기록하되, SensitiveBodyMasker 로 access_token/refresh_token/id_token/code/client_secret 마스킹.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -44,11 +46,11 @@ public class OAuthHttpClient {
 			return response.getBody();
 
 		} catch (HttpStatusCodeException e) {
-			logFail(providerName, operation, e.getStatusCode(), start);
+			logFail(providerName, operation, e.getStatusCode(), start, e.getResponseBodyAsString());
 			throw exceptionMapper.mapHttpStatus(providerName, operation, e);
 
 		} catch (ResourceAccessException e) {
-			logFail(providerName, operation, null, start);
+			logFail(providerName, operation, null, start, null);
 			throw exceptionMapper.mapTimeout(providerName, operation, e);
 		}
 	}
@@ -70,11 +72,11 @@ public class OAuthHttpClient {
 			return response.getBody();
 
 		} catch (HttpStatusCodeException e) {
-			logFail(providerName, operation, e.getStatusCode(), start);
+			logFail(providerName, operation, e.getStatusCode(), start, e.getResponseBodyAsString());
 			throw exceptionMapper.mapHttpStatus(providerName, operation, e);
 
 		} catch (ResourceAccessException e) {
-			logFail(providerName, operation, null, start);
+			logFail(providerName, operation, null, start, null);
 			throw exceptionMapper.mapTimeout(providerName, operation, e);
 		}
 	}
@@ -85,11 +87,13 @@ public class OAuthHttpClient {
 			provider, operation, status.value(), durationMs);
 	}
 
-	private void logFail(String provider, String operation, HttpStatusCode status, long startNano) {
+	private void logFail(String provider, String operation, HttpStatusCode status, long startNano,
+		String responseBody) {
 		long durationMs = Duration.ofNanos(System.nanoTime() - startNano).toMillis();
 		String statusValue = (status == null) ? "NA" : String.valueOf(status.value());
-		// 민감정보 바디/토큰/코드 로깅 금지
-		log.warn("oauth_external_fail provider={} operation={} status={} durationMs={}",
-			provider, operation, statusValue, durationMs);
+		// 실패 디버깅 목적으로 body 를 남기되, access_token/code 등 민감 필드는 마스킹한다.
+		String maskedBody = SensitiveBodyMasker.mask(responseBody);
+		log.warn("oauth_external_fail provider={} operation={} status={} durationMs={} body={}",
+			provider, operation, statusValue, durationMs, maskedBody);
 	}
 }
