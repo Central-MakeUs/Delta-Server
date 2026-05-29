@@ -12,7 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
 
 		registry
 			.addMapping("/**")
-			.allowedOrigins("http://localhost:3000", "http://localhost:5173", "https://semo-xi.duckdns.org", "https://delta-semo.figma.site")
+			.allowedOrigins("http://localhost:3000", "http://localhost:5173", "https://semo-xi.duckdns.org", "https://delta-semo.figma.site", "https://fe-dashboard-1kp.pages.dev")
 			.allowedMethods("*")
 			.allowedHeaders("*")
 			.allowCredentials(true);
