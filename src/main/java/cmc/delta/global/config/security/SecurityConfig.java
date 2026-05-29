@@ -112,6 +112,7 @@ public class SecurityConfig {
 			"https://dev.deltasemo.cloud",
 			"https://deltasemo.cloud",
 			"https://semo-xi.vercel.app",
+			"https://delta-semo.figma.site",
 			"http://localhost:*"));
 		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
