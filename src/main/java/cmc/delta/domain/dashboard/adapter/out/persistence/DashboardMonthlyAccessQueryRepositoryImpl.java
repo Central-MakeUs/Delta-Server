@@ -57,8 +57,11 @@ public class DashboardMonthlyAccessQueryRepositoryImpl implements DashboardMonth
 		QUser user = QUser.user;
 		LocalDate start = yearMonth.atDay(1);
 
-		DateTemplate<LocalDate> signupDate = Expressions.dateTemplate(
-			LocalDate.class, "DATE({0})", user.createdAt);
+		DateTemplate<java.sql.Date> signupDate = Expressions.dateTemplate(
+			java.sql.Date.class,
+			"DATE({0})",
+			user.createdAt
+		);
 
 		List<Tuple> results = queryFactory
 			.select(signupDate, user.id.count())
@@ -73,7 +76,7 @@ public class DashboardMonthlyAccessQueryRepositoryImpl implements DashboardMonth
 
 		return results.stream()
 			.collect(Collectors.toMap(
-				t -> t.get(signupDate),
+				t -> t.get(signupDate).toLocalDate(),
 				t -> t.get(user.id.count())
 			));
 	}
