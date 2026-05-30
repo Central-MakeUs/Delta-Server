@@ -79,6 +79,12 @@ public class Problem extends BaseTimeEntity {
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
 
+	@Column(name = "view_count", nullable = false)
+	private int viewCount;
+
+	@Column(name = "ai_solution_count", nullable = false)
+	private int aiSolutionCount;
+
 	@OneToMany(mappedBy = "problem", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ProblemChoice> choices = new ArrayList<>();
 

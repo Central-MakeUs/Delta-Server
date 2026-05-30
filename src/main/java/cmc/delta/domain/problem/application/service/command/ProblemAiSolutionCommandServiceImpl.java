@@ -56,6 +56,8 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, userId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
+		problemRepositoryPort.incrementAiSolutionCount(problemId);
+
 		LocalDateTime now = LocalDateTime.now(clock);
 		String inputHash = calculateInputHash(problem);
 

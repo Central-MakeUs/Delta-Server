@@ -2,13 +2,20 @@ package cmc.delta.domain.dashboard.application.service;
 
 import cmc.delta.domain.dashboard.application.dto.DashboardDailyAccessItem;
 import cmc.delta.domain.dashboard.application.dto.DashboardMonthlyAccessResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemItem;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemsResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardUserItem;
 import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
 import cmc.delta.domain.dashboard.application.port.in.DashboardQueryUseCase;
 import cmc.delta.domain.dashboard.application.port.out.DashboardMonthlyAccessQueryPort;
+import cmc.delta.domain.dashboard.application.port.out.DashboardProblemQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardUserQueryPort;
+import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -21,6 +28,7 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 
 	private final DashboardUserQueryPort dashboardUserQueryPort;
 	private final DashboardMonthlyAccessQueryPort dashboardMonthlyAccessQueryPort;
+	private final DashboardProblemQueryPort dashboardProblemQueryPort;
 
 	@Override
 	public DashboardUsersResponse getUsers(Pageable pageable) {
@@ -32,7 +40,28 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 
 	@Override
 	public DashboardMonthlyAccessResponse getMonthlyAccess(YearMonth yearMonth) {
-		List<DashboardDailyAccessItem> dailyAccess = dashboardMonthlyAccessQueryPort.findDailyAccessByMonth(yearMonth);
+		Map<LocalDate, Long> accessMap = dashboardMonthlyAccessQueryPort.findDailyAccessByMonth(yearMonth);
+		Map<LocalDate, Long> newUsersMap = dashboardMonthlyAccessQueryPort.findDailyNewUsersByMonth(yearMonth);
+
+		Set<LocalDate> allDates = new HashSet<>(accessMap.keySet());
+		allDates.addAll(newUsersMap.keySet());
+
+		List<DashboardDailyAccessItem> dailyAccess = allDates.stream()
+			.sorted()
+			.map(date -> new DashboardDailyAccessItem(
+				date,
+				accessMap.getOrDefault(date, 0L),
+				newUsersMap.getOrDefault(date, 0L)))
+			.toList();
+
 		return new DashboardMonthlyAccessResponse(yearMonth.getYear(), yearMonth.getMonthValue(), dailyAccess);
+	}
+
+	@Override
+	public DashboardProblemsResponse getProblems(Pageable pageable) {
+		List<DashboardProblemItem> content = dashboardProblemQueryPort.findProblems(pageable);
+		long totalElements = dashboardProblemQueryPort.countProblems();
+		int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
+		return new DashboardProblemsResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements, totalPages);
 	}
 }

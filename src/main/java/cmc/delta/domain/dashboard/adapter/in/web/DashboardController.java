@@ -1,8 +1,10 @@
 package cmc.delta.domain.dashboard.adapter.in.web;
 
 import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardMonthlyAccessRequest;
+import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardProblemsRequest;
 import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardUsersRequest;
 import cmc.delta.domain.dashboard.application.dto.DashboardMonthlyAccessResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemsResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
 import cmc.delta.domain.dashboard.application.port.in.DashboardQueryUseCase;
 import cmc.delta.global.api.response.ApiResponse;
@@ -39,5 +41,12 @@ public class DashboardController {
 		@ModelAttribute DashboardMonthlyAccessRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
 			dashboardQueryUseCase.getMonthlyAccess(request.toYearMonth()));
+	}
+
+	@Operation(summary = "문제 등록 현황 조회", description = DashboardApiDocs.GET_PROBLEMS)
+	@GetMapping("/problems")
+	public ApiResponse<DashboardProblemsResponse> getProblems(@ModelAttribute DashboardProblemsRequest request) {
+		return ApiResponses.success(SuccessCode.OK,
+			dashboardQueryUseCase.getProblems(PageRequest.of(request.page(), request.size())));
 	}
 }

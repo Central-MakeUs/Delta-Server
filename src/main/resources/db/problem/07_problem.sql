@@ -11,6 +11,8 @@ CREATE TABLE problem (
 	answer_choice_no INT NULL,
 	solution_text MEDIUMTEXT NULL,
 	completed_at DATETIME(6) NULL,
+	view_count INT NOT NULL DEFAULT 0,
+	ai_solution_count INT NOT NULL DEFAULT 0,
 	created_at DATETIME(6) NOT NULL,
 	updated_at DATETIME(6) NOT NULL,
 	PRIMARY KEY (id),

@@ -1,10 +1,12 @@
 package cmc.delta.domain.dashboard.application.port.out;
 
-import cmc.delta.domain.dashboard.application.dto.DashboardDailyAccessItem;
+import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.List;
+import java.util.Map;
 
 public interface DashboardMonthlyAccessQueryPort {
 
-	List<DashboardDailyAccessItem> findDailyAccessByMonth(YearMonth yearMonth);
+	Map<LocalDate, Long> findDailyAccessByMonth(YearMonth yearMonth);
+
+	Map<LocalDate, Long> findDailyNewUsersByMonth(YearMonth yearMonth);
 }
