@@ -59,4 +59,23 @@ public final class DashboardApiDocs {
 		- totalElements: 전체 문제 수
 		- totalPages: 전체 페이지 수
 		""";
+
+	public static final String GET_PROBLEM_DETAIL = """
+		관리자 대시보드의 문제 등록 현황 상세를 조회합니다.
+
+		경로 변수:
+		- problemId: 문제 ID
+
+		응답 필드:
+		- problemId: 문제 ID
+		- problemName: 문제명 (problem의 final unit 명)
+		- unitName: 단원명 (final unit의 parent unit 명, root unit이면 null)
+		- problemType: 문제 유형명
+		- aiSolutionCount: AI 풀이 요청 API 누적 호출 수 (캐시 적중 포함, 호출마다 +1)
+		- viewCount: 문제 상세조회 API 누적 호출 수
+		- registeredAt: 문제 등록 일시
+		- wrongAnswerCompleted: 오답 완료 여부 (completedAt 존재 여부)
+		- userRole: 등록한 사용자 권한 (USER / ADMIN)
+		- imageUrl: 원본 이미지 조회 URL
+		""";
 }
