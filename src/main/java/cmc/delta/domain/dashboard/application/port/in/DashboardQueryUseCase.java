@@ -1,6 +1,7 @@
 package cmc.delta.domain.dashboard.application.port.in;
 
 import cmc.delta.domain.dashboard.application.dto.DashboardMonthlyAccessResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemsResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
 import java.time.YearMonth;
@@ -13,4 +14,6 @@ public interface DashboardQueryUseCase {
 	DashboardMonthlyAccessResponse getMonthlyAccess(YearMonth yearMonth);
 
 	DashboardProblemsResponse getProblems(Pageable pageable);
+
+	DashboardProblemDetailResponse getProblemDetail(Long problemId);
 }

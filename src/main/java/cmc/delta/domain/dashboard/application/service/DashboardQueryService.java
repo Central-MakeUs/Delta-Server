@@ -2,14 +2,19 @@ package cmc.delta.domain.dashboard.application.service;
 
 import cmc.delta.domain.dashboard.application.dto.DashboardDailyAccessItem;
 import cmc.delta.domain.dashboard.application.dto.DashboardMonthlyAccessResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailRow;
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemItem;
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemsResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardUserItem;
 import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
+import cmc.delta.domain.dashboard.application.exception.DashboardException;
 import cmc.delta.domain.dashboard.application.port.in.DashboardQueryUseCase;
 import cmc.delta.domain.dashboard.application.port.out.DashboardMonthlyAccessQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardProblemQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardUserQueryPort;
+import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.HashSet;
@@ -29,6 +34,7 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 	private final DashboardUserQueryPort dashboardUserQueryPort;
 	private final DashboardMonthlyAccessQueryPort dashboardMonthlyAccessQueryPort;
 	private final DashboardProblemQueryPort dashboardProblemQueryPort;
+	private final StoragePort storagePort;
 
 	@Override
 	public DashboardUsersResponse getUsers(Pageable pageable) {
@@ -63,5 +69,13 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 		long totalElements = dashboardProblemQueryPort.countProblems();
 		int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
 		return new DashboardProblemsResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements, totalPages);
+	}
+
+	@Override
+	public DashboardProblemDetailResponse getProblemDetail(Long problemId) {
+		DashboardProblemDetailRow row = dashboardProblemQueryPort.findProblemDetail(problemId)
+			.orElseThrow(() -> new DashboardException(ErrorCode.PROBLEM_NOT_FOUND));
+		String viewUrl = storagePort.issueReadUrl(row.storageKey());
+		return row.toResponse(viewUrl);
 	}
 }
