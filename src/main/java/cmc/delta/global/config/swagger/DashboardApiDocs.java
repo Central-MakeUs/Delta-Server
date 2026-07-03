@@ -22,6 +22,16 @@ public final class DashboardApiDocs {
 	public static final String GET_USERS = """
 		관리자 대시보드의 사용자 관리 목록을 조회합니다.
 
+		요청 파라미터:
+		- page: 페이지 번호 (기본값 0)
+		- size: 페이지 크기 (기본값 20, 최대 100)
+		- sortBy: 정렬 기준 (ID / NICKNAME / ACCESS_COUNT / LAST_ACCESS_DATE / PROBLEM_COUNT, 기본값 ID)
+		- sortDirection: 정렬 방향 (ASC / DESC, 기본값 DESC)
+
+		정렬 기본 동작:
+		- sortBy, sortDirection을 생략하면 ID가 큰 사용자가 먼저 조회됩니다.
+		- LAST_ACCESS_DATE 정렬에서 최근 접속일이 없는 사용자는 항상 마지막에 조회됩니다.
+
 		응답 필드:
 		- content: 사용자 목록
 		  - userId: 사용자 ID
@@ -58,5 +68,24 @@ public final class DashboardApiDocs {
 		- size: 페이지 크기
 		- totalElements: 전체 문제 수
 		- totalPages: 전체 페이지 수
+		""";
+
+	public static final String GET_PROBLEM_DETAIL = """
+		관리자 대시보드의 문제 등록 현황 상세를 조회합니다.
+
+		경로 변수:
+		- problemId: 문제 ID
+
+		응답 필드:
+		- problemId: 문제 ID
+		- problemName: 문제명 (problem의 final unit 명)
+		- unitName: 단원명 (final unit의 parent unit 명, root unit이면 null)
+		- problemType: 문제 유형명
+		- aiSolutionCount: AI 풀이 요청 API 누적 호출 수 (캐시 적중 포함, 호출마다 +1)
+		- viewCount: 문제 상세조회 API 누적 호출 수
+		- registeredAt: 문제 등록 일시
+		- wrongAnswerCompleted: 오답 완료 여부 (completedAt 존재 여부)
+		- userRole: 등록한 사용자 권한 (USER / ADMIN)
+		- imageUrl: 원본 이미지 조회 URL
 		""";
 }
