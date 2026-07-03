@@ -22,6 +22,16 @@ public final class DashboardApiDocs {
 	public static final String GET_USERS = """
 		관리자 대시보드의 사용자 관리 목록을 조회합니다.
 
+		요청 파라미터:
+		- page: 페이지 번호 (기본값 0)
+		- size: 페이지 크기 (기본값 20, 최대 100)
+		- sortBy: 정렬 기준 (ID / NICKNAME / ACCESS_COUNT / LAST_ACCESS_DATE / PROBLEM_COUNT, 기본값 ID)
+		- sortDirection: 정렬 방향 (ASC / DESC, 기본값 DESC)
+
+		정렬 기본 동작:
+		- sortBy, sortDirection을 생략하면 ID가 큰 사용자가 먼저 조회됩니다.
+		- LAST_ACCESS_DATE 정렬에서 최근 접속일이 없는 사용자는 항상 마지막에 조회됩니다.
+
 		응답 필드:
 		- content: 사용자 목록
 		  - userId: 사용자 ID
