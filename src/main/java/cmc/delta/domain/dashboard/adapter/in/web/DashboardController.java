@@ -34,7 +34,10 @@ public class DashboardController {
 	@GetMapping("/users")
 	public ApiResponse<DashboardUsersResponse> getUsers(@ModelAttribute DashboardUsersRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
-			dashboardQueryUseCase.getUsers(PageRequest.of(request.page(), request.size())));
+			dashboardQueryUseCase.getUsers(
+				PageRequest.of(request.page(), request.size()),
+				request.sortBy(),
+				request.sortDirection()));
 	}
 
 	@Operation(summary = "달별 일별 접속자 수 조회", description = DashboardApiDocs.GET_MONTHLY_ACCESS)
