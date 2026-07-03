@@ -4,14 +4,20 @@ import static com.querydsl.core.types.Projections.constructor;
 
 import cmc.delta.domain.dashboard.application.dto.DashboardUserItem;
 import cmc.delta.domain.dashboard.application.port.out.DashboardUserQueryPort;
+import cmc.delta.domain.dashboard.model.enums.DashboardSortDirection;
+import cmc.delta.domain.dashboard.model.enums.DashboardUserSortBy;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.stats.model.QUserDailyAccess;
 import cmc.delta.domain.user.model.QUser;
 import cmc.delta.domain.user.model.enums.UserRole;
-import org.springframework.data.domain.Pageable;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.DateExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -19,27 +25,42 @@ import org.springframework.stereotype.Repository;
 public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort {
 
 	private final JPAQueryFactory queryFactory;
+	private final DashboardUserOrderResolver orderResolver;
 
 	@Override
-	public List<DashboardUserItem> findUsers(Pageable pageable) {
+	public List<DashboardUserItem> findUsers(
+		Pageable pageable,
+		DashboardUserSortBy sortBy,
+		DashboardSortDirection sortDirection) {
 		QUser user = QUser.user;
 		QUserDailyAccess access = QUserDailyAccess.userDailyAccess;
 		QProblem problem = QProblem.problem;
+
+		NumberExpression<Long> accessCount = access.accessDate.countDistinct();
+		DateExpression<LocalDate> lastAccessDate = access.accessDate.max();
+		NumberExpression<Long> problemCount = problem.id.countDistinct();
+		OrderSpecifier<?>[] orderBy = orderResolver.resolve(
+			sortBy,
+			sortDirection,
+			user,
+			accessCount,
+			lastAccessDate,
+			problemCount);
 
 		return queryFactory
 			.select(constructor(DashboardUserItem.class,
 				user.id,
 				user.nickname,
 				user.role,
-				access.accessDate.countDistinct(),
-				access.accessDate.max(),
-				problem.id.countDistinct()))
+				accessCount,
+				lastAccessDate,
+				problemCount))
 			.from(user)
 			.leftJoin(access).on(access.userId.eq(user.id))
 			.leftJoin(problem).on(problem.user.id.eq(user.id))
 			.where(user.role.ne(UserRole.ADMIN))
-			.groupBy(user.id, user.nickname)
-			.orderBy(user.id.desc())
+			.groupBy(user.id, user.nickname, user.role)
+			.orderBy(orderBy)
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch();
