@@ -5,16 +5,21 @@ import static org.mockito.Mockito.*;
 
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailRow;
+import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
 import cmc.delta.domain.dashboard.application.exception.DashboardException;
 import cmc.delta.domain.dashboard.application.port.out.DashboardMonthlyAccessQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardProblemQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardUserQueryPort;
+import cmc.delta.domain.dashboard.model.enums.DashboardSortDirection;
+import cmc.delta.domain.dashboard.model.enums.DashboardUserSortBy;
 import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.*;
+import org.springframework.data.domain.PageRequest;
 
 class DashboardQueryServiceTest {
 
@@ -37,6 +42,34 @@ class DashboardQueryServiceTest {
 			dashboardMonthlyAccessQueryPort,
 			dashboardProblemQueryPort,
 			storagePort);
+	}
+
+	@Test
+	@DisplayName("getUsers: 정렬 조건을 사용자 조회 포트에 전달한다")
+	void getUsers_passesSortOptionsToPort() {
+		// given
+		PageRequest pageable = PageRequest.of(1, 10);
+		when(dashboardUserQueryPort.findUsers(
+			pageable,
+			DashboardUserSortBy.ACCESS_COUNT,
+			DashboardSortDirection.ASC))
+			.thenReturn(List.of());
+		when(dashboardUserQueryPort.countUsers()).thenReturn(0L);
+
+		// when
+		DashboardUsersResponse response = sut.getUsers(
+			pageable,
+			DashboardUserSortBy.ACCESS_COUNT,
+			DashboardSortDirection.ASC);
+
+		// then
+		assertThat(response.page()).isEqualTo(1);
+		assertThat(response.size()).isEqualTo(10);
+		verify(dashboardUserQueryPort).findUsers(
+			pageable,
+			DashboardUserSortBy.ACCESS_COUNT,
+			DashboardSortDirection.ASC);
+		verify(dashboardUserQueryPort).countUsers();
 	}
 
 	@Test
