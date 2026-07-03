@@ -4,6 +4,7 @@ import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardMonthlyAcc
 import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardProblemsRequest;
 import cmc.delta.domain.dashboard.adapter.in.web.dto.request.DashboardUsersRequest;
 import cmc.delta.domain.dashboard.application.dto.DashboardMonthlyAccessResponse;
+import cmc.delta.domain.dashboard.application.dto.DashboardProblemDetailResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardProblemsResponse;
 import cmc.delta.domain.dashboard.application.dto.DashboardUsersResponse;
 import cmc.delta.domain.dashboard.application.port.in.DashboardQueryUseCase;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +34,10 @@ public class DashboardController {
 	@GetMapping("/users")
 	public ApiResponse<DashboardUsersResponse> getUsers(@ModelAttribute DashboardUsersRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
-			dashboardQueryUseCase.getUsers(PageRequest.of(request.page(), request.size())));
+			dashboardQueryUseCase.getUsers(
+				PageRequest.of(request.page(), request.size()),
+				request.sortBy(),
+				request.sortDirection()));
 	}
 
 	@Operation(summary = "달별 일별 접속자 수 조회", description = DashboardApiDocs.GET_MONTHLY_ACCESS)
@@ -48,5 +53,11 @@ public class DashboardController {
 	public ApiResponse<DashboardProblemsResponse> getProblems(@ModelAttribute DashboardProblemsRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
 			dashboardQueryUseCase.getProblems(PageRequest.of(request.page(), request.size())));
+	}
+
+	@Operation(summary = "문제 등록 현황 상세 조회", description = DashboardApiDocs.GET_PROBLEM_DETAIL)
+	@GetMapping("/problems/{problemId}")
+	public ApiResponse<DashboardProblemDetailResponse> getProblemDetail(@PathVariable Long problemId) {
+		return ApiResponses.success(SuccessCode.OK, dashboardQueryUseCase.getProblemDetail(problemId));
 	}
 }
