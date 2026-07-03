@@ -13,6 +13,8 @@ import cmc.delta.domain.dashboard.application.port.in.DashboardQueryUseCase;
 import cmc.delta.domain.dashboard.application.port.out.DashboardMonthlyAccessQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardProblemQueryPort;
 import cmc.delta.domain.dashboard.application.port.out.DashboardUserQueryPort;
+import cmc.delta.domain.dashboard.model.enums.DashboardSortDirection;
+import cmc.delta.domain.dashboard.model.enums.DashboardUserSortBy;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.storage.port.out.StoragePort;
 import java.time.LocalDate;
@@ -37,8 +39,11 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 	private final StoragePort storagePort;
 
 	@Override
-	public DashboardUsersResponse getUsers(Pageable pageable) {
-		List<DashboardUserItem> content = dashboardUserQueryPort.findUsers(pageable);
+	public DashboardUsersResponse getUsers(
+		Pageable pageable,
+		DashboardUserSortBy sortBy,
+		DashboardSortDirection sortDirection) {
+		List<DashboardUserItem> content = dashboardUserQueryPort.findUsers(pageable, sortBy, sortDirection);
 		long totalElements = dashboardUserQueryPort.countUsers();
 		int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
 		return new DashboardUsersResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements, totalPages);
