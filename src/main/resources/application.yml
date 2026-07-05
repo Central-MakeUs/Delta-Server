@@ -82,6 +82,10 @@ worker:
     fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:500}
     batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}
 
+  report:
+    fixed-delay-ms: ${WORKER_REPORT_FIXED_DELAY_MS:1000}
+    batch-size: ${WORKER_REPORT_BATCH_SIZE:2}
+
 jwt:
   issuer: cmc-delta
   secret-base64: ${JWT_SECRET_BASE64}
