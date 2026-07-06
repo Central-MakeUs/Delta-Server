@@ -82,6 +82,10 @@ worker:
     fixed-delay-ms: ${WORKER_AI_SOLUTION_FIXED_DELAY_MS:500}
     batch-size: ${WORKER_AI_SOLUTION_BATCH_SIZE:3}
 
+  report:
+    fixed-delay-ms: ${WORKER_REPORT_FIXED_DELAY_MS:1000}
+    batch-size: ${WORKER_REPORT_BATCH_SIZE:2}
+
 jwt:
   issuer: cmc-delta
   secret-base64: ${JWT_SECRET_BASE64}
@@ -97,8 +101,9 @@ mathpix:
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
-  model: gemini-2.5-flash-lite
-  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite-preview}
+  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite}
+  report-model: ${GEMINI_REPORT_MODEL:gemini-3.1-flash-lite}
 
 openai:
   base-url: https://api.openai.com
