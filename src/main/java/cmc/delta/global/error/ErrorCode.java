@@ -74,7 +74,12 @@ public enum ErrorCode {
 
 	// OCR / AI
 	OCR_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_010", "OCR 처리에 실패했습니다.", LogLevel.ERROR),
-	AI_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_020", "AI 처리에 실패했습니다.", LogLevel.ERROR);
+	AI_PROCESSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PROB_020", "AI 처리에 실패했습니다.", LogLevel.ERROR),
+
+	// REPORT (취약점 분석 리포트)
+	REPORT_NOT_ENOUGH_PROBLEMS(HttpStatus.BAD_REQUEST, "REPORT_001", "취약점 분석 리포트는 오답 5개 이상부터 생성할 수 있습니다.",
+		LogLevel.INFO),
+	REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT_002", "리포트를 찾을 수 없습니다.", LogLevel.INFO);
 
 	private final HttpStatus status;
 	private final String code;
