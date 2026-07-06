@@ -101,8 +101,9 @@ mathpix:
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_API_KEY}
-  model: gemini-2.5-flash-lite
-  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite-preview}
+  model: ${GEMINI_MODEL:gemini-3.1-flash-lite}
+  solve-model: ${GEMINI_SOLVE_MODEL:gemini-3.1-flash-lite}
+  report-model: ${GEMINI_REPORT_MODEL:gemini-3.1-flash-lite}
 
 openai:
   base-url: https://api.openai.com
