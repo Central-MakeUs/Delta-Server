@@ -42,11 +42,19 @@ public class SecurityConfig {
 	};
 
 	private static final String[] PUBLIC_POST_PATHS = {
-		"/api/v1/auth/**"
+		"/api/v1/auth/kakao",
+		"/api/v1/auth/google",
+		"/api/v1/auth/apple",
+		"/api/v1/auth/apple/exchange",
+		"/api/v1/auth/reissue"
 	};
 
 	public static final String[] JWT_SKIP_PATHS = {
-		"/api/v1/auth/",
+		"/api/v1/auth/kakao",
+		"/api/v1/auth/google",
+		"/api/v1/auth/apple",
+		"/api/v1/auth/apple/exchange",
+		"/api/v1/auth/reissue",
 		"/apple/callback"
 	};
 

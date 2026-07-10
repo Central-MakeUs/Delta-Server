@@ -40,6 +40,7 @@ class JwtAuthenticationFilterSkipTest {
 			"/api/v1/auth/kakao",
 			"/api/v1/auth/google",
 			"/api/v1/auth/apple",
+			"/api/v1/auth/apple/exchange",
 			"/api/v1/auth/reissue",
 			"/apple/callback");
 	}
@@ -63,6 +64,8 @@ class JwtAuthenticationFilterSkipTest {
 	@ValueSource(strings = {
 		"/api/v1/problems",
 		"/api/v1/users/me",
+		"/api/v1/auth/logout",
+		"/api/v1/auth/kakao/extra",
 		"/api/v1/auth-other/something"
 	})
 	@DisplayName("JWT_SKIP_PATHS에 해당하지 않는 경로는 필터를 통과함")
@@ -87,7 +90,7 @@ class JwtAuthenticationFilterSkipTest {
 		request.setRequestURI(path);
 
 		boolean expectedSkip = Stream.of(SecurityConfig.JWT_SKIP_PATHS)
-			.anyMatch(path::startsWith);
+			.anyMatch(path::equals);
 
 		// when
 		boolean actualSkip = filter.shouldNotFilter(request);

@@ -37,7 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	protected boolean shouldNotFilter(HttpServletRequest request) {
 		String uri = request.getRequestURI();
 		for (String path : SecurityConfig.JWT_SKIP_PATHS) {
-			if (uri.startsWith(path)) {
+			if (uri.equals(path)) {
 				return true;
 			}
 		}
