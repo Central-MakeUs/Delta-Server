@@ -38,7 +38,8 @@ public class SecurityConfig {
 		"/v3/api-docs/**",
 		"/actuator/health",
 		"/actuator/prometheus",
-		"/health"
+		"/health",
+		"/api/v1/app-version"
 	};
 
 	private static final String[] PUBLIC_POST_PATHS = {
@@ -55,6 +56,7 @@ public class SecurityConfig {
 		"/api/v1/auth/apple",
 		"/api/v1/auth/apple/exchange",
 		"/api/v1/auth/reissue",
+		"/api/v1/app-version",
 		"/apple/callback"
 	};
 
