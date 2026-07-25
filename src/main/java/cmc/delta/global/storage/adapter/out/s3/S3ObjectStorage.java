@@ -48,7 +48,6 @@ public class S3ObjectStorage implements ObjectStorage {
 
 			// 민감정보(바이트/원본파일명/URL 등) 로깅 금지
 			log.debug("S3 업로드 완료 storageKey={}", storageKey);
-			return null;
 		});
 	}
 
@@ -125,7 +124,6 @@ public class S3ObjectStorage implements ObjectStorage {
 			s3Client.deleteObject(delete);
 
 			log.debug("S3 삭제 완료 storageKey={}", storageKey);
-			return null;
 		});
 	}
 
@@ -143,7 +141,6 @@ public class S3ObjectStorage implements ObjectStorage {
 
 			s3Client.copyObject(copy);
 			log.debug("S3 복사 완료 sourceKey={} destKey={}", sourceStorageKey, destinationStorageKey);
-			return null;
 		});
 	}
 
@@ -151,6 +148,13 @@ public class S3ObjectStorage implements ObjectStorage {
 		if (ttl == null || ttl.isZero() || ttl.isNegative()) {
 			throw StorageException.invalidRequest("ttl이 올바르지 않습니다.");
 		}
+	}
+
+	private void execute(String action, Runnable operation) {
+		execute(action, () -> {
+			operation.run();
+			return null;
+		});
 	}
 
 	private <T> T execute(String action, Supplier<T> supplier) {
