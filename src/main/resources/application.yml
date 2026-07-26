@@ -12,6 +12,19 @@ spring:
     show-sql: false
     generate-ddl: true
 
+  # @Scheduled 워커가 서로를 막지 않도록 스케줄러 스레드를 워커 수 이상으로 확보한다.
+  task:
+    scheduling:
+      pool:
+        size: ${SCHEDULING_POOL_SIZE:8}
+
+  datasource:
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_IDLE:5}
+      connection-timeout: ${DB_POOL_CONNECTION_TIMEOUT_MS:3000}
+      max-lifetime: ${DB_POOL_MAX_LIFETIME_MS:900000}
+
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
@@ -97,6 +110,8 @@ mathpix:
   base-url: https://api.mathpix.com
   app-id: ${MATHPIX_APP_ID}
   app-key: ${MATHPIX_APP_KEY}
+  connect-timeout-ms: ${MATHPIX_CONNECT_TIMEOUT_MS:3000}
+  read-timeout-ms: ${MATHPIX_READ_TIMEOUT_MS:30000}
 
 gemini:
   base-url: https://generativelanguage.googleapis.com
