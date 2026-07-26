@@ -15,6 +15,7 @@ public class WorkerInfraConfig {
 
 	private static final int ZERO_QUEUE_CAPACITY = 0;
 	private static final int MIN_CONCURRENCY = 1;
+	private static final int SHUTDOWN_AWAIT_SECONDS = 30;
 	private static final String OCR_THREAD_PREFIX = "ocr-worker-";
 	private static final String AI_THREAD_PREFIX = "ai-worker-";
 	private static final String PURGE_THREAD_PREFIX = "purge-worker-";
@@ -47,6 +48,9 @@ public class WorkerInfraConfig {
 		executor.setQueueCapacity(ZERO_QUEUE_CAPACITY);
 		executor.setThreadNamePrefix(threadPrefix);
 		executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+		// 종료 시 처리 중인 스캔 작업이 유실되지 않도록 대기 후 셧다운한다.
+		executor.setWaitForTasksToCompleteOnShutdown(true);
+		executor.setAwaitTerminationSeconds(SHUTDOWN_AWAIT_SECONDS);
 		executor.initialize();
 		return executor;
 	}
