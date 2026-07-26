@@ -7,8 +7,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class TypeCandidatesParser {
@@ -41,6 +43,7 @@ public class TypeCandidatesParser {
 			JsonNode root = objectMapper.readTree(json);
 			return root.isArray() ? root : null;
 		} catch (Exception e) {
+			log.warn("AI 유형 후보 JSON 파싱 실패. 후보 전체를 무시함 reason={}", e.getMessage());
 			return null;
 		}
 	}
