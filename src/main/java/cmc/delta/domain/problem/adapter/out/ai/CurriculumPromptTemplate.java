@@ -7,8 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class CurriculumPromptTemplate {
 
-	private CurriculumPromptTemplate() {
-	}
+	private CurriculumPromptTemplate() {}
 
 	private static final String TEMPLATE = """
 		You are a Korean high school math problem classifier.

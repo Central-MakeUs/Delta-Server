@@ -50,16 +50,7 @@ public class MathpixOcrClient implements OcrClient {
 	public OcrResult recognize(InputStream imageStream, long contentLength, String filename) {
 		try {
 			MultiValueMap<String, Object> form = buildForm(imageStream, contentLength, filename);
-
-			String response = restClient.post()
-				.uri(props.baseUrl() + PATH_TEXT)
-				.header(HEADER_APP_ID, props.appId())
-				.header(HEADER_APP_KEY, props.appKey())
-				.contentType(MediaType.MULTIPART_FORM_DATA)
-				.body(form)
-				.retrieve()
-				.body(String.class);
-
+			String response = executeOcrRequest(form);
 			return parse(response);
 
 		} catch (RestClientResponseException e) {
@@ -71,6 +62,17 @@ public class MathpixOcrClient implements OcrClient {
 		} catch (Exception e) {
 			throw MathpixOcrException.responseParseFailed(e);
 		}
+	}
+
+	private String executeOcrRequest(MultiValueMap<String, Object> form) {
+		return restClient.post()
+			.uri(props.baseUrl() + PATH_TEXT)
+			.header(HEADER_APP_ID, props.appId())
+			.header(HEADER_APP_KEY, props.appKey())
+			.contentType(MediaType.MULTIPART_FORM_DATA)
+			.body(form)
+			.retrieve()
+			.body(String.class);
 	}
 
 	private MultiValueMap<String, Object> buildForm(InputStream imageStream, long contentLength, String filename) {
