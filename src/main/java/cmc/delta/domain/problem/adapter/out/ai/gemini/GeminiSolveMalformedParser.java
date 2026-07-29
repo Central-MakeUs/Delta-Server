@@ -55,17 +55,19 @@ class GeminiSolveMalformedParser {
 			return null;
 		}
 
+		String candidate = extractBoundedFieldValue(text, valueStartIndex, nextFieldKey);
+		return isUsableMalformedFieldValue(candidate) ? candidate : null;
+	}
+
+	private String extractBoundedFieldValue(String text, int valueStartIndex, String nextFieldKey) {
 		int closedQuoteIndex = findClosingQuoteIndex(text, valueStartIndex);
-		String candidate;
 		if (closedQuoteIndex > valueStartIndex) {
-			candidate = text.substring(valueStartIndex, closedQuoteIndex);
-			return isUsableMalformedFieldValue(candidate) ? candidate : null;
+			return text.substring(valueStartIndex, closedQuoteIndex);
 		}
 
 		int nextFieldIndex = nextFieldKey == null ? -1 : text.indexOf(nextFieldKey, valueStartIndex);
 		if (nextFieldIndex > valueStartIndex) {
-			candidate = trimMalformedTail(text.substring(valueStartIndex, nextFieldIndex));
-			return isUsableMalformedFieldValue(candidate) ? candidate : null;
+			return trimMalformedTail(text.substring(valueStartIndex, nextFieldIndex));
 		}
 
 		return null;
@@ -114,13 +116,10 @@ class GeminiSolveMalformedParser {
 				escaped = false;
 				continue;
 			}
-			if (current == '\\') {
-				escaped = true;
-				continue;
-			}
 			if (current == '"') {
 				return index;
 			}
+			escaped = current == '\\';
 		}
 		return -1;
 	}
@@ -130,15 +129,22 @@ class GeminiSolveMalformedParser {
 		if (trimmed == null || trimmed.isBlank()) {
 			return null;
 		}
-		if (trimmed.endsWith(",")) {
-			trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
+		return stripTrailingQuote(stripTrailingJsonPunctuation(trimmed));
+	}
+
+	private String stripTrailingJsonPunctuation(String value) {
+		String result = value;
+		if (result.endsWith(",")) {
+			result = result.substring(0, result.length() - 1).trim();
 		}
-		if (trimmed.endsWith("}")) {
-			trimmed = trimmed.substring(0, trimmed.length() - 1).trim();
+		if (result.endsWith("}")) {
+			result = result.substring(0, result.length() - 1).trim();
 		}
-		if (trimmed.endsWith("\"")) {
-			trimmed = trimmed.substring(0, trimmed.length() - 1);
-		}
-		return trimmed;
+		return result;
+	}
+
+	private String stripTrailingQuote(String value) {
+		// 닫는 따옴표 앞의 공백은 값의 일부일 수 있으므로 trim하지 않는다.
+		return value.endsWith("\"") ? value.substring(0, value.length() - 1) : value;
 	}
 }
