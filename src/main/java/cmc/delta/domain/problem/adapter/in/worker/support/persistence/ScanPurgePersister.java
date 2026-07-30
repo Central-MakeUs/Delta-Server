@@ -6,7 +6,6 @@ import cmc.delta.domain.problem.adapter.out.persistence.scan.prediction.ProblemS
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.model.problem.Problem;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
