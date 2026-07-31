@@ -38,6 +38,10 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 		List<TypePrediction> top = predictions == null ? List.of()
 			: predictions.stream().limit(MAX_PREDICTED_TYPES).toList();
 
+		predictionRepository.saveAll(toPredictionRows(scan, top));
+	}
+
+	private List<ProblemScanTypePrediction> toPredictionRows(ProblemScan scan, List<TypePrediction> top) {
 		List<String> typeIds = top.stream().map(TypePrediction::typeId).toList();
 		Map<String, ProblemType> typeMap = problemTypeReader.findByIds(typeIds).stream()
 			.collect(Collectors.toMap(ProblemType::getId, Function.identity()));
@@ -51,8 +55,7 @@ public class ScanTypePredictionPersistenceAdapter implements ScanTypePredictionW
 
 			rows.add(new ProblemScanTypePrediction(scan, type, rank++, p.confidence()));
 		}
-
-		predictionRepository.saveAll(rows);
+		return rows;
 	}
 
 	@Override

@@ -21,28 +21,44 @@ public class ProblemListOrderResolver {
 		List<OrderSpecifier<?>> orders = new ArrayList<>(3);
 
 		switch (sort) {
-			case OLDEST -> {
-				orders.add(p.problem.createdAt.asc());
-				orders.add(p.problem.id.asc());
-			}
-			case UNIT_MOST, UNIT_LEAST -> {
-				NumberExpression<Long> subjectCnt = countExpressions.subjectCount(userId, condition, p.subject.id);
-				orders.add(sort == ProblemListSort.UNIT_MOST ? subjectCnt.desc() : subjectCnt.asc());
-				orders.add(p.problem.createdAt.desc());
-				orders.add(p.problem.id.desc());
-			}
-			case TYPE_MOST, TYPE_LEAST -> {
-				NumberExpression<Long> typeCnt = countExpressions.typeCount(userId, condition, p.type.id);
-				orders.add(sort == ProblemListSort.TYPE_MOST ? typeCnt.desc() : typeCnt.asc());
-				orders.add(p.problem.createdAt.desc());
-				orders.add(p.problem.id.desc());
-			}
-			case RECENT -> {
-				orders.add(p.problem.createdAt.desc());
-				orders.add(p.problem.id.desc());
-			}
+			case OLDEST -> addOldestOrders(orders, p);
+			case UNIT_MOST, UNIT_LEAST -> addUnitCountOrders(orders, userId, condition, sort, p);
+			case TYPE_MOST, TYPE_LEAST -> addTypeCountOrders(orders, userId, condition, sort, p);
+			case RECENT -> addRecentOrders(orders, p);
 		}
 
 		return orders.toArray(new OrderSpecifier<?>[0]);
+	}
+
+	private void addOldestOrders(List<OrderSpecifier<?>> orders, ProblemListQuerySupport.Paths p) {
+		orders.add(p.problem.createdAt.asc());
+		orders.add(p.problem.id.asc());
+	}
+
+	private void addRecentOrders(List<OrderSpecifier<?>> orders, ProblemListQuerySupport.Paths p) {
+		orders.add(p.problem.createdAt.desc());
+		orders.add(p.problem.id.desc());
+	}
+
+	private void addUnitCountOrders(
+		List<OrderSpecifier<?>> orders,
+		Long userId,
+		ProblemListCondition condition,
+		ProblemListSort sort,
+		ProblemListQuerySupport.Paths p) {
+		NumberExpression<Long> subjectCnt = countExpressions.subjectCount(userId, condition, p.subject.id);
+		orders.add(sort == ProblemListSort.UNIT_MOST ? subjectCnt.desc() : subjectCnt.asc());
+		addRecentOrders(orders, p);
+	}
+
+	private void addTypeCountOrders(
+		List<OrderSpecifier<?>> orders,
+		Long userId,
+		ProblemListCondition condition,
+		ProblemListSort sort,
+		ProblemListQuerySupport.Paths p) {
+		NumberExpression<Long> typeCnt = countExpressions.typeCount(userId, condition, p.type.id);
+		orders.add(sort == ProblemListSort.TYPE_MOST ? typeCnt.desc() : typeCnt.asc());
+		addRecentOrders(orders, p);
 	}
 }

@@ -33,8 +33,7 @@ class ScanTypePredictionCommandServiceTest {
 		List<PredictedType> input = List.of(
 			new PredictedType("T1", BigDecimal.valueOf(0.9)),
 			new PredictedType("T2", BigDecimal.valueOf(0.7)),
-			new PredictedType("T3", BigDecimal.valueOf(0.5))
-		);
+			new PredictedType("T3", BigDecimal.valueOf(0.5)));
 
 		// when
 		sut.replacePredictedTypes(scanId, input);
@@ -81,7 +80,7 @@ class ScanTypePredictionCommandServiceTest {
 			new PredictedType("T3", BigDecimal.valueOf(0.7)),
 			new PredictedType("T4", BigDecimal.valueOf(0.6)),
 			new PredictedType("T5", BigDecimal.valueOf(0.5)),
-			new PredictedType("T6", BigDecimal.valueOf(0.4))  // 6번째 → 잘려야 함
+			new PredictedType("T6", BigDecimal.valueOf(0.4)) // 6번째 → 잘려야 함
 		);
 
 		// when
@@ -107,8 +106,7 @@ class ScanTypePredictionCommandServiceTest {
 			new PredictedType("T2", BigDecimal.valueOf(0.8)),
 			new PredictedType("T3", BigDecimal.valueOf(0.7)),
 			new PredictedType("T4", BigDecimal.valueOf(0.6)),
-			new PredictedType("T5", BigDecimal.valueOf(0.5))
-		);
+			new PredictedType("T5", BigDecimal.valueOf(0.5)));
 
 		// when
 		sut.replacePredictedTypes(scanId, input);

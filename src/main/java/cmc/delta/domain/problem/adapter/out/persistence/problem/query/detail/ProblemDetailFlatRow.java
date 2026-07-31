@@ -1,11 +1,10 @@
 package cmc.delta.domain.problem.adapter.out.persistence.problem.query.detail;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemTypeTagRow;
 import cmc.delta.domain.problem.model.enums.AnswerFormat;
+import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProblemDetailFlatRow(
 	Long problemId,

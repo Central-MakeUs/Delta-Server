@@ -45,8 +45,7 @@ class AiScanPersistCommandServiceTest {
 
 		List<TypeCandidate> parsed = List.of(
 			new TypeCandidate("T1", BigDecimal.valueOf(0.9)),
-			new TypeCandidate("T2", BigDecimal.valueOf(0.7))
-		);
+			new TypeCandidate("T2", BigDecimal.valueOf(0.7)));
 		when(typeCandidatesParser.parseTypeCandidates(any())).thenReturn(parsed);
 
 		// when

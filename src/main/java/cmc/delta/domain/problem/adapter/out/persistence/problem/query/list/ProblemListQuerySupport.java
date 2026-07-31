@@ -11,6 +11,8 @@ import cmc.delta.domain.problem.application.port.out.support.CursorPageResult;
 import cmc.delta.domain.problem.model.enums.ProblemListSort;
 import cmc.delta.domain.problem.model.problem.QProblem;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.ConstructorExpression;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDateTime;
@@ -56,14 +58,30 @@ public class ProblemListQuerySupport {
 
 		applyCursorPredicate(where, condition, cursorQuery, p);
 
+		List<ProblemListRow> fetched = fetchCursorContent(userId, condition, cursorQuery, p, where);
+
+		Long totalElements = cursorQuery.isFirstPage() ? fetchTotal(p, baseWhere) : null;
+		return toCursorPageResult(fetched, cursorQuery.size(), totalElements);
+	}
+
+	private List<ProblemListRow> fetchCursorContent(
+		Long userId,
+		ProblemListCondition condition,
+		CursorQuery cursorQuery,
+		Paths p,
+		BooleanBuilder where) {
 		JPAQuery<ProblemListRow> contentQuery = buildContentQuery(p, where);
 		contentQuery.orderBy(orderResolver.resolve(userId, condition, p));
 
-		int size = cursorQuery.size();
-		List<ProblemListRow> fetched = contentQuery
-			.limit((long)size + 1)
+		return contentQuery
+			.limit((long)cursorQuery.size() + 1)
 			.fetch();
+	}
 
+	private CursorPageResult<ProblemListRow> toCursorPageResult(
+		List<ProblemListRow> fetched,
+		int size,
+		Long totalElements) {
 		boolean hasNext = fetched.size() > size;
 		List<ProblemListRow> content = hasNext ? fetched.subList(0, size) : fetched;
 
@@ -75,7 +93,6 @@ public class ProblemListQuerySupport {
 			nextLastCreatedAt = last.createdAt();
 		}
 
-		Long totalElements = cursorQuery.isFirstPage() ? fetchTotal(p, baseWhere) : null;
 		return new CursorPageResult<>(content, hasNext, nextLastId, nextLastCreatedAt, totalElements);
 	}
 
@@ -95,17 +112,21 @@ public class ProblemListQuerySupport {
 		}
 
 		ProblemListSort sort = (condition.sort() == null) ? ProblemListSort.RECENT : condition.sort();
+		where.and(cursorPredicate(sort, lastId, lastCreatedAt, p));
+	}
+
+	private BooleanExpression cursorPredicate(
+		ProblemListSort sort,
+		Long lastId,
+		LocalDateTime lastCreatedAt,
+		Paths p) {
 		if (sort == ProblemListSort.RECENT) {
-			where.and(
-				p.problem.createdAt.lt(lastCreatedAt)
-					.or(p.problem.createdAt.eq(lastCreatedAt).and(p.problem.id.lt(lastId))));
-			return;
+			return p.problem.createdAt.lt(lastCreatedAt)
+				.or(p.problem.createdAt.eq(lastCreatedAt).and(p.problem.id.lt(lastId)));
 		}
 		if (sort == ProblemListSort.OLDEST) {
-			where.and(
-				p.problem.createdAt.gt(lastCreatedAt)
-					.or(p.problem.createdAt.eq(lastCreatedAt).and(p.problem.id.gt(lastId))));
-			return;
+			return p.problem.createdAt.gt(lastCreatedAt)
+				.or(p.problem.createdAt.eq(lastCreatedAt).and(p.problem.id.gt(lastId)));
 		}
 
 		throw new IllegalArgumentException("cursor pagination supports only RECENT/OLDEST");
@@ -113,23 +134,27 @@ public class ProblemListQuerySupport {
 
 	private JPAQuery<ProblemListRow> buildContentQuery(Paths p, BooleanBuilder where) {
 		return queryFactory
-			.select(constructor(
-				ProblemListRow.class,
-				p.problem.id,
-				p.subject.id,
-				p.subject.name,
-				p.unit.id,
-				p.unit.name,
-				p.type.id,
-				p.type.name,
-				p.problem.originalStorageKey,
-				p.problem.completedAt,
-				p.problem.createdAt))
+			.select(listRowProjection(p))
 			.from(p.problem)
 			.join(p.problem.finalUnit, p.unit)
 			.leftJoin(p.unit.parent, p.subject)
 			.join(p.problem.finalType, p.type)
 			.where(where);
+	}
+
+	private ConstructorExpression<ProblemListRow> listRowProjection(Paths p) {
+		return constructor(
+			ProblemListRow.class,
+			p.problem.id,
+			p.subject.id,
+			p.subject.name,
+			p.unit.id,
+			p.unit.name,
+			p.type.id,
+			p.type.name,
+			p.problem.originalStorageKey,
+			p.problem.completedAt,
+			p.problem.createdAt);
 	}
 
 	private long fetchTotal(Paths p, BooleanBuilder where) {
