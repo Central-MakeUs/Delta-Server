@@ -7,7 +7,6 @@ import cmc.delta.domain.problem.application.port.out.problem.ProblemAiSolutionTa
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.model.problem.ProblemAiSolutionTask;
 import cmc.delta.global.error.ErrorCode;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +24,12 @@ public class ProblemAiSolutionQueryServiceImpl implements ProblemAiSolutionQuery
 		problemRepositoryPort.findByIdAndUserId(problemId, userId)
 			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
 
-		Optional<ProblemAiSolutionTask> optionalTask = taskRepositoryPort.findByProblemId(problemId);
-		if (optionalTask.isEmpty()) {
-			return ProblemAiSolutionDetailResponse.notRequested();
-		}
+		return taskRepositoryPort.findByProblemId(problemId)
+			.map(this::toDetailResponse)
+			.orElseGet(ProblemAiSolutionDetailResponse::notRequested);
+	}
 
-		ProblemAiSolutionTask task = optionalTask.get();
-		ProblemAiSolutionDetailResponse.SolutionContent solutionContent = toSolutionContent(task);
-
+	private ProblemAiSolutionDetailResponse toDetailResponse(ProblemAiSolutionTask task) {
 		return new ProblemAiSolutionDetailResponse(
 			task.getId(),
 			task.getStatus().name(),
@@ -40,7 +37,7 @@ public class ProblemAiSolutionQueryServiceImpl implements ProblemAiSolutionQuery
 			task.getRequestedAt(),
 			task.getStartedAt(),
 			task.getCompletedAt(),
-			solutionContent);
+			toSolutionContent(task));
 	}
 
 	private ProblemAiSolutionDetailResponse.SolutionContent toSolutionContent(ProblemAiSolutionTask task) {

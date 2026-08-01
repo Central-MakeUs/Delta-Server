@@ -10,6 +10,7 @@ import cmc.delta.domain.problem.application.port.out.problem.ProblemAiSolutionTa
 import cmc.delta.domain.problem.application.port.out.problem.ProblemRepositoryPort;
 import cmc.delta.domain.problem.application.port.out.storage.ObjectStorageReader;
 import cmc.delta.domain.problem.application.support.command.SolutionTextNormalizer;
+import cmc.delta.domain.problem.model.enums.ProblemAiSolutionStatus;
 import cmc.delta.domain.problem.model.problem.Problem;
 import cmc.delta.domain.problem.model.problem.ProblemAiSolutionTask;
 import cmc.delta.global.error.ErrorCode;
@@ -21,6 +22,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +44,13 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 	private static final String MIME_TYPE_IMAGE_WEBP = "image/webp";
 	private static final String MIME_TYPE_IMAGE_HEIC = "image/heic";
 
+	// if 체인 대신 확장자 → MIME 매핑 테이블로 분기한다.
+	private static final Map<String, String> MIME_TYPES_BY_EXTENSION = Map.of(
+		".png", MIME_TYPE_IMAGE_PNG,
+		".webp", MIME_TYPE_IMAGE_WEBP,
+		".heic", MIME_TYPE_IMAGE_HEIC,
+		".heif", MIME_TYPE_IMAGE_HEIC);
+
 	private static final String REPEATED_GARBAGE_SENTENCE = "A$ 에서 $M N$ 에 내린 수선은 외접원의 중심 $O$ 를 지난다.";
 	private static final int REPEATED_GARBAGE_THRESHOLD = 10;
 
@@ -53,9 +63,7 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 	@Override
 	@Transactional
 	public ProblemAiSolutionRequestResponse requestMyProblemAiSolution(Long userId, Long problemId) {
-		Problem problem = problemRepositoryPort.findByIdAndUserId(problemId, userId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
-
+		Problem problem = findMyProblem(userId, problemId);
 		problemRepositoryPort.incrementAiSolutionCount(problemId);
 
 		LocalDateTime now = LocalDateTime.now(clock);
@@ -63,39 +71,33 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 
 		Optional<ProblemAiSolutionTask> optionalTask = taskRepositoryPort.findByProblemIdForUpdate(problemId);
 		if (optionalTask.isEmpty()) {
-			ProblemAiSolutionTask createdTask = ProblemAiSolutionTask.createPending(
-				problem,
-				PROMPT_VERSION,
-				inputHash,
-				problem.getProblemMarkdown(),
-				problem.getAnswerFormat(),
-				problem.getAnswerValue(),
-				problem.getAnswerChoiceNo(),
-				now);
-			return toRequestResponse(taskRepositoryPort.save(createdTask), false);
+			return toRequestResponse(createPendingTask(problem, inputHash, now), false);
 		}
 
 		ProblemAiSolutionTask existingTask = optionalTask.get();
-		if (shouldRegenerateReadyTask(existingTask)) {
-			existingTask.requestAgain(
-				PROMPT_VERSION,
-				inputHash,
-				problem.getProblemMarkdown(),
-				problem.getAnswerFormat(),
-				problem.getAnswerValue(),
-				problem.getAnswerChoiceNo(),
-				now);
-			return toRequestResponse(existingTask, false);
-		}
-		if (existingTask.canReuseFor(inputHash)) {
-			return new ProblemAiSolutionRequestResponse(
-				existingTask.getId(),
-				existingTask.getStatus().name(),
-				true,
-				existingTask.getRequestedAt());
+		if (!shouldRegenerateReadyTask(existingTask) && existingTask.canReuseFor(inputHash)) {
+			return toRequestResponse(existingTask, true);
 		}
 
-		existingTask.requestAgain(
+		requestTaskAgain(existingTask, problem, inputHash, now);
+		return toRequestResponse(existingTask, false);
+	}
+
+	@Override
+	@Transactional
+	public void deleteMyProblemAiSolution(Long userId, Long problemId) {
+		findMyProblem(userId, problemId);
+		taskRepositoryPort.deleteByProblemId(problemId);
+	}
+
+	private Problem findMyProblem(Long userId, Long problemId) {
+		return problemRepositoryPort.findByIdAndUserId(problemId, userId)
+			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
+	}
+
+	private ProblemAiSolutionTask createPendingTask(Problem problem, String inputHash, LocalDateTime now) {
+		ProblemAiSolutionTask createdTask = ProblemAiSolutionTask.createPending(
+			problem,
 			PROMPT_VERSION,
 			inputHash,
 			problem.getProblemMarkdown(),
@@ -103,15 +105,18 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			problem.getAnswerValue(),
 			problem.getAnswerChoiceNo(),
 			now);
-		return toRequestResponse(existingTask, false);
+		return taskRepositoryPort.save(createdTask);
 	}
 
-	@Override
-	@Transactional
-	public void deleteMyProblemAiSolution(Long userId, Long problemId) {
-		problemRepositoryPort.findByIdAndUserId(problemId, userId)
-			.orElseThrow(() -> new ProblemException(ErrorCode.PROBLEM_NOT_FOUND));
-		taskRepositoryPort.deleteByProblemId(problemId);
+	private void requestTaskAgain(ProblemAiSolutionTask task, Problem problem, String inputHash, LocalDateTime now) {
+		task.requestAgain(
+			PROMPT_VERSION,
+			inputHash,
+			problem.getProblemMarkdown(),
+			problem.getAnswerFormat(),
+			problem.getAnswerValue(),
+			problem.getAnswerChoiceNo(),
+			now);
 	}
 
 	@Transactional
@@ -132,25 +137,34 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 			ProblemAiSolvePrompt prompt = new ProblemAiSolvePrompt(imageBytes, imageMimeType, null, null, null);
 			ProblemAiSolveResult solveResult = problemSolveAiClient.solveProblem(prompt);
 
-			String normalizedText = SolutionTextNormalizer.normalize(solveResult.solutionText());
-
-			LocalDateTime completedAt = LocalDateTime.now(clock);
-			task.markReady(solveResult.solutionLatex(), normalizedText, completedAt);
-			log.debug("AI 풀이 비동기 실행 성공 taskId={} problemId={} elapsedSeconds={} completedAt={}",
-				task.getId(), task.getProblem().getId(), elapsedSeconds(startedAt, completedAt), completedAt);
+			markSolveSuccess(task, solveResult, startedAt);
 		} catch (Exception exception) {
-			LocalDateTime failedAt = LocalDateTime.now(clock);
-			String failureReason = extractFailureReason(exception);
-			task.markTerminalFailure(failureReason, failedAt);
-			log.debug(
-				"AI 풀이 비동기 실행 실패 taskId={} problemId={} elapsedSeconds={} failureReason={} exceptionClass={} message={}",
-				task.getId(), task.getProblem().getId(), elapsedSeconds(startedAt, failedAt),
-				failureReason, exception.getClass().getSimpleName(), exception.getMessage());
+			markSolveFailure(task, exception, startedAt);
 		}
 	}
 
+	private void markSolveSuccess(ProblemAiSolutionTask task, ProblemAiSolveResult solveResult,
+		LocalDateTime startedAt) {
+		String normalizedText = SolutionTextNormalizer.normalize(solveResult.solutionText());
+
+		LocalDateTime completedAt = LocalDateTime.now(clock);
+		task.markReady(solveResult.solutionLatex(), normalizedText, completedAt);
+		log.debug("AI 풀이 비동기 실행 성공 taskId={} problemId={} elapsedSeconds={} completedAt={}",
+			task.getId(), task.getProblem().getId(), elapsedSeconds(startedAt, completedAt), completedAt);
+	}
+
+	private void markSolveFailure(ProblemAiSolutionTask task, Exception exception, LocalDateTime startedAt) {
+		LocalDateTime failedAt = LocalDateTime.now(clock);
+		String failureReason = extractFailureReason(exception);
+		task.markTerminalFailure(failureReason, failedAt);
+		log.debug(
+			"AI 풀이 비동기 실행 실패 taskId={} problemId={} elapsedSeconds={} failureReason={} exceptionClass={} message={}",
+			task.getId(), task.getProblem().getId(), elapsedSeconds(startedAt, failedAt),
+			failureReason, exception.getClass().getSimpleName(), exception.getMessage());
+	}
+
 	private boolean shouldRegenerateReadyTask(ProblemAiSolutionTask task) {
-		if (!"READY".equals(task.getStatus().name())) {
+		if (task.getStatus() != ProblemAiSolutionStatus.READY) {
 			return false;
 		}
 		String solutionText = task.getSolutionText();
@@ -208,15 +222,18 @@ public class ProblemAiSolutionCommandServiceImpl implements ProblemAiSolutionCom
 	}
 
 	private String resolveImageMimeType(ProblemAiSolutionTask task) {
-		String key = task.getProblem().getOriginalStorageKey();
-		if (key == null || key.isBlank()) {
-			return MIME_TYPE_IMAGE_JPEG;
-		}
-		String lower = key.toLowerCase();
-		if (lower.endsWith(".png")) return MIME_TYPE_IMAGE_PNG;
-		if (lower.endsWith(".webp")) return MIME_TYPE_IMAGE_WEBP;
-		if (lower.endsWith(".heic") || lower.endsWith(".heif")) return MIME_TYPE_IMAGE_HEIC;
-		return MIME_TYPE_IMAGE_JPEG;
+		return Optional.ofNullable(task.getProblem().getOriginalStorageKey())
+			.filter(key -> !key.isBlank())
+			.flatMap(this::findMimeTypeByExtension)
+			.orElse(MIME_TYPE_IMAGE_JPEG);
+	}
+
+	private Optional<String> findMimeTypeByExtension(String storageKey) {
+		String lowerKey = storageKey.toLowerCase(Locale.ROOT);
+		return MIME_TYPES_BY_EXTENSION.entrySet().stream()
+			.filter(entry -> lowerKey.endsWith(entry.getKey()))
+			.map(Map.Entry::getValue)
+			.findFirst();
 	}
 
 	private String extractFailureReason(Exception exception) {
