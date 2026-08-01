@@ -59,7 +59,10 @@ public class ProblemListConditionFactory {
 		if (inner.isEmpty()) {
 			return List.of();
 		}
+		return parseJsonArrayItems(inner);
+	}
 
+	private List<String> parseJsonArrayItems(String inner) {
 		String[] parts = inner.split(",");
 		List<String> out = new ArrayList<>(parts.length);
 		for (String part : parts) {
