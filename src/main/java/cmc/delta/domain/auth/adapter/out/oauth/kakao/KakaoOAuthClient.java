@@ -29,15 +29,7 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 
 	@Override
 	public OAuthToken exchangeCode(String code) {
-		MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
-		form.add("client_id", properties.clientId());
-		form.add("redirect_uri", properties.redirectUri());
-		form.add("code", code);
-
-		if (StringUtils.hasText(properties.clientSecret())) {
-			form.add("client_secret", properties.clientSecret());
-		}
+		MultiValueMap<String, String> form = buildTokenRequestForm(code);
 
 		KakaoTokenResponse body = oauthHttpClient.postForm(
 			PROVIDER_NAME,
@@ -53,10 +45,22 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 		return new OAuthToken(body.accessToken());
 	}
 
+	private MultiValueMap<String, String> buildTokenRequestForm(String code) {
+		MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
+		form.add("client_id", properties.clientId());
+		form.add("redirect_uri", properties.redirectUri());
+		form.add("code", code);
+
+		if (StringUtils.hasText(properties.clientSecret())) {
+			form.add("client_secret", properties.clientSecret());
+		}
+		return form;
+	}
+
 	@Override
 	public OAuthProfile fetchProfile(String providerAccessToken) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.setBearerAuth(providerAccessToken);
+		HttpHeaders headers = buildBearerHeaders(providerAccessToken);
 
 		KakaoUserResponse body = oauthHttpClient.get(
 			PROVIDER_NAME,
@@ -69,6 +73,16 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			throw OAuthClientException.profileFetchInvalidResponse(PROVIDER_NAME);
 		}
 
+		return buildProfile(body);
+	}
+
+	private HttpHeaders buildBearerHeaders(String providerAccessToken) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.setBearerAuth(providerAccessToken);
+		return headers;
+	}
+
+	private OAuthProfile buildProfile(KakaoUserResponse body) {
 		String email = (body.kakaoAccount() == null) ? null : body.kakaoAccount().email();
 		String nickname = (body.kakaoAccount() != null && body.kakaoAccount().profile() != null)
 			? body.kakaoAccount().profile().nickname()
