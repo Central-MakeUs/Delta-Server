@@ -15,10 +15,8 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@Table(
-	name = "user_daily_access",
-	uniqueConstraints = @UniqueConstraint(name = "uk_user_daily_access", columnNames = {"user_id", "access_date"})
-)
+@Table(name = "user_daily_access", uniqueConstraints = @UniqueConstraint(name = "uk_user_daily_access", columnNames = {
+	"user_id", "access_date"}))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserDailyAccess extends BaseTimeEntity {
 

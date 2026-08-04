@@ -32,7 +32,8 @@ public class DashboardController {
 
 	@Operation(summary = "사용자 관리 목록 조회", description = DashboardApiDocs.GET_USERS)
 	@GetMapping("/users")
-	public ApiResponse<DashboardUsersResponse> getUsers(@ModelAttribute DashboardUsersRequest request) {
+	public ApiResponse<DashboardUsersResponse> getUsers(@ModelAttribute
+	DashboardUsersRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
 			dashboardQueryUseCase.getUsers(
 				PageRequest.of(request.page(), request.size()),
@@ -43,21 +44,24 @@ public class DashboardController {
 	@Operation(summary = "달별 일별 접속자 수 조회", description = DashboardApiDocs.GET_MONTHLY_ACCESS)
 	@GetMapping("/access/monthly")
 	public ApiResponse<DashboardMonthlyAccessResponse> getMonthlyAccess(
-		@ModelAttribute DashboardMonthlyAccessRequest request) {
+		@ModelAttribute
+		DashboardMonthlyAccessRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
 			dashboardQueryUseCase.getMonthlyAccess(request.toYearMonth()));
 	}
 
 	@Operation(summary = "문제 등록 현황 조회", description = DashboardApiDocs.GET_PROBLEMS)
 	@GetMapping("/problems")
-	public ApiResponse<DashboardProblemsResponse> getProblems(@ModelAttribute DashboardProblemsRequest request) {
+	public ApiResponse<DashboardProblemsResponse> getProblems(@ModelAttribute
+	DashboardProblemsRequest request) {
 		return ApiResponses.success(SuccessCode.OK,
 			dashboardQueryUseCase.getProblems(PageRequest.of(request.page(), request.size())));
 	}
 
 	@Operation(summary = "문제 등록 현황 상세 조회", description = DashboardApiDocs.GET_PROBLEM_DETAIL)
 	@GetMapping("/problems/{problemId}")
-	public ApiResponse<DashboardProblemDetailResponse> getProblemDetail(@PathVariable Long problemId) {
+	public ApiResponse<DashboardProblemDetailResponse> getProblemDetail(@PathVariable
+	Long problemId) {
 		return ApiResponses.success(SuccessCode.OK, dashboardQueryUseCase.getProblemDetail(problemId));
 	}
 }

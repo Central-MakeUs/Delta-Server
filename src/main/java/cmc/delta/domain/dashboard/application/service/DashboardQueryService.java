@@ -45,8 +45,8 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 		DashboardSortDirection sortDirection) {
 		List<DashboardUserItem> content = dashboardUserQueryPort.findUsers(pageable, sortBy, sortDirection);
 		long totalElements = dashboardUserQueryPort.countUsers();
-		int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
-		return new DashboardUsersResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements, totalPages);
+		return new DashboardUsersResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements,
+			calculateTotalPages(totalElements, pageable));
 	}
 
 	@Override
@@ -72,8 +72,8 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 	public DashboardProblemsResponse getProblems(Pageable pageable) {
 		List<DashboardProblemItem> content = dashboardProblemQueryPort.findProblems(pageable);
 		long totalElements = dashboardProblemQueryPort.countProblems();
-		int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
-		return new DashboardProblemsResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements, totalPages);
+		return new DashboardProblemsResponse(content, pageable.getPageNumber(), pageable.getPageSize(), totalElements,
+			calculateTotalPages(totalElements, pageable));
 	}
 
 	@Override
@@ -82,5 +82,12 @@ public class DashboardQueryService implements DashboardQueryUseCase {
 			.orElseThrow(() -> new DashboardException(ErrorCode.PROBLEM_NOT_FOUND));
 		String viewUrl = storagePort.issueReadUrl(row.storageKey());
 		return row.toResponse(viewUrl);
+	}
+
+	private int calculateTotalPages(long totalElements, Pageable pageable) {
+		if (totalElements == 0) {
+			return 0;
+		}
+		return (int)((totalElements + pageable.getPageSize() - 1) / pageable.getPageSize());
 	}
 }

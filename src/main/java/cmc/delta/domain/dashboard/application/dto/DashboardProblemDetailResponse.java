@@ -13,6 +13,5 @@ public record DashboardProblemDetailResponse(
 	LocalDateTime registeredAt,
 	boolean wrongAnswerCompleted,
 	UserRole userRole,
-	String imageUrl
-) {
+	String imageUrl) {
 }
