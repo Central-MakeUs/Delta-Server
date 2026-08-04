@@ -1,6 +1,7 @@
 package cmc.delta.domain.auth.application.service.provisioning;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
 import cmc.delta.domain.auth.application.port.in.provisioning.UserProvisioningUseCase;
@@ -16,7 +17,6 @@ import cmc.delta.global.error.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.mock;
 
 class UserProvisioningServiceImplTest {
 
