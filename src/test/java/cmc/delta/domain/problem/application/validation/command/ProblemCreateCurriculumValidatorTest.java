@@ -64,7 +64,7 @@ class ProblemCreateCurriculumValidatorTest {
 	@DisplayName("getFinalUnit: 부모 없는 unit(최상위)이면 PROBLEM_FINAL_UNIT_NOT_FOUND")
 	void getFinalUnit_whenNoParent_throwsNotFound() {
 		// given
-		Unit root = unitWithId("ROOT");  // parent == null
+		Unit root = unitWithId("ROOT"); // parent == null
 		when(unitLoadPort.findById("ROOT")).thenReturn(Optional.of(root));
 
 		// when

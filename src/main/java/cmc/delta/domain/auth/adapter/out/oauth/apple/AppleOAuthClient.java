@@ -46,23 +46,11 @@ public class AppleOAuthClient {
 			throw AppleOAuthException.authorizationCodeEmpty();
 		}
 		String clientSecretJwt = generateClientSecret();
-		MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
-		form.add("client_id", props.clientId());
-		form.add("client_secret", clientSecretJwt);
-		form.add("code", code);
-		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
-		form.add("redirect_uri", props.redirectUri());
-		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-		HttpEntity<MultiValueMap<String, String>> entity = new HttpEntity<MultiValueMap<String, String>>(form, headers);
+		HttpEntity<MultiValueMap<String, String>> entity = buildTokenRequestBody(code, clientSecretJwt);
 		try {
 			ResponseEntity<AppleTokenResponse> resp = appleRestTemplate.exchange(TOKEN_URL, HttpMethod.POST, entity,
 				AppleTokenResponse.class);
-			AppleTokenResponse body = resp.getBody();
-			if (body == null || !StringUtils.hasText(body.idToken())) {
-				throw AppleOAuthException.tokenExchangeInvalidResponse();
-			}
-			return body;
+			return requireValidTokenResponse(resp.getBody());
 		} catch (HttpStatusCodeException e) {
 			int status = e.getStatusCode().value();
 			throw AppleOAuthException.tokenExchangeFailed(status, e);
@@ -71,39 +59,65 @@ public class AppleOAuthClient {
 		}
 	}
 
+	private HttpEntity<MultiValueMap<String, String>> buildTokenRequestBody(String code, String clientSecretJwt) {
+		MultiValueMap<String, String> form = new LinkedMultiValueMap<String, String>();
+		form.add("client_id", props.clientId());
+		form.add("client_secret", clientSecretJwt);
+		form.add("code", code);
+		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
+		form.add("redirect_uri", props.redirectUri());
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+		return new HttpEntity<MultiValueMap<String, String>>(form, headers);
+	}
+
+	private AppleTokenResponse requireValidTokenResponse(AppleTokenResponse body) {
+		if (body == null || !StringUtils.hasText(body.idToken())) {
+			throw AppleOAuthException.tokenExchangeInvalidResponse();
+		}
+		return body;
+	}
+
 	// client_secret = ES256로 서명한 JWT
 	// iss = team_id
 	// sub = client_id (Services ID)
 	// aud = https://appleid.apple.com
 	private String generateClientSecret() {
 		try {
-			Instant now = Instant.now();
-			Instant exp = now.plusSeconds(CLIENT_SECRET_TTL_SECONDS);
-
-			JWTClaimsSet claims = new JWTClaimsSet.Builder()
-				.issuer(props.teamId())
-				.subject(props.clientId())
-				.audience("https://appleid.apple.com")
-				.issueTime(java.util.Date.from(now))
-				.expirationTime(java.util.Date.from(exp))
-				.build();
-
-			JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256)
-				.keyID(props.keyId())
-				.type(JOSEObjectType.JWT)
-				.build();
-
-			SignedJWT jwt = new SignedJWT(header, claims);
-
-			ECPrivateKey privateKey = (ECPrivateKey)loadPrivateKeyFromPem(props.privateKey());
-			JWSSigner signer = new ECDSASigner(privateKey);
-
-			jwt.sign(signer);
-			return jwt.serialize();
-
+			JWTClaimsSet claims = buildClientSecretClaims();
+			JWSHeader header = buildClientSecretHeader();
+			return signClientSecret(new SignedJWT(header, claims));
 		} catch (Exception e) {
 			throw AppleOAuthException.clientSecretGenerateFailed(e);
 		}
+	}
+
+	private JWTClaimsSet buildClientSecretClaims() {
+		Instant now = Instant.now();
+		Instant exp = now.plusSeconds(CLIENT_SECRET_TTL_SECONDS);
+
+		return new JWTClaimsSet.Builder()
+			.issuer(props.teamId())
+			.subject(props.clientId())
+			.audience("https://appleid.apple.com")
+			.issueTime(java.util.Date.from(now))
+			.expirationTime(java.util.Date.from(exp))
+			.build();
+	}
+
+	private JWSHeader buildClientSecretHeader() {
+		return new JWSHeader.Builder(JWSAlgorithm.ES256)
+			.keyID(props.keyId())
+			.type(JOSEObjectType.JWT)
+			.build();
+	}
+
+	private String signClientSecret(SignedJWT jwt) throws Exception {
+		ECPrivateKey privateKey = (ECPrivateKey)loadPrivateKeyFromPem(props.privateKey());
+		JWSSigner signer = new ECDSASigner(privateKey);
+
+		jwt.sign(signer);
+		return jwt.serialize();
 	}
 
 	private PrivateKey loadPrivateKeyFromPem(String pem) throws Exception {
@@ -111,16 +125,7 @@ public class AppleOAuthClient {
 			throw AppleOAuthException.privateKeyEmpty();
 		}
 
-		pem = pem.replace("\\n", "\n");
-
-		// BEGIN/END가 본문에 붙어서 들어오는 케이스 보정
-		pem = pem.replace("-----BEGIN PRIVATE KEY-----", "-----BEGIN PRIVATE KEY-----\n");
-		pem = pem.replace("-----END PRIVATE KEY-----", "\n-----END PRIVATE KEY-----");
-
-		String normalized = pem
-			.replace("-----BEGIN PRIVATE KEY-----", "")
-			.replace("-----END PRIVATE KEY-----", "")
-			.replaceAll("\\s", "");
+		String normalized = normalizePemBody(pem);
 
 		byte[] der;
 		try {
@@ -132,6 +137,19 @@ public class AppleOAuthClient {
 		PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
 		KeyFactory kf = KeyFactory.getInstance("EC");
 		return kf.generatePrivate(spec);
+	}
+
+	private String normalizePemBody(String pem) {
+		String unescaped = pem.replace("\\n", "\n");
+
+		// BEGIN/END가 본문에 붙어서 들어오는 케이스 보정
+		unescaped = unescaped.replace("-----BEGIN PRIVATE KEY-----", "-----BEGIN PRIVATE KEY-----\n");
+		unescaped = unescaped.replace("-----END PRIVATE KEY-----", "\n-----END PRIVATE KEY-----");
+
+		return unescaped
+			.replace("-----BEGIN PRIVATE KEY-----", "")
+			.replace("-----END PRIVATE KEY-----", "")
+			.replaceAll("\\s", "");
 	}
 
 	// 애플 토큰 응답(JSON)

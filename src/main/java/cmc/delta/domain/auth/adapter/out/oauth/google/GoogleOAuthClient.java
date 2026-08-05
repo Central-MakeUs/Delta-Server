@@ -24,12 +24,7 @@ public class GoogleOAuthClient {
 	}
 
 	public GoogleTokenResponse exchangeCode(String code) {
-		MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
-		form.add("client_id", properties.clientId());
-		form.add("client_secret", properties.clientSecret());
-		form.add("redirect_uri", properties.redirectUri());
-		form.add("code", code);
+		MultiValueMap<String, String> form = buildTokenRequestForm(code);
 
 		GoogleTokenResponse body = oauthHttpClient.postForm(
 			PROVIDER_NAME,
@@ -43,5 +38,15 @@ public class GoogleOAuthClient {
 		}
 
 		return body;
+	}
+
+	private MultiValueMap<String, String> buildTokenRequestForm(String code) {
+		MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+		form.add("grant_type", GRANT_TYPE_AUTHORIZATION_CODE);
+		form.add("client_id", properties.clientId());
+		form.add("client_secret", properties.clientSecret());
+		form.add("redirect_uri", properties.redirectUri());
+		form.add("code", code);
+		return form;
 	}
 }

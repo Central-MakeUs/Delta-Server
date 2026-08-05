@@ -7,7 +7,27 @@ final class GeminiSchemaFactory {
 	private GeminiSchemaFactory() {}
 
 	static Map<String, Object> responseSchema() {
-		Map<String, Object> candidateArraySchema = Map.of(
+		return Map.of(
+			"type", "OBJECT",
+			"properties", curriculumProperties(),
+			"required", requiredFieldNames());
+	}
+
+	private static Map<String, Object> curriculumProperties() {
+		Map<String, Object> candidateArraySchema = candidateArraySchema();
+		return Map.of(
+			"is_math_problem", Map.of("type", "BOOLEAN"),
+			"predicted_subject_id", Map.of("type", "STRING"),
+			"predicted_unit_id", Map.of("type", "STRING"),
+			"predicted_type_id", Map.of("type", "STRING"),
+			"confidence", Map.of("type", "NUMBER"),
+			"subject_candidates", candidateArraySchema,
+			"unit_candidates", candidateArraySchema,
+			"type_candidates", candidateArraySchema);
+	}
+
+	private static Map<String, Object> candidateArraySchema() {
+		return Map.of(
 			"type", "ARRAY",
 			"items", Map.of(
 				"type", "OBJECT",
@@ -15,26 +35,17 @@ final class GeminiSchemaFactory {
 					"id", Map.of("type", "STRING"),
 					"score", Map.of("type", "NUMBER")),
 				"required", List.of("id", "score")));
+	}
 
-		return Map.of(
-			"type", "OBJECT",
-			"properties", Map.of(
-				"is_math_problem", Map.of("type", "BOOLEAN"),
-				"predicted_subject_id", Map.of("type", "STRING"),
-				"predicted_unit_id", Map.of("type", "STRING"),
-				"predicted_type_id", Map.of("type", "STRING"),
-				"confidence", Map.of("type", "NUMBER"),
-				"subject_candidates", candidateArraySchema,
-				"unit_candidates", candidateArraySchema,
-				"type_candidates", candidateArraySchema),
-			"required", List.of(
-				"is_math_problem",
-				"predicted_subject_id",
-				"predicted_unit_id",
-				"predicted_type_id",
-				"confidence",
-				"subject_candidates",
-				"unit_candidates",
-				"type_candidates"));
+	private static List<String> requiredFieldNames() {
+		return List.of(
+			"is_math_problem",
+			"predicted_subject_id",
+			"predicted_unit_id",
+			"predicted_type_id",
+			"confidence",
+			"subject_candidates",
+			"unit_candidates",
+			"type_candidates");
 	}
 }

@@ -2,8 +2,7 @@ package cmc.delta.domain.problem.adapter.out.ai;
 
 public final class SolvePromptTemplate {
 
-	private SolvePromptTemplate() {
-	}
+	private SolvePromptTemplate() {}
 
 	private static final String TEMPLATE = """
 		You are a Korean math problem solver.

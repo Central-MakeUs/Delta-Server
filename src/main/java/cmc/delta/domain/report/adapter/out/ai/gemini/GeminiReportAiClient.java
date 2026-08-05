@@ -46,10 +46,13 @@ public class GeminiReportAiClient implements ReportAiClient {
 	private final String model;
 
 	public GeminiReportAiClient(
-		@Qualifier("geminiRestClient") RestClient geminiRestClient,
+		@Qualifier("geminiRestClient")
+		RestClient geminiRestClient,
 		ObjectMapper objectMapper,
-		@Value("${gemini.api-key}") String apiKey,
-		@Value("${gemini.report-model:${gemini.model:gemini-3.1-flash-lite}}") String model) {
+		@Value("${gemini.api-key}")
+		String apiKey,
+		@Value("${gemini.report-model:${gemini.model:gemini-3.1-flash-lite}}")
+		String model) {
 		this.geminiRestClient = geminiRestClient;
 		this.objectMapper = objectMapper;
 		this.apiKey = apiKey;

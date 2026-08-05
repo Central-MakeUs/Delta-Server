@@ -20,16 +20,8 @@ public class AppleOAuthException extends BusinessException {
 		return new AppleOAuthException(ErrorCode.INVALID_REQUEST, "애플 authorization code가 비어있습니다.", null);
 	}
 
-	public static AppleOAuthException userJsonParseFailed(Throwable cause) {
-		return new AppleOAuthException(ErrorCode.INVALID_REQUEST, "애플 user 파싱에 실패했습니다.", cause);
-	}
-
 	public static AppleOAuthException subEmpty() {
 		return new AppleOAuthException(ErrorCode.AUTHENTICATION_FAILED, "애플 sub가 비어있습니다.", null);
-	}
-
-	public static AppleOAuthException idTokenSubEmpty() {
-		return new AppleOAuthException(ErrorCode.AUTHENTICATION_FAILED, "애플 id_token(sub)이 비어있습니다.", null);
 	}
 
 	public static AppleOAuthException idTokenParseFailed(Throwable cause) {

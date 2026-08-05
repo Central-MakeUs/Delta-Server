@@ -57,8 +57,7 @@ class DailyStatsQueryServiceTest {
 			.willReturn(
 				new PeriodStatsCountResult(5, 20, 10, 3),
 				new PeriodStatsCountResult(15, 60, 30, 9),
-				new PeriodStatsCountResult(30, 120, 70, 20)
-			);
+				new PeriodStatsCountResult(30, 120, 70, 20));
 
 		DailyStatsReport report = sut.generate();
 

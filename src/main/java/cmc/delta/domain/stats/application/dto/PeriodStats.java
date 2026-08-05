@@ -8,5 +8,5 @@ public record PeriodStats(
 	long newUsers,
 	long scans,
 	long wrongAnswerCards,
-	long aiSolutionAttempts
-) {}
+	long aiSolutionAttempts) {
+}

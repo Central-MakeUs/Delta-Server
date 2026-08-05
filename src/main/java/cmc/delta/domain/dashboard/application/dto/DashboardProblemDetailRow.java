@@ -13,8 +13,7 @@ public record DashboardProblemDetailRow(
 	LocalDateTime registeredAt,
 	boolean wrongAnswerCompleted,
 	UserRole userRole,
-	String storageKey
-) {
+	String storageKey) {
 	public DashboardProblemDetailResponse toResponse(String viewUrl) {
 		return new DashboardProblemDetailResponse(
 			problemId,

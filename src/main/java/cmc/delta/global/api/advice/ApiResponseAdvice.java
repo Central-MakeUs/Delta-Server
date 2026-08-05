@@ -5,6 +5,7 @@ import cmc.delta.global.api.response.ApiResponse;
 import cmc.delta.global.api.response.ApiResponses;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -14,6 +15,7 @@ import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
 
@@ -54,27 +56,40 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
 		ServerHttpRequest request,
 		ServerHttpResponse response) {
 
-		if (shouldSkipWrap(request))
+		if (!shouldWrap(body, selectedContentType, request)) {
 			return body;
-
-		if (!isJsonLike(selectedContentType) && !(body instanceof String))
-			return body;
-
-		if (body instanceof ApiResponse<?>)
-			return body;
-
-		int status = resolveHttpStatus(response);
-		ApiResponse<Object> wrapped = ApiResponses.success(status, body);
-		if (body instanceof String) {
-			try {
-				response.getHeaders().setContentType(JSON);
-				return objectMapper.writeValueAsString(wrapped);
-			} catch (Exception e) {
-				return body;
-			}
 		}
 
+		ApiResponse<Object> wrapped = ApiResponses.success(resolveHttpStatus(response), body);
+		if (body instanceof String) {
+			return serializeForStringConverter(wrapped, body, request, response);
+		}
 		return wrapped;
+	}
+
+	private boolean shouldWrap(Object body, MediaType selectedContentType, ServerHttpRequest request) {
+		if (shouldSkipWrap(request)) {
+			return false;
+		}
+		if (!isJsonLike(selectedContentType) && !(body instanceof String)) {
+			return false;
+		}
+		return !(body instanceof ApiResponse<?>);
+	}
+
+	/**
+	 * String 반환 컨트롤러는 StringHttpMessageConverter가 처리하므로
+	 * 래퍼 객체를 그대로 반환하면 직렬화가 깨진다. 여기서 직접 JSON 문자열로 만들어 돌려준다.
+	 */
+	private Object serializeForStringConverter(
+		ApiResponse<Object> wrapped, Object originalBody, ServerHttpRequest request, ServerHttpResponse response) {
+		try {
+			response.getHeaders().setContentType(JSON);
+			return objectMapper.writeValueAsString(wrapped);
+		} catch (Exception e) {
+			log.warn("ApiResponse 문자열 응답 래핑 실패. 원본 그대로 반환 path={}", request.getURI().getPath(), e);
+			return originalBody;
+		}
 	}
 
 	private boolean shouldSkipWrap(ServerHttpRequest request) {

@@ -10,6 +10,7 @@ import cmc.delta.domain.problem.model.problem.QProblem;
 import cmc.delta.domain.stats.model.QUserDailyAccess;
 import cmc.delta.domain.user.model.QUser;
 import cmc.delta.domain.user.model.enums.UserRole;
+import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.DateExpression;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -47,14 +48,20 @@ public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort 
 			lastAccessDate,
 			problemCount);
 
+		return fetchUsers(pageable, user, access, problem, accessCount, lastAccessDate, problemCount, orderBy);
+	}
+
+	private List<DashboardUserItem> fetchUsers(
+		Pageable pageable,
+		QUser user,
+		QUserDailyAccess access,
+		QProblem problem,
+		NumberExpression<Long> accessCount,
+		DateExpression<LocalDate> lastAccessDate,
+		NumberExpression<Long> problemCount,
+		OrderSpecifier<?>[] orderBy) {
 		return queryFactory
-			.select(constructor(DashboardUserItem.class,
-				user.id,
-				user.nickname,
-				user.role,
-				accessCount,
-				lastAccessDate,
-				problemCount))
+			.select(buildUserProjection(user, accessCount, lastAccessDate, problemCount))
 			.from(user)
 			.leftJoin(access).on(access.userId.eq(user.id))
 			.leftJoin(problem).on(problem.user.id.eq(user.id))
@@ -64,6 +71,20 @@ public class DashboardUserQueryRepositoryImpl implements DashboardUserQueryPort 
 			.offset(pageable.getOffset())
 			.limit(pageable.getPageSize())
 			.fetch();
+	}
+
+	private ConstructorExpression<DashboardUserItem> buildUserProjection(
+		QUser user,
+		NumberExpression<Long> accessCount,
+		DateExpression<LocalDate> lastAccessDate,
+		NumberExpression<Long> problemCount) {
+		return constructor(DashboardUserItem.class,
+			user.id,
+			user.nickname,
+			user.role,
+			accessCount,
+			lastAccessDate,
+			problemCount);
 	}
 
 	@Override

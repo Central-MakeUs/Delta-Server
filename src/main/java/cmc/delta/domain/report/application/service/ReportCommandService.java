@@ -43,8 +43,8 @@ public class ReportCommandService implements ReportCommandUseCase {
 	private static final String NULL_SENTINEL = "<null>";
 	private static final String FALLBACK_FAILURE_REASON = "REPORT_GENERATION_FAILED";
 	private static final int MAX_FAILURE_REASON_LENGTH = 255; // failure_reason 컬럼 길이. 초과 시 커밋 실패→롤백→재claim 무한루프.
-	private static final ProblemStatsCondition ALL_PROBLEMS =
-		new ProblemStatsCondition(null, null, null, ProblemStatsSort.DEFAULT);
+	private static final ProblemStatsCondition ALL_PROBLEMS = new ProblemStatsCondition(null, null, null,
+		ProblemStatsSort.DEFAULT);
 
 	private final ReportRepositoryPort reportRepositoryPort;
 	private final ReportSourcePort reportSourcePort;
@@ -82,12 +82,8 @@ public class ReportCommandService implements ReportCommandUseCase {
 		report.markProcessing(startedAt);
 		Long userId = report.getUserId();
 		try {
-			List<ProblemUnitStatsRow> unitStats = problemStatsQueryPort.findUnitStats(userId, ALL_PROBLEMS);
-			List<ProblemTypeStatsRow> typeStats = problemStatsQueryPort.findTypeStats(userId, ALL_PROBLEMS);
-			ReportAggregate aggregate = ReportAggregator.aggregate(unitStats, typeStats);
-
-			List<WrongAnswerSample> samples = reportSourcePort.loadSamples(userId, SAMPLE_LIMIT);
-			ReportNarrative narrative = reportAiClient.analyze(aggregate, samples);
+			ReportAggregate aggregate = buildAggregate(userId);
+			ReportNarrative narrative = runAnalysis(userId, aggregate);
 
 			report.markReady(payloadCodec.write(aggregate), payloadCodec.write(narrative), LocalDateTime.now(clock));
 			log.debug("취약점 리포트 생성 성공 reportId={} userId={}", report.getId(), userId);
@@ -96,6 +92,17 @@ public class ReportCommandService implements ReportCommandUseCase {
 			log.warn("취약점 리포트 생성 실패 reportId={} userId={} exceptionClass={} message={}",
 				report.getId(), userId, exception.getClass().getSimpleName(), exception.getMessage());
 		}
+	}
+
+	private ReportAggregate buildAggregate(Long userId) {
+		List<ProblemUnitStatsRow> unitStats = problemStatsQueryPort.findUnitStats(userId, ALL_PROBLEMS);
+		List<ProblemTypeStatsRow> typeStats = problemStatsQueryPort.findTypeStats(userId, ALL_PROBLEMS);
+		return ReportAggregator.aggregate(unitStats, typeStats);
+	}
+
+	private ReportNarrative runAnalysis(Long userId, ReportAggregate aggregate) {
+		List<WrongAnswerSample> samples = reportSourcePort.loadSamples(userId, SAMPLE_LIMIT);
+		return reportAiClient.analyze(aggregate, samples);
 	}
 
 	private String calculateInputHash(ReportSourceSignature signature) {

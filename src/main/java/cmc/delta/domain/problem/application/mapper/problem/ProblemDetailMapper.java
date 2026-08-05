@@ -2,7 +2,6 @@ package cmc.delta.domain.problem.application.mapper.problem;
 
 import cmc.delta.domain.problem.application.mapper.support.ProblemCurriculumItemSupport;
 import cmc.delta.domain.problem.application.port.in.problem.result.ProblemDetailResponse;
-import cmc.delta.domain.problem.application.port.in.support.CurriculumItemResponse;
 import cmc.delta.domain.problem.application.port.out.problem.query.dto.ProblemDetailRow;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

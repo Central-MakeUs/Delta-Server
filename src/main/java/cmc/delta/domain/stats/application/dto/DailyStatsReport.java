@@ -8,5 +8,5 @@ public record DailyStatsReport(
 	long withdrawnUsers,
 	PeriodStats today,
 	PeriodStats last3Days,
-	PeriodStats last7Days
-) {}
+	PeriodStats last7Days) {
+}

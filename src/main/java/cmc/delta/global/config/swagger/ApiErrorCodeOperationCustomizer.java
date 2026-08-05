@@ -21,7 +21,20 @@ public class ApiErrorCodeOperationCustomizer implements OperationCustomizer {
 
 	@Override
 	public Operation customize(Operation operation, HandlerMethod handlerMethod) {
+		List<ErrorCode> errorCodes = resolveErrorCodes(handlerMethod);
+		if (errorCodes.isEmpty()) {
+			return operation;
+		}
 
+		ApiResponses responses = resolveResponses(operation);
+		for (ErrorCode errorCode : errorCodes) {
+			applyErrorExample(responses, errorCode);
+		}
+
+		return operation;
+	}
+
+	private List<ErrorCode> resolveErrorCodes(HandlerMethod handlerMethod) {
 		ApiErrorCodeExample single = handlerMethod.getMethodAnnotation(ApiErrorCodeExample.class);
 		ApiErrorCodeExamples multiple = handlerMethod.getMethodAnnotation(ApiErrorCodeExamples.class);
 
@@ -33,44 +46,47 @@ public class ApiErrorCodeOperationCustomizer implements OperationCustomizer {
 		if (multiple != null) {
 			errorCodes.addAll(Arrays.asList(multiple.value()));
 		}
-		if (errorCodes.isEmpty()) {
-			return operation;
-		}
+		return errorCodes;
+	}
 
+	private ApiResponses resolveResponses(Operation operation) {
 		ApiResponses responses = operation.getResponses();
 		if (responses == null) {
 			responses = new ApiResponses();
 			operation.setResponses(responses);
 		}
+		return responses;
+	}
 
-		for (ErrorCode errorCode : errorCodes) {
-			String statusCode = String.valueOf(errorCode.status().value());
+	private void applyErrorExample(ApiResponses responses, ErrorCode errorCode) {
+		String statusCode = String.valueOf(errorCode.status().value());
 
-			ExampleHolder holder = createExampleHolder(errorCode);
+		ExampleHolder holder = createExampleHolder(errorCode);
 
-			ApiResponse apiResponse = responses.computeIfAbsent(statusCode, code -> new ApiResponse());
+		ApiResponse apiResponse = responses.computeIfAbsent(statusCode, code -> new ApiResponse());
 
-			if (apiResponse.getDescription() == null || apiResponse.getDescription().isBlank()) {
-				apiResponse.setDescription(errorCode.defaultMessage());
-			}
-
-			Content content = apiResponse.getContent();
-			if (content == null) {
-				content = new Content();
-				apiResponse.setContent(content);
-			}
-
-			MediaType mediaType = content.get(APPLICATION_JSON);
-			if (mediaType == null) {
-				mediaType = new MediaType();
-				mediaType.setSchema(new Schema<>().$ref(API_RESPONSE_SCHEMA_REF));
-				content.addMediaType(APPLICATION_JSON, mediaType);
-			}
-
-			mediaType.addExamples(holder.getName(), holder.getHolder());
+		if (apiResponse.getDescription() == null || apiResponse.getDescription().isBlank()) {
+			apiResponse.setDescription(errorCode.defaultMessage());
 		}
 
-		return operation;
+		MediaType mediaType = resolveJsonMediaType(apiResponse);
+		mediaType.addExamples(holder.getName(), holder.getHolder());
+	}
+
+	private MediaType resolveJsonMediaType(ApiResponse apiResponse) {
+		Content content = apiResponse.getContent();
+		if (content == null) {
+			content = new Content();
+			apiResponse.setContent(content);
+		}
+
+		MediaType mediaType = content.get(APPLICATION_JSON);
+		if (mediaType == null) {
+			mediaType = new MediaType();
+			mediaType.setSchema(new Schema<>().$ref(API_RESPONSE_SCHEMA_REF));
+			content.addMediaType(APPLICATION_JSON, mediaType);
+		}
+		return mediaType;
 	}
 
 	private ExampleHolder createExampleHolder(ErrorCode errorCode) {

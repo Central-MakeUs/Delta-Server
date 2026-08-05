@@ -103,6 +103,17 @@ public class ScanPurgeWorker extends AbstractExternalCallScanWorker {
 
 	@Override
 	protected void handleSuccess(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
+		int deletedCount = deleteUnreferencedAssets(scanId);
+
+		if (!isOwned(scanId, lockOwner, lockToken)) {
+			return;
+		}
+
+		persister.purgeIfLocked(scanId, lockOwner, lockToken);
+		log.debug("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
+	}
+
+	private int deleteUnreferencedAssets(Long scanId) {
 		List<Asset> assets = assetJpaRepository.findAllByScan_Id(scanId);
 		int deletedCount = 0;
 		for (Asset asset : assets) {
@@ -117,13 +128,7 @@ public class ScanPurgeWorker extends AbstractExternalCallScanWorker {
 					asset.getStorageKey(), e);
 			}
 		}
-
-		if (!isOwned(scanId, lockOwner, lockToken)) {
-			return;
-		}
-
-		persister.purgeIfLocked(scanId, lockOwner, lockToken);
-		log.debug("{} purge 완료 scanId={} deletedAssets={}", IDENTITY.label(), scanId, deletedCount);
+		return deletedCount;
 	}
 
 	@Override

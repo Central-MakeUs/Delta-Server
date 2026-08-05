@@ -3,8 +3,10 @@ package cmc.delta.domain.problem.adapter.in.worker.support.ocr;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class LineDataSignalExtractor {
 
@@ -29,27 +31,31 @@ public class LineDataSignalExtractor {
 			if (!lines.isArray()) {
 				return EMPTY;
 			}
-
-			int math = 0;
-			int text = 0;
-			int code = 0;
-			int pseudocode = 0;
-
-			for (JsonNode line : lines) {
-				String type = normalizeType(line.path(JSON_TYPE).asText(""));
-				switch (type) {
-					case "math" -> math++;
-					case "text" -> text++;
-					case "code" -> code++;
-					case "pseudocode" -> pseudocode++;
-					default -> {}
-				}
-			}
-
-			return new OcrSignalSummary(math, text, code, pseudocode);
+			return countSignals(lines);
 		} catch (Exception e) {
+			log.warn("OCR line_data 신호 추출 실패. 신호 없음으로 처리 reason={}", e.getMessage());
 			return EMPTY;
 		}
+	}
+
+	private OcrSignalSummary countSignals(JsonNode lines) {
+		int math = 0;
+		int text = 0;
+		int code = 0;
+		int pseudocode = 0;
+
+		for (JsonNode line : lines) {
+			String type = normalizeType(line.path(JSON_TYPE).asText(""));
+			switch (type) {
+				case "math" -> math++;
+				case "text" -> text++;
+				case "code" -> code++;
+				case "pseudocode" -> pseudocode++;
+				default -> {}
+			}
+		}
+
+		return new OcrSignalSummary(math, text, code, pseudocode);
 	}
 
 	private String normalizeType(String type) {

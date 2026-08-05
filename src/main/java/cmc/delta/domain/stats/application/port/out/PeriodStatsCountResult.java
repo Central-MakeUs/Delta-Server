@@ -4,5 +4,5 @@ public record PeriodStatsCountResult(
 	long newUsers,
 	long scans,
 	long problems,
-	long aiSolutionAttempts
-) {}
+	long aiSolutionAttempts) {
+}

@@ -9,6 +9,5 @@ public record DashboardUserItem(
 	UserRole userRole,
 	long accessCount,
 	LocalDate lastAccessDate,
-	long problemCount
-) {
+	long problemCount) {
 }

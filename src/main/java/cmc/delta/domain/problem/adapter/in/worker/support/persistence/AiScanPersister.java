@@ -9,7 +9,6 @@ import cmc.delta.domain.problem.adapter.in.worker.support.failure.FailureReason;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.ScanRepository;
 import cmc.delta.domain.problem.adapter.out.persistence.scan.worker.ScanWorkRepository;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
-import cmc.delta.domain.problem.model.scan.ProblemScan;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Component;

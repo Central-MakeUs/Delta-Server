@@ -5,8 +5,7 @@ import org.springframework.util.StringUtils;
 
 final class SocialProfileUtils {
 
-	private SocialProfileUtils() {
-	}
+	private SocialProfileUtils() {}
 
 	static String requireProvided(String value, String message) {
 		if (!StringUtils.hasText(value)) {

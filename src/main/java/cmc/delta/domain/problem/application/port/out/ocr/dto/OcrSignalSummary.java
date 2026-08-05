@@ -6,10 +6,6 @@ public record OcrSignalSummary(
 	int codeLineCount,
 	int pseudocodeLineCount) {
 
-	public boolean hasMathLine() {
-		return mathLineCount > 0;
-	}
-
 	public boolean hasCodeLine() {
 		return codeLineCount > 0 || pseudocodeLineCount > 0;
 	}

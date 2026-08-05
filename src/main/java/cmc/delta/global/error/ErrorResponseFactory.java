@@ -26,10 +26,6 @@ public class ErrorResponseFactory {
 		return create(errorCode, errorCode.defaultMessage(), null);
 	}
 
-	public ApiResponse<Object> errorWithMessage(ErrorCode errorCode, String message) {
-		return create(errorCode, message, null);
-	}
-
 	public ApiResponse<Object> notReadableBody(ErrorCode errorCode) {
 		return create(errorCode, MESSAGE_NOT_READABLE_BODY, null);
 	}

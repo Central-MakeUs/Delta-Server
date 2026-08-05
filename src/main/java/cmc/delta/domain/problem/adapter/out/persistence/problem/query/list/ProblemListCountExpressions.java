@@ -29,19 +29,6 @@ public class ProblemListCountExpressions {
 		return Expressions.numberTemplate(Long.class, "({0})", sub);
 	}
 
-	public NumberExpression<Long> unitCount(Long userId, ProblemListCondition condition, StringPath outerUnitId) {
-		QProblem p2 = new QProblem("p2_unit_cnt");
-
-		JPQLQuery<Long> sub = JPAExpressions
-			.select(p2.count())
-			.from(p2)
-			.where(
-				predicateBuilder.buildCountBaseWhere(userId, condition, p2)
-					.and(p2.finalUnit.id.eq(outerUnitId)));
-
-		return Expressions.numberTemplate(Long.class, "({0})", sub);
-	}
-
 	public NumberExpression<Long> typeCount(Long userId, ProblemListCondition condition, StringPath outerTypeId) {
 		QProblem p2 = new QProblem("p2_type_cnt");
 

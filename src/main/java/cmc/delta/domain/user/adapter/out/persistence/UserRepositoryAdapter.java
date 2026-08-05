@@ -1,10 +1,5 @@
 package cmc.delta.domain.user.adapter.out.persistence;
 
-import java.time.LocalDateTime;
-import java.util.Optional;
-
-import org.springframework.stereotype.Repository;
-
 import cmc.delta.domain.auth.application.port.out.AdminUserQueryPort;
 import cmc.delta.domain.stats.application.port.out.StatsUserQueryPort;
 import cmc.delta.domain.user.adapter.out.persistence.jpa.UserJpaRepository;
@@ -14,7 +9,10 @@ import cmc.delta.domain.user.model.UserWithProvider;
 import cmc.delta.domain.user.model.enums.UserRole;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import jakarta.persistence.EntityManager;
+import java.time.LocalDateTime;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
@@ -55,7 +53,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort, StatsUserQuery
 
 	@Override
 	public long countAll() {
-		return jpaRepository.count();
+		return count();
 	}
 
 	@Override

@@ -110,19 +110,23 @@ public class AiScanWorker extends AbstractExternalCallScanWorker {
 		}
 
 		if (!aiResult.isMathProblem()) {
-			persistUseCase.persistAiFailed(
-				scanId,
-				lockOwner,
-				lockToken,
-				FailureDecision.nonRetryable(FailureReason.AI_NOT_MATH),
-				batchNow);
-			log.debug("AI 판별 결과 수학문제 아님 scanId={} 상태=FAILED", scanId);
+			persistNotMathFailed(scanId, lockOwner, lockToken, batchNow);
 			return;
 		}
 
 		persistUseCase.persistAiSucceeded(scanId, lockOwner, lockToken, aiResult, batchNow);
 
 		log.debug("AI 분류 완료 scanId={} 상태=AI_DONE", scanId);
+	}
+
+	private void persistNotMathFailed(Long scanId, String lockOwner, String lockToken, LocalDateTime batchNow) {
+		persistUseCase.persistAiFailed(
+			scanId,
+			lockOwner,
+			lockToken,
+			FailureDecision.nonRetryable(FailureReason.AI_NOT_MATH),
+			batchNow);
+		log.debug("AI 판별 결과 수학문제 아님 scanId={} 상태=FAILED", scanId);
 	}
 
 	@Override

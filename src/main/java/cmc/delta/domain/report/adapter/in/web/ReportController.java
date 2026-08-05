@@ -37,7 +37,8 @@ public class ReportController {
 		ErrorCode.INTERNAL_ERROR
 	})
 	@PostMapping
-	public ApiResponse<ReportRequestResult> requestReport(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<ReportRequestResult> requestReport(@CurrentUser
+	UserPrincipal principal) {
 		ReportRequestResult result = reportCommandUseCase.requestMyReport(principal.userId());
 		return ApiResponses.success(SuccessCode.ACCEPTED, result);
 	}
@@ -51,8 +52,10 @@ public class ReportController {
 	})
 	@GetMapping("/{reportId}")
 	public ApiResponse<ReportDetailResult> getReport(
-		@CurrentUser UserPrincipal principal,
-		@PathVariable Long reportId) {
+		@CurrentUser
+		UserPrincipal principal,
+		@PathVariable
+		Long reportId) {
 		ReportDetailResult result = reportQueryUseCase.getMyReport(principal.userId(), reportId);
 		return ApiResponses.success(SuccessCode.OK, result);
 	}
@@ -65,7 +68,8 @@ public class ReportController {
 		ErrorCode.INTERNAL_ERROR
 	})
 	@GetMapping("/latest")
-	public ApiResponse<ReportDetailResult> getLatestReport(@CurrentUser UserPrincipal principal) {
+	public ApiResponse<ReportDetailResult> getLatestReport(@CurrentUser
+	UserPrincipal principal) {
 		ReportDetailResult result = reportQueryUseCase.getMyLatestReport(principal.userId());
 		return ApiResponses.success(SuccessCode.OK, result);
 	}

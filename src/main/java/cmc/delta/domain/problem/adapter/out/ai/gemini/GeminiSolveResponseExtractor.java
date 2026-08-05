@@ -1,7 +1,10 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
+import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -24,30 +27,9 @@ class GeminiSolveResponseExtractor {
 	String extractModelJsonText(String rawResponseJson) {
 		try {
 			JsonNode root = objectMapper.readTree(rawResponseJson == null ? "{}" : rawResponseJson);
-			JsonNode partsNode = root.path("candidates")
-				.path(0)
-				.path("content")
-				.path("parts");
-
-			StringBuilder textBuilder = new StringBuilder();
-			if (partsNode.isArray()) {
-				for (JsonNode partNode : partsNode) {
-					String partText = partNode.path("text").asText(null);
-					if (partText != null) {
-						textBuilder.append(partText);
-					}
-				}
-			}
-
-			String modelText = textBuilder.length() == 0 ? null : textBuilder.toString();
+			String modelText = concatPartTexts(findPartsNode(root));
 			if (modelText == null || modelText.isBlank()) {
-				String finishReason = root.path("candidates").path(0).path("finishReason").asText("UNKNOWN");
-				int thoughtsTokenCount = root.path("usageMetadata").path("thoughtsTokenCount").asInt(0);
-				log.debug(
-					"Gemini 풀이 text 비어있음 finishReason={} thoughtsTokenCount={} rawSnippet={}",
-					finishReason,
-					thoughtsTokenCount,
-					abbreviate(rawResponseJson));
+				logEmptyModelText(root, rawResponseJson);
 				throw GeminiAiException.emptyText();
 			}
 			log.debug("Gemini 풀이 raw model text 수신 length={}", modelText.length());
@@ -60,28 +42,58 @@ class GeminiSolveResponseExtractor {
 		}
 	}
 
+	private JsonNode findPartsNode(JsonNode root) {
+		return root.path("candidates")
+			.path(0)
+			.path("content")
+			.path("parts");
+	}
+
+	private String concatPartTexts(JsonNode partsNode) {
+		if (!partsNode.isArray()) {
+			return null;
+		}
+		StringBuilder textBuilder = new StringBuilder();
+		for (JsonNode partNode : partsNode) {
+			String partText = partNode.path("text").asText(null);
+			if (partText != null) {
+				textBuilder.append(partText);
+			}
+		}
+		return textBuilder.length() == 0 ? null : textBuilder.toString();
+	}
+
+	private void logEmptyModelText(JsonNode root, String rawResponseJson) {
+		String finishReason = root.path("candidates").path(0).path("finishReason").asText("UNKNOWN");
+		int thoughtsTokenCount = root.path("usageMetadata").path("thoughtsTokenCount").asInt(0);
+		log.debug(
+			"Gemini 풀이 text 비어있음 finishReason={} thoughtsTokenCount={} rawSnippet={}",
+			finishReason,
+			thoughtsTokenCount,
+			abbreviate(rawResponseJson));
+	}
+
 	String unwrapJsonTextNodeIfNeeded(String modelText) {
 		if (modelText == null || modelText.isBlank()) {
 			return "";
 		}
-
 		try {
-			JsonNode root = objectMapper.readTree(modelText);
-			if (!root.isTextual()) {
-				return modelText;
-			}
-			String textValue = root.asText();
-			if (textValue == null || textValue.isBlank()) {
-				return modelText;
-			}
-			String trimmed = textValue.trim();
-			if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-				return trimmed;
-			}
-			return modelText;
-		} catch (Exception ignore) {
+			return readWrappedJsonText(modelText).orElse(modelText);
+		} catch (Exception e) {
+			log.debug("Gemini 풀이 text 노드 unwrap 실패. 원문 유지 reason={}", e.getMessage());
 			return modelText;
 		}
+	}
+
+	/** 응답이 JSON 문자열 노드로 한 번 감싸져 온 경우에만 내부 JSON 텍스트를 꺼낸다. */
+	private Optional<String> readWrappedJsonText(String modelText) throws JsonProcessingException {
+		JsonNode root = objectMapper.readTree(modelText);
+		if (!root.isTextual()) {
+			return Optional.empty();
+		}
+		return Optional.ofNullable(root.asText())
+			.map(String::trim)
+			.filter(trimmed -> trimmed.startsWith("{") || trimmed.startsWith("["));
 	}
 
 	String extractJsonObject(String text) {
@@ -94,44 +106,11 @@ class GeminiSolveResponseExtractor {
 			return null;
 		}
 
-		boolean inString = false;
-		boolean escaped = false;
-		int depth = 0;
-		for (int index = startIndex; index < text.length(); index++) {
-			char current = text.charAt(index);
-
-			if (inString) {
-				if (escaped) {
-					escaped = false;
-					continue;
-				}
-				if (current == '\\') {
-					escaped = true;
-					continue;
-				}
-				if (current == '"') {
-					inString = false;
-				}
-				continue;
-			}
-
-			if (current == '"') {
-				inString = true;
-				continue;
-			}
-			if (current == '{') {
-				depth += 1;
-				continue;
-			}
-			if (current == '}') {
-				depth -= 1;
-				if (depth == 0) {
-					return text.substring(startIndex, index + 1);
-				}
-			}
+		JsonObjectScanner.ScanResult result = JsonObjectScanner.scan(text, startIndex, text.length());
+		if (!result.isBalanced()) {
+			return null;
 		}
-
-		return null;
+		return text.substring(startIndex, result.balancedEndIndex() + 1);
 	}
 
 	String repairTruncatedJsonObject(String text) {
@@ -146,71 +125,35 @@ class GeminiSolveResponseExtractor {
 
 		int endExclusive = Math.min(text.length(), startIndex + MAX_JSON_REPAIR_SCAN_LENGTH);
 		String candidate = text.substring(startIndex, endExclusive);
-		StringBuilder repaired = new StringBuilder(candidate);
 
-		boolean inString = false;
-		boolean escaped = false;
-		int depth = 0;
+		JsonObjectScanner.ScanResult state = JsonObjectScanner.scan(candidate, 0, candidate.length());
+		String repairedJson = appendMissingClosers(candidate, state);
 
-		for (int index = 0; index < candidate.length(); index++) {
-			char current = candidate.charAt(index);
-
-			if (inString) {
-				if (escaped) {
-					escaped = false;
-					continue;
-				}
-				if (current == '\\') {
-					escaped = true;
-					continue;
-				}
-				if (current == '"') {
-					inString = false;
-				}
-				continue;
-			}
-
-			if (current == '"') {
-				inString = true;
-				continue;
-			}
-			if (current == '{') {
-				depth += 1;
-				continue;
-			}
-			if (current == '}' && depth > 0) {
-				depth -= 1;
-			}
-		}
-
-		if (escaped) {
-			repaired.append('\\');
-		}
-		if (inString) {
-			repaired.append('"');
-		}
-		while (depth > 0) {
-			repaired.append('}');
-			depth -= 1;
-		}
-
-		String repairedJson = repaired.toString();
-		if (!repairedJson.contains(KEY_SOLUTION_LATEX)
-			&& !repairedJson.contains(KEY_SOLUTION_TEXT)
-			&& !repairedJson.contains(KEY_FINAL_ANSWER)) {
+		if (!containsAnySolveField(repairedJson)) {
 			return null;
 		}
 		return repairedJson;
 	}
 
+	private String appendMissingClosers(String candidate, JsonObjectScanner.ScanResult state) {
+		StringBuilder repaired = new StringBuilder(candidate);
+		if (state.escaped()) {
+			repaired.append('\\');
+		}
+		if (state.inString()) {
+			repaired.append('"');
+		}
+		repaired.append("}".repeat(Math.max(0, state.openDepth())));
+		return repaired.toString();
+	}
+
+	private boolean containsAnySolveField(String json) {
+		return json.contains(KEY_SOLUTION_LATEX)
+			|| json.contains(KEY_SOLUTION_TEXT)
+			|| json.contains(KEY_FINAL_ANSWER);
+	}
+
 	private String abbreviate(String text) {
-		if (text == null || text.isBlank()) {
-			return "";
-		}
-		String compact = text.replace("\n", "\\n").replace("\r", "\\r");
-		if (compact.length() <= 1200) {
-			return compact;
-		}
-		return compact.substring(0, 1200) + "...";
+		return AiResponseParseUtils.abbreviateForLog(text);
 	}
 }

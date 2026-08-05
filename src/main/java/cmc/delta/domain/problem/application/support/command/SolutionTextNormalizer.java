@@ -1,7 +1,9 @@
 package cmc.delta.domain.problem.application.support.command;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public final class SolutionTextNormalizer {
@@ -18,8 +20,15 @@ public final class SolutionTextNormalizer {
 	private static final int LOOP_MARKER_TRUNCATION_MIN_LINES = 12;
 	private static final int LOOP_MARKER_TRUNCATION_THRESHOLD = 2;
 
-	private SolutionTextNormalizer() {
-	}
+	private static final int LEADING_BLOCK_MIN_TEXT_LENGTH = 400;
+	private static final int LEADING_BLOCK_MAX_ANCHOR_LENGTH = 160;
+	private static final int LEADING_BLOCK_MIN_ANCHOR_LENGTH = 60;
+	private static final int LEADING_BLOCK_ANCHOR_RATIO = 4;
+	private static final int PREFIX_COMPARE_MAX_LENGTH = 500;
+	private static final int PREFIX_COMPARE_MIN_LENGTH = 120;
+	private static final double PREFIX_SIMILARITY_THRESHOLD = 0.9;
+
+	private SolutionTextNormalizer() {}
 
 	/**
 	 * AI 풀이 텍스트를 저장 전 정규화하는 파이프라인.
@@ -52,53 +61,60 @@ public final class SolutionTextNormalizer {
 		if (solutionText == null || solutionText.isBlank()) {
 			return solutionText;
 		}
+		String deduplicated = removeConsecutiveDuplicateLines(solutionText.split("\n"));
+		return deduplicated.isBlank() ? solutionText : deduplicated;
+	}
 
-		String[] lines = solutionText.split("\n");
+	private static String removeConsecutiveDuplicateLines(String[] lines) {
 		StringBuilder result = new StringBuilder();
 		String previousKey = null;
 
 		for (String line : lines) {
 			String key = normalizeLineKey(line);
-			boolean isDuplicate = previousKey != null
-				&& key != null
-				&& key.length() >= DUPLICATE_LINE_MIN_LENGTH
-				&& key.equals(previousKey);
-			if (isDuplicate) {
+			if (isDuplicateOfPrevious(key, previousKey)) {
 				continue;
 			}
 			appendLine(result, line);
-			if (key != null) {
-				previousKey = key;
-			}
+			previousKey = key != null ? key : previousKey;
 		}
+		return result.toString().trim();
+	}
 
-		String deduplicated = result.toString().trim();
-		return deduplicated.isBlank() ? solutionText : deduplicated;
+	private static boolean isDuplicateOfPrevious(String key, String previousKey) {
+		return previousKey != null
+			&& key != null
+			&& key.length() >= DUPLICATE_LINE_MIN_LENGTH
+			&& key.equals(previousKey);
 	}
 
 	private static String deduplicateGlobalLongLines(String solutionText) {
 		if (solutionText == null || solutionText.isBlank()) {
 			return solutionText;
 		}
+		String deduplicated = removeGlobalDuplicateLongLines(solutionText.split("\n"));
+		return deduplicated.isBlank() ? solutionText : deduplicated;
+	}
 
-		String[] lines = solutionText.split("\n");
-		Map<String, Integer> seen = new HashMap<>();
+	private static String removeGlobalDuplicateLongLines(String[] lines) {
+		Set<String> seenKeys = new HashSet<>();
 		StringBuilder result = new StringBuilder();
 
 		for (String line : lines) {
-			String key = normalizeLineKey(line);
-			if (key != null && key.length() >= DUPLICATE_LINE_MIN_LENGTH) {
-				int occurrence = seen.getOrDefault(key, 0);
-				if (occurrence >= 1) {
-					continue;
-				}
-				seen.put(key, occurrence + 1);
+			if (isRepeatedLongLine(line, seenKeys)) {
+				continue;
 			}
 			appendLine(result, line);
 		}
+		return result.toString().trim();
+	}
 
-		String deduplicated = result.toString().trim();
-		return deduplicated.isBlank() ? solutionText : deduplicated;
+	private static boolean isRepeatedLongLine(String line, Set<String> seenKeys) {
+		String key = normalizeLineKey(line);
+		if (key == null || key.length() < DUPLICATE_LINE_MIN_LENGTH) {
+			return false;
+		}
+		// 처음 보는 키면 등록하고 통과, 이미 본 키면 중복으로 제거한다.
+		return !seenKeys.add(key);
 	}
 
 	private static String truncateReasoningLoopTail(String solutionText) {
@@ -107,19 +123,7 @@ public final class SolutionTextNormalizer {
 		}
 
 		String[] lines = solutionText.split("\n");
-		int loopMarkerCount = 0;
-		int truncateFrom = -1;
-
-		for (int index = 0; index < lines.length; index++) {
-			if (!REASONING_LOOP_MARKER_PATTERN.matcher(lines[index]).matches()) {
-				continue;
-			}
-			loopMarkerCount += 1;
-			if (index >= LOOP_MARKER_TRUNCATION_MIN_LINES && loopMarkerCount >= LOOP_MARKER_TRUNCATION_THRESHOLD) {
-				truncateFrom = index;
-				break;
-			}
-		}
+		int truncateFrom = findLoopTruncationIndex(lines);
 
 		if (truncateFrom < 0) {
 			return solutionText;
@@ -134,64 +138,85 @@ public final class SolutionTextNormalizer {
 		return result.isBlank() ? solutionText : result;
 	}
 
+	private static int findLoopTruncationIndex(String[] lines) {
+		int loopMarkerCount = 0;
+
+		for (int index = 0; index < lines.length; index++) {
+			if (!REASONING_LOOP_MARKER_PATTERN.matcher(lines[index]).matches()) {
+				continue;
+			}
+			loopMarkerCount += 1;
+			if (index >= LOOP_MARKER_TRUNCATION_MIN_LINES && loopMarkerCount >= LOOP_MARKER_TRUNCATION_THRESHOLD) {
+				return index;
+			}
+		}
+
+		return -1;
+	}
+
 	private static String sanitizeRepeatedSentences(String solutionText) {
 		if (solutionText == null || solutionText.isBlank()) {
 			return solutionText;
 		}
-
 		String[] sentences = solutionText.split("(?<=[.!?])\\s+");
 		if (sentences.length == 0) {
 			return solutionText;
 		}
+		String sanitized = removeRepeatedLongSentences(sentences);
+		return sanitized.isBlank() ? solutionText : sanitized;
+	}
 
+	private static String removeRepeatedLongSentences(String[] sentences) {
 		Map<String, Integer> sentenceCounts = new HashMap<>();
 		StringBuilder result = new StringBuilder();
 
 		for (String sentence : sentences) {
-			String key = normalizeSentenceKey(sentence);
-			if (key == null) {
-				appendSentence(result, sentence);
-				continue;
-			}
-			int nextCount = sentenceCounts.getOrDefault(key, 0) + 1;
-			sentenceCounts.put(key, nextCount);
-			if (nextCount <= MAX_SAME_LONG_SENTENCE_OCCURRENCES) {
+			if (shouldKeepSentence(sentence, sentenceCounts)) {
 				appendSentence(result, sentence);
 			}
 		}
+		return result.toString().trim();
+	}
 
-		String sanitized = result.toString().trim();
-		return sanitized.isBlank() ? solutionText : sanitized;
+	private static boolean shouldKeepSentence(String sentence, Map<String, Integer> sentenceCounts) {
+		String key = normalizeSentenceKey(sentence);
+		if (key == null) {
+			// 짧은 문장은 반복 검사 대상이 아니다.
+			return true;
+		}
+		int nextCount = sentenceCounts.merge(key, 1, Integer::sum);
+		return nextCount <= MAX_SAME_LONG_SENTENCE_OCCURRENCES;
 	}
 
 	private static String collapseDuplicatedLeadingBlock(String solutionText) {
 		if (solutionText == null || solutionText.isBlank()) {
 			return solutionText;
 		}
-
 		String normalized = solutionText.trim();
-		if (normalized.length() < 400) {
+		String anchor = resolveLeadingAnchor(normalized);
+		if (anchor == null) {
 			return normalized;
 		}
+		return collapseIfLeadingBlockRepeats(normalized, anchor);
+	}
 
-		int anchorLength = Math.min(160, normalized.length() / 4);
-		if (anchorLength < 60) {
-			return normalized;
+	private static String resolveLeadingAnchor(String normalized) {
+		if (normalized.length() < LEADING_BLOCK_MIN_TEXT_LENGTH) {
+			return null;
 		}
-		String anchor = normalized.substring(0, anchorLength);
+		int anchorLength = Math.min(LEADING_BLOCK_MAX_ANCHOR_LENGTH,
+			normalized.length() / LEADING_BLOCK_ANCHOR_RATIO);
+		return anchorLength < LEADING_BLOCK_MIN_ANCHOR_LENGTH ? null : normalized.substring(0, anchorLength);
+	}
 
-		int secondIndex = findSecondBlockStart(normalized, anchor, anchorLength);
+	private static String collapseIfLeadingBlockRepeats(String normalized, String anchor) {
+		int secondIndex = findSecondBlockStart(normalized, anchor, anchor.length());
 		if (secondIndex < 0) {
 			return normalized;
 		}
-
 		String firstBlock = normalized.substring(0, secondIndex).trim();
 		String secondBlock = normalized.substring(secondIndex).trim();
-		if (!isHighlySimilarPrefix(firstBlock, secondBlock)) {
-			return normalized;
-		}
-
-		return firstBlock;
+		return isHighlySimilarPrefix(firstBlock, secondBlock) ? firstBlock : normalized;
 	}
 
 	private static String ensureFinalAnswerLine(String solutionText) {
@@ -215,56 +240,72 @@ public final class SolutionTextNormalizer {
 		}
 
 		String[] lines = solutionText.split("\n");
-		int endIndex = lines.length - 1;
+		int endIndex = skipTrailingBlankLines(lines, lines.length - 1);
 		String trailingAnswer = null;
 
-		while (endIndex >= 0 && lines[endIndex].trim().isEmpty()) {
-			endIndex -= 1;
+		while (endIndex >= 0 && isFinalAnswerLine(lines[endIndex])) {
+			trailingAnswer = trailingAnswer != null ? trailingAnswer : extractAnswerValue(lines[endIndex]);
+			endIndex = skipTrailingBlankLines(lines, endIndex - 1);
 		}
-		while (endIndex >= 0 && FINAL_ANSWER_LINE_PATTERN.matcher(lines[endIndex]).matches()) {
-			if (trailingAnswer == null) {
-				trailingAnswer = extractAnswerValue(lines[endIndex]);
-			}
-			endIndex -= 1;
-			while (endIndex >= 0 && lines[endIndex].trim().isEmpty()) {
-				endIndex -= 1;
-			}
-		}
+		return buildStripResult(lines, endIndex, trailingAnswer);
+	}
 
+	private static boolean isFinalAnswerLine(String line) {
+		return FINAL_ANSWER_LINE_PATTERN.matcher(line).matches();
+	}
+
+	private static TrailingAnswerStripResult buildStripResult(String[] lines, int endIndex, String trailingAnswer) {
 		if (endIndex < 0) {
 			return new TrailingAnswerStripResult(null, trailingAnswer);
 		}
+		String bodyText = collectBody(lines, endIndex);
+		return bodyText.isBlank()
+			? new TrailingAnswerStripResult(null, trailingAnswer)
+			: new TrailingAnswerStripResult(bodyText, trailingAnswer);
+	}
 
+	private static int skipTrailingBlankLines(String[] lines, int from) {
+		int index = from;
+		while (index >= 0 && lines[index].trim().isEmpty()) {
+			index -= 1;
+		}
+		return index;
+	}
+
+	private static String collectBody(String[] lines, int endIndex) {
 		StringBuilder body = new StringBuilder();
 		for (int index = 0; index <= endIndex; index++) {
 			appendLine(body, lines[index]);
 		}
-
-		String bodyText = body.toString().trim();
-		return bodyText.isBlank()
-			? new TrailingAnswerStripResult(null, trailingAnswer)
-			: new TrailingAnswerStripResult(bodyText, trailingAnswer);
+		return body.toString().trim();
 	}
 
 	private static String extractAnswerValue(String answerLine) {
 		if (answerLine == null) {
 			return null;
 		}
-		int sep = answerLine.indexOf(':');
-		if (sep < 0) {
-			sep = answerLine.indexOf('：');
-		}
-		if (sep < 0 || sep + 1 >= answerLine.length()) {
+		int separatorIndex = findAnswerSeparatorIndex(answerLine);
+		if (separatorIndex < 0 || separatorIndex + 1 >= answerLine.length()) {
 			return null;
 		}
-		String value = answerLine.substring(sep + 1).trim();
+		String value = trimAnswerDecorations(answerLine.substring(separatorIndex + 1).trim());
+		return value.isBlank() ? null : value;
+	}
+
+	private static int findAnswerSeparatorIndex(String answerLine) {
+		int separatorIndex = answerLine.indexOf(':');
+		return separatorIndex >= 0 ? separatorIndex : answerLine.indexOf('：');
+	}
+
+	private static String trimAnswerDecorations(String rawValue) {
+		String value = rawValue;
 		while (value.startsWith("*") || value.startsWith("\"") || value.startsWith("'") || value.startsWith("\\")) {
 			value = value.substring(1).trim();
 		}
 		while (value.endsWith("*") || value.endsWith("\"") || value.endsWith("'")) {
 			value = value.substring(0, value.length() - 1).trim();
 		}
-		return value.isBlank() ? null : value;
+		return value;
 	}
 
 	private static int findSecondBlockStart(String text, String anchor, int anchorLength) {
@@ -284,8 +325,8 @@ public final class SolutionTextNormalizer {
 	}
 
 	private static boolean isHighlySimilarPrefix(String first, String second) {
-		int compareLength = Math.min(Math.min(first.length(), second.length()), 500);
-		if (compareLength < 120) {
+		int compareLength = Math.min(Math.min(first.length(), second.length()), PREFIX_COMPARE_MAX_LENGTH);
+		if (compareLength < PREFIX_COMPARE_MIN_LENGTH) {
 			return false;
 		}
 		int matched = 0;
@@ -294,7 +335,7 @@ public final class SolutionTextNormalizer {
 				matched += 1;
 			}
 		}
-		return (double)matched / compareLength >= 0.9;
+		return (double)matched / compareLength >= PREFIX_SIMILARITY_THRESHOLD;
 	}
 
 	private static String normalizeLineKey(String line) {

@@ -1,10 +1,17 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
+import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
+import cmc.delta.domain.problem.adapter.out.ai.SolvePromptTemplate;
+import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -13,22 +20,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
-import cmc.delta.domain.problem.adapter.out.ai.SolvePromptTemplate;
-import cmc.delta.domain.problem.application.port.out.ai.ProblemSolveAiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Component
 @EnableConfigurationProperties(GeminiProperties.class)
 public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
-	private static final int LOG_TEXT_LIMIT = 1200;
 	private static final int SOLVE_MAX_OUTPUT_TOKENS = 8192;
 	private static final int SOLVE_THINKING_BUDGET = -1;
 	private static final long NANOS_PER_MILLISECOND = 1_000_000L;
@@ -52,7 +48,8 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	public GeminiProblemSolveAiClient(
 		GeminiProperties props,
 		ObjectMapper objectMapper,
-		@Qualifier("geminiRestClient") RestClient geminiRestClient,
+		@Qualifier("geminiRestClient")
+		RestClient geminiRestClient,
 		GeminiSolveResponseExtractor responseExtractor,
 		GeminiSolveMalformedParser malformedParser,
 		GeminiSolveDegenerateDetector degenerateDetector,
@@ -70,53 +67,77 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	public ProblemAiSolveResult solveProblem(ProblemAiSolvePrompt prompt) {
 		long startedAtNanos = System.nanoTime();
 		try {
-			String promptText = buildPromptText();
-			Map<String, Object> requestBody = buildRequestBody(
-				promptText,
-				prompt.problemImageBytes(),
-				prompt.problemImageMimeType());
-			log.debug(
-				"Gemini 풀이 요청 model={} imageBytes={} imageMimeType={} promptLength={}",
-				props.solveModel(),
-				prompt.problemImageBytes() == null ? 0 : prompt.problemImageBytes().length,
-				prompt.problemImageMimeType(),
-				promptText.length());
-
-			String rawResponseJson = callApi(requestBody);
-			log.debug(
-				"Gemini 풀이 원본 응답 수신 model={} rawLength={} rawSnippet={}",
-				props.solveModel(),
-				rawResponseJson == null ? 0 : rawResponseJson.length(),
-				abbreviate(rawResponseJson));
-
-			ProblemAiSolveResult result = parseResponse(rawResponseJson);
-			log.info("Gemini 풀이 완료 model={} durationMs={}", props.solveModel(), elapsedMillis(startedAtNanos));
-			return result;
+			return requestAndParseSolve(prompt, startedAtNanos);
 		} catch (RestClientResponseException e) {
-			log.warn(
-				"Gemini 풀이 HTTP 실패 model={} status={} durationMs={} responseBodySnippet={}",
-				props.solveModel(),
-				e.getRawStatusCode(),
-				elapsedMillis(startedAtNanos),
-				abbreviate(e.getResponseBodyAsString()));
+			logSolveHttpFailure(e, startedAtNanos);
 			throw GeminiAiException.externalCallFailed(e);
 		} catch (GeminiAiException e) {
-			log.warn(
-				"Gemini 풀이 실패 model={} durationMs={} message={}",
-				props.solveModel(),
-				elapsedMillis(startedAtNanos),
-				e.getMessage(),
-				e);
+			logSolveFailure(e, startedAtNanos);
 			throw e;
 		} catch (Exception e) {
-			log.warn(
-				"Gemini 풀이 예외 model={} durationMs={} message={}",
-				props.solveModel(),
-				elapsedMillis(startedAtNanos),
-				e.getMessage(),
-				e);
+			logSolveUnexpectedFailure(e, startedAtNanos);
 			throw GeminiAiException.responseParseFailed(e);
 		}
+	}
+
+	private ProblemAiSolveResult requestAndParseSolve(ProblemAiSolvePrompt prompt, long startedAtNanos) {
+		String promptText = buildPromptText();
+		Map<String, Object> requestBody = buildRequestBody(
+			promptText,
+			prompt.problemImageBytes(),
+			prompt.problemImageMimeType());
+		logSolveRequest(prompt, promptText);
+
+		String rawResponseJson = callApi(requestBody);
+		logSolveRawResponse(rawResponseJson);
+
+		ProblemAiSolveResult result = parseResponse(rawResponseJson);
+		log.info("Gemini 풀이 완료 model={} durationMs={}", props.solveModel(), elapsedMillis(startedAtNanos));
+		return result;
+	}
+
+	private void logSolveRequest(ProblemAiSolvePrompt prompt, String promptText) {
+		log.debug(
+			"Gemini 풀이 요청 model={} imageBytes={} imageMimeType={} promptLength={}",
+			props.solveModel(),
+			prompt.problemImageBytes() == null ? 0 : prompt.problemImageBytes().length,
+			prompt.problemImageMimeType(),
+			promptText.length());
+	}
+
+	private void logSolveRawResponse(String rawResponseJson) {
+		log.debug(
+			"Gemini 풀이 원본 응답 수신 model={} rawLength={} rawSnippet={}",
+			props.solveModel(),
+			rawResponseJson == null ? 0 : rawResponseJson.length(),
+			abbreviate(rawResponseJson));
+	}
+
+	private void logSolveHttpFailure(RestClientResponseException e, long startedAtNanos) {
+		log.warn(
+			"Gemini 풀이 HTTP 실패 model={} status={} durationMs={} responseBodySnippet={}",
+			props.solveModel(),
+			e.getRawStatusCode(),
+			elapsedMillis(startedAtNanos),
+			abbreviate(e.getResponseBodyAsString()));
+	}
+
+	private void logSolveFailure(GeminiAiException e, long startedAtNanos) {
+		log.warn(
+			"Gemini 풀이 실패 model={} durationMs={} message={}",
+			props.solveModel(),
+			elapsedMillis(startedAtNanos),
+			e.getMessage(),
+			e);
+	}
+
+	private void logSolveUnexpectedFailure(Exception e, long startedAtNanos) {
+		log.warn(
+			"Gemini 풀이 예외 model={} durationMs={} message={}",
+			props.solveModel(),
+			elapsedMillis(startedAtNanos),
+			e.getMessage(),
+			e);
 	}
 
 	private String callApi(Map<String, Object> requestBody) {
@@ -154,16 +175,18 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 			"parts", List.of(
 				Map.of("inline_data", Map.of("mime_type", safeMimeType, "data", base64Image)),
 				Map.of("text", promptText)))));
+		body.put("generationConfig", buildSolveGenerationConfig());
+		return body;
+	}
 
+	private Map<String, Object> buildSolveGenerationConfig() {
 		Map<String, Object> generationConfig = new LinkedHashMap<>();
 		generationConfig.put("temperature", 0);
 		generationConfig.put("maxOutputTokens", SOLVE_MAX_OUTPUT_TOKENS);
 		generationConfig.put("responseMimeType", "application/json");
 		generationConfig.put("responseSchema", RESPONSE_SCHEMA);
 		generationConfig.put("thinkingConfig", Map.of("thinkingBudget", SOLVE_THINKING_BUDGET));
-
-		body.put("generationConfig", generationConfig);
-		return body;
+		return generationConfig;
 	}
 
 	private ProblemAiSolveResult parseResponse(String rawResponseJson) {
@@ -173,7 +196,8 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 		} catch (GeminiAiException e) {
 			throw e;
 		} catch (Exception e) {
-			log.debug("Gemini 풀이 parseResponse 실패 rawSnippet={} reason={}", abbreviate(rawResponseJson), e.getMessage(), e);
+			log.debug("Gemini 풀이 parseResponse 실패 rawSnippet={} reason={}", abbreviate(rawResponseJson), e.getMessage(),
+				e);
 			throw GeminiAiException.responseParseFailed(e);
 		}
 	}
@@ -181,21 +205,28 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	private ProblemAiSolveResult parseOrFallback(String modelText) {
 		String normalizedModelText = AiResponseParseUtils.stripMarkdownCodeFence(modelText);
 		String unwrappedModelText = responseExtractor.unwrapJsonTextNodeIfNeeded(normalizedModelText);
-		String jsonPayload = responseExtractor.extractJsonObject(unwrappedModelText);
+		String jsonPayload = findOrRepairJsonPayload(unwrappedModelText);
 		if (jsonPayload == null) {
-			jsonPayload = responseExtractor.repairTruncatedJsonObject(unwrappedModelText);
-		}
-
-		if (jsonPayload != null) {
-			ProblemAiSolveResult parsed = tryParseJson(jsonPayload, unwrappedModelText);
-			if (parsed != null) {
-				return parsed;
-			}
-		} else {
 			log.debug("Gemini 풀이 응답에서 JSON 객체를 찾지 못함. malformed fallback 시도 textLength={}",
 				unwrappedModelText.length());
+			return fallbackToMalformedParse(unwrappedModelText);
 		}
+		ProblemAiSolveResult parsed = tryParseJson(jsonPayload, unwrappedModelText);
+		if (parsed != null) {
+			return parsed;
+		}
+		return fallbackToMalformedParse(unwrappedModelText);
+	}
 
+	private String findOrRepairJsonPayload(String unwrappedModelText) {
+		String jsonPayload = responseExtractor.extractJsonObject(unwrappedModelText);
+		if (jsonPayload != null) {
+			return jsonPayload;
+		}
+		return responseExtractor.repairTruncatedJsonObject(unwrappedModelText);
+	}
+
+	private ProblemAiSolveResult fallbackToMalformedParse(String unwrappedModelText) {
 		GeminiSolveMalformedParser.ParsedFields extracted = malformedParser.parse(unwrappedModelText);
 		if (extracted != null) {
 			log.debug(
@@ -214,12 +245,9 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 
 	private ProblemAiSolveResult tryParseJson(String jsonPayload, String unwrappedModelText) {
 		try {
-			JsonNode root = objectMapper.readTree(jsonPayload);
-			String solutionLatex = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_LATEX);
-			String solutionText = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_TEXT);
-			String finalAnswer = AiResponseParseUtils.readTextOrNull(root, FIELD_FINAL_ANSWER);
-			if (solutionLatex != null || solutionText != null || finalAnswer != null) {
-				return finalizeResult(solutionLatex, solutionText);
+			ProblemAiSolveResult parsed = parseSolveFields(objectMapper.readTree(jsonPayload));
+			if (parsed != null) {
+				return parsed;
 			}
 			log.debug("Gemini 풀이 JSON 파싱 성공했지만 필수 필드 누락. malformed fallback 시도 textLength={}",
 				unwrappedModelText.length());
@@ -229,6 +257,16 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 				parseException.getMessage());
 		}
 		return null;
+	}
+
+	private ProblemAiSolveResult parseSolveFields(JsonNode root) {
+		String solutionLatex = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_LATEX);
+		String solutionText = AiResponseParseUtils.readTextOrNull(root, FIELD_SOLUTION_TEXT);
+		String finalAnswer = AiResponseParseUtils.readTextOrNull(root, FIELD_FINAL_ANSWER);
+		if (solutionLatex == null && solutionText == null && finalAnswer == null) {
+			return null;
+		}
+		return finalizeResult(solutionLatex, solutionText);
 	}
 
 	private ProblemAiSolveResult finalizeResult(String rawLatex, String rawPlainText) {
@@ -252,13 +290,6 @@ public class GeminiProblemSolveAiClient implements ProblemSolveAiClient {
 	}
 
 	private String abbreviate(String text) {
-		if (text == null || text.isBlank()) {
-			return "";
-		}
-		String compact = text.replace("\n", "\\n").replace("\r", "\\r");
-		if (compact.length() <= LOG_TEXT_LIMIT) {
-			return compact;
-		}
-		return compact.substring(0, LOG_TEXT_LIMIT) + "...";
+		return AiResponseParseUtils.abbreviateForLog(text);
 	}
 }

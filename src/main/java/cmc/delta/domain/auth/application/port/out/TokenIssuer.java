@@ -11,8 +11,8 @@ public interface TokenIssuer {
 
 	AccessTokenInfo parseAccessTokenInfo(String accessToken);
 
-	record AccessTokenInfo(String jti, Duration remainingTtl) {}
-
+	record AccessTokenInfo(String jti, Duration remainingTtl) {
+	}
 
 	record IssuedTokens(String accessToken, String refreshToken, String tokenType) {
 		public String authorizationHeaderValue() {

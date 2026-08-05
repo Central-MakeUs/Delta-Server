@@ -12,6 +12,5 @@ public record DashboardProblemItem(
 	long viewCount,
 	LocalDateTime registeredAt,
 	boolean wrongAnswerCompleted,
-	UserRole userRole
-) {
+	UserRole userRole) {
 }

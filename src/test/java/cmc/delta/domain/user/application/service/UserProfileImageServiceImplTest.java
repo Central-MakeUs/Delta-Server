@@ -3,10 +3,10 @@ package cmc.delta.domain.user.application.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.in.dto.ProfileImageUploadCommand;
 import cmc.delta.domain.user.application.port.in.dto.UserProfileImageResult;
 import cmc.delta.domain.user.application.port.out.ProfileImageStoragePort;
-import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;

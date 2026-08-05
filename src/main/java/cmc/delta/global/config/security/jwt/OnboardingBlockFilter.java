@@ -39,40 +39,46 @@ public class OnboardingBlockFilter extends OncePerRequestFilter {
 		HttpServletResponse response,
 		FilterChain filterChain) throws ServletException, IOException {
 
-		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-		if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal principal)) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		UserStatus status = userStatusQuery.getStatus(principal.userId());
-		if (status == UserStatus.WITHDRAWN) {
-			if (isWithdrawnAllowed(request)) {
-				filterChain.doFilter(request, response);
-				return;
-			}
-			throw new JwtAuthenticationException(ErrorCode.USER_WITHDRAWN);
-		}
-
-		if (isAllowed(request)) {
-			filterChain.doFilter(request, response);
-			return;
-		}
-
-		if (status == UserStatus.ONBOARDING_REQUIRED) {
-			throw new JwtAuthenticationException(ErrorCode.USER_ONBOARDING_REQUIRED);
+		ErrorCode blockReason = resolveBlockReason(request);
+		if (blockReason != null) {
+			throw new JwtAuthenticationException(blockReason);
 		}
 
 		filterChain.doFilter(request, response);
 	}
 
-	private boolean isAllowed(HttpServletRequest request) {
-		String key = request.getMethod() + " " + request.getRequestURI();
-		return ALLOWLIST.contains(key);
+	// 차단 사유가 없으면 null을 반환해 필터 체인을 계속 진행시킨다.
+	private ErrorCode resolveBlockReason(HttpServletRequest request) {
+		UserPrincipal principal = findAuthenticatedPrincipal();
+		if (principal == null) {
+			return null;
+		}
+
+		UserStatus status = userStatusQuery.getStatus(principal.userId());
+		if (status == UserStatus.WITHDRAWN) {
+			return matches(WITHDRAWN_ALLOWLIST, request) ? null : ErrorCode.USER_WITHDRAWN;
+		}
+
+		return resolveOnboardingBlock(status, request);
 	}
 
-	private boolean isWithdrawnAllowed(HttpServletRequest request) {
+	private UserPrincipal findAuthenticatedPrincipal() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null || !(auth.getPrincipal() instanceof UserPrincipal principal)) {
+			return null;
+		}
+		return principal;
+	}
+
+	private ErrorCode resolveOnboardingBlock(UserStatus status, HttpServletRequest request) {
+		if (matches(ALLOWLIST, request)) {
+			return null;
+		}
+		return status == UserStatus.ONBOARDING_REQUIRED ? ErrorCode.USER_ONBOARDING_REQUIRED : null;
+	}
+
+	private boolean matches(Set<String> allowlist, HttpServletRequest request) {
 		String key = request.getMethod() + " " + request.getRequestURI();
-		return WITHDRAWN_ALLOWLIST.contains(key);
+		return allowlist.contains(key);
 	}
 }

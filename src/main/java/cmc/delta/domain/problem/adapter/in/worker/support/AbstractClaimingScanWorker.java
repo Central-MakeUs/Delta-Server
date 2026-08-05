@@ -50,44 +50,57 @@ public abstract class AbstractClaimingScanWorker {
 	public final void runBatch(String lockOwner, int batchSize, long lockLeaseSeconds) {
 		this.lastLockLeaseSeconds = lockLeaseSeconds;
 		applyMdc(createTraceId());
-
 		try {
-			LocalDateTime batchNow = now();
-			LocalDateTime staleBefore = batchNow.minusSeconds(lockLeaseSeconds);
-			LocalDateTime lockedAt = batchNow;
-			String lockToken = createLockToken();
-
-			List<Long> ids = claimIds(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
-
-			if (ids == null || ids.isEmpty()) {
-				onNoCandidate(batchNow);
-				return;
-			}
-
-			onClaimed(batchNow, ids.size());
-
-			Map<String, String> parentMdc = MDC.getCopyOfContextMap();
-
-			CompletableFuture<?>[] futures = ids.stream()
-				.map(id -> CompletableFuture.runAsync(() -> {
-					if (parentMdc != null) {
-						MDC.setContextMap(parentMdc);
-					}
-					try {
-						processOne(id, lockOwner, lockToken, batchNow);
-					} catch (Exception e) {
-						log.error("worker processOne unexpected error scanId={}", id, e);
-					} finally {
-						MDC.clear();
-					}
-				}, executor))
-				.toArray(CompletableFuture[]::new);
-
-			CompletableFuture.allOf(futures).join();
-
+			claimAndDispatch(lockOwner, batchSize, lockLeaseSeconds);
 		} finally {
 			clearMdc();
 		}
+	}
+
+	private void claimAndDispatch(String lockOwner, int batchSize, long lockLeaseSeconds) {
+		LocalDateTime batchNow = now();
+		LocalDateTime staleBefore = batchNow.minusSeconds(lockLeaseSeconds);
+		LocalDateTime lockedAt = batchNow;
+		String lockToken = createLockToken();
+
+		List<Long> ids = claimIds(batchNow, staleBefore, lockOwner, lockToken, lockedAt, batchSize);
+		if (ids == null || ids.isEmpty()) {
+			onNoCandidate(batchNow);
+			return;
+		}
+
+		onClaimed(batchNow, ids.size());
+		dispatchAll(ids, lockOwner, lockToken, batchNow);
+	}
+
+	private void dispatchAll(List<Long> ids, String lockOwner, String lockToken, LocalDateTime batchNow) {
+		Map<String, String> parentMdc = MDC.getCopyOfContextMap();
+
+		CompletableFuture<?>[] futures = ids.stream()
+			.map(id -> toFuture(id, lockOwner, lockToken, batchNow, parentMdc))
+			.toArray(CompletableFuture[]::new);
+
+		CompletableFuture.allOf(futures).join();
+	}
+
+	private CompletableFuture<Void> toFuture(
+		Long id,
+		String lockOwner,
+		String lockToken,
+		LocalDateTime batchNow,
+		Map<String, String> parentMdc) {
+		return CompletableFuture.runAsync(() -> {
+			if (parentMdc != null) {
+				MDC.setContextMap(parentMdc);
+			}
+			try {
+				processOne(id, lockOwner, lockToken, batchNow);
+			} catch (Exception e) {
+				log.error("worker processOne unexpected error scanId={}", id, e);
+			} finally {
+				MDC.clear();
+			}
+		}, executor);
 	}
 
 	protected void onNoCandidate(LocalDateTime now) {}

@@ -25,7 +25,8 @@ public class FakeTokenIssuer implements TokenIssuer {
 		Instant exp = now.plus(accessTtl);
 
 		String access = "at:" + principal.userId() + ":" + jti + ":" + exp.getEpochSecond();
-		String refresh = "rt:" + principal.userId() + ":" + principal.role() + ":" + UUID.randomUUID() + ":" + now.getEpochSecond();
+		String refresh = "rt:" + principal.userId() + ":" + principal.role() + ":" + UUID.randomUUID() + ":"
+			+ now.getEpochSecond();
 
 		return new IssuedTokens(access, refresh, "Bearer");
 	}

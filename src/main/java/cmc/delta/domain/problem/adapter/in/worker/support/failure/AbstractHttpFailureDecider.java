@@ -1,11 +1,10 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.failure;
 
+import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientResponseException;
-
-import cmc.delta.domain.problem.adapter.in.worker.exception.ProblemScanWorkerException;
 
 public abstract class AbstractHttpFailureDecider {
 
@@ -44,19 +43,40 @@ public abstract class AbstractHttpFailureDecider {
 			return FailureDecision.retryable(networkErrorReason);
 		}
 		if (exception instanceof RestClientResponseException rest) {
-			int statusCode = rest.getRawStatusCode();
-			if (statusCode == HTTP_STATUS_TOO_MANY_REQUESTS) {
-				Long delaySeconds = computeRateLimitDelaySeconds(extractRetryAfterSeconds(rest));
-				return new FailureDecision(rateLimitReason, true, delaySeconds);
-			}
-			if (statusCode >= HTTP_STATUS_5XX_START) {
-				return FailureDecision.retryable(client5xxReason);
-			}
-			if (statusCode >= HTTP_STATUS_4XX_START) {
-				return FailureDecision.nonRetryable(client4xxReason);
-			}
+			return decideByStatusCode(rest);
 		}
 		return FailureDecision.retryable(unknownFailureReason);
+	}
+
+	private FailureDecision decideByStatusCode(RestClientResponseException rest) {
+		int statusCode = rest.getRawStatusCode();
+		if (isRateLimited(statusCode)) {
+			return decideRateLimited(rest);
+		}
+		if (isServerError(statusCode)) {
+			return FailureDecision.retryable(client5xxReason);
+		}
+		if (isClientError(statusCode)) {
+			return FailureDecision.nonRetryable(client4xxReason);
+		}
+		return FailureDecision.retryable(unknownFailureReason);
+	}
+
+	private boolean isRateLimited(int statusCode) {
+		return statusCode == HTTP_STATUS_TOO_MANY_REQUESTS;
+	}
+
+	private boolean isServerError(int statusCode) {
+		return statusCode >= HTTP_STATUS_5XX_START;
+	}
+
+	private boolean isClientError(int statusCode) {
+		return statusCode >= HTTP_STATUS_4XX_START;
+	}
+
+	private FailureDecision decideRateLimited(RestClientResponseException rest) {
+		Long delaySeconds = computeRateLimitDelaySeconds(extractRetryAfterSeconds(rest));
+		return new FailureDecision(rateLimitReason, true, delaySeconds);
 	}
 
 	private Long extractRetryAfterSeconds(RestClientResponseException rest) {

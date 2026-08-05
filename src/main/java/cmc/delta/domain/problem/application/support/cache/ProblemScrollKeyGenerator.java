@@ -26,25 +26,33 @@ public class ProblemScrollKeyGenerator implements KeyGenerator {
 
 		long epoch = epochStore.getEpoch(userId);
 
+		return VERSION
+			+ ":u=" + userId
+			+ ":e=" + epoch
+			+ conditionKeyPart(condition)
+			+ cursorKeyPart(cursorQuery);
+	}
+
+	private String conditionKeyPart(ProblemListCondition condition) {
 		String subjectIds = safeIds(condition.subjectIds());
 		String unitIds = safeIds(condition.unitIds());
 		String typeIds = safeIds(condition.typeIds());
 		String sort = (condition.sort() == null) ? "-" : condition.sort().name();
 		String status = (condition.status() == null) ? "-" : condition.status().name();
 
+		return ":subs=" + subjectIds
+			+ ":units=" + unitIds
+			+ ":types=" + typeIds
+			+ ":sort=" + sort
+			+ ":status=" + status;
+	}
+
+	private String cursorKeyPart(CursorQuery cursorQuery) {
 		String lastId = (cursorQuery.lastId() == null) ? "-" : String.valueOf(cursorQuery.lastId());
 		String lastCreatedAt = time(cursorQuery.lastCreatedAt());
 		String size = String.valueOf(cursorQuery.size());
 
-		return VERSION
-			+ ":u=" + userId
-			+ ":e=" + epoch
-			+ ":subs=" + subjectIds
-			+ ":units=" + unitIds
-			+ ":types=" + typeIds
-			+ ":sort=" + sort
-			+ ":status=" + status
-			+ ":lastId=" + lastId
+		return ":lastId=" + lastId
 			+ ":lastAt=" + lastCreatedAt
 			+ ":size=" + size;
 	}

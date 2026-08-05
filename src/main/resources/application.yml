@@ -21,6 +21,22 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  # 워커 executor(ocr 8 + ai 5 + purge 4)와 스케줄러 스레드가 동시에 커넥션을 잡으므로
+  # 기본값 10으로는 웹 요청이 커넥션을 못 얻는다. open-in-view=true라 요청당 점유 시간도 길다.
+  # 워커는 외부 호출 구간에서 커넥션을 놓으므로 스레드 총합보다는 적게 잡아도 된다.
+  datasource:
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:30}
+      minimum-idle: ${DB_POOL_MIN_IDLE:10}
+      connection-timeout: 3000
+
+  # 기본값 1이면 @Scheduled 워커 8개가 한 스레드에서 직렬로 돌아
+  # OCR 배치가 끝날 때까지 AI/리포트 워커가 전부 밀린다. 스케줄러 수(8)보다 넉넉하게 잡는다.
+  task:
+    scheduling:
+      pool:
+        size: ${SCHEDULER_POOL_SIZE:10}
+
   # Redis 공통 설정
   data:
     redis:
@@ -64,18 +80,21 @@ oauth:
     read-timeout-ms: 4000
 
 worker:
+  # 스캔 워커는 전부 외부 API 대기가 대부분인 I/O 바운드라 코어 수보다 크게 잡는다.
+  # batch-size는 concurrency의 2배로 두어 한 tick에 풀이 놀지 않게 한다.
   ocr:
     fixed-delay-ms: ${WORKER_OCR_FIXED_DELAY_MS:1000}
-    batch-size: ${WORKER_OCR_BATCH_SIZE:10}
+    batch-size: ${WORKER_OCR_BATCH_SIZE:16}
     lock-lease-seconds: ${WORKER_OCR_LOCK_LEASE_SECONDS:600}
-    concurrency: ${WORKER_OCR_CONCURRENCY:5}
+    concurrency: ${WORKER_OCR_CONCURRENCY:8}
     backlog-log-minutes: ${WORKER_OCR_BACKLOG_LOG_MINUTES:7}
 
+  # Gemini 레이트 리밋(429)을 이미 맞고 있어 동시성을 과하게 올리면 실패만 늘어난다.
   ai:
     fixed-delay-ms: ${WORKER_AI_FIXED_DELAY_MS:500}
-    batch-size: ${WORKER_AI_BATCH_SIZE:5}
+    batch-size: ${WORKER_AI_BATCH_SIZE:10}
     lock-lease-seconds: ${WORKER_AI_LOCK_LEASE_SECONDS:600}
-    concurrency: ${WORKER_AI_CONCURRENCY:3}
+    concurrency: ${WORKER_AI_CONCURRENCY:5}
     backlog-log-minutes: ${WORKER_AI_BACKLOG_LOG_MINUTES:7}
 
   ai-solution:
@@ -85,6 +104,21 @@ worker:
   report:
     fixed-delay-ms: ${WORKER_REPORT_FIXED_DELAY_MS:1000}
     batch-size: ${WORKER_REPORT_BATCH_SIZE:2}
+
+  # 1시간에 한 번만 돌므로 batch가 작으면 스캔 증가분을 못 따라가 백로그가 쌓인다.
+  # lock-lease는 S3 삭제가 배치 내내 이어져도 만료되지 않도록 넉넉히 둔다.
+  purge:
+    fixed-delay-ms: ${WORKER_PURGE_FIXED_DELAY_MS:3600000}
+    batch-size: ${WORKER_PURGE_BATCH_SIZE:30}
+    lock-lease-seconds: ${WORKER_PURGE_LOCK_LEASE_SECONDS:600}
+    concurrency: ${WORKER_PURGE_CONCURRENCY:4}
+    backlog-log-minutes: ${WORKER_PURGE_BACKLOG_LOG_MINUTES:60}
+    retention-days: ${WORKER_PURGE_RETENTION_DAYS:3}
+
+  user-purge:
+    fixed-delay-ms: ${WORKER_USER_PURGE_FIXED_DELAY_MS:3600000}
+    batch-size: ${WORKER_USER_PURGE_BATCH_SIZE:50}
+    retention-days: ${WORKER_USER_PURGE_RETENTION_DAYS:7}
 
 jwt:
   issuer: cmc-delta

@@ -33,7 +33,8 @@ class ProblemStatsControllerWebMvcTest {
 		statsConditionFactory = mock(ProblemStatsConditionFactory.class);
 		recordUserAccessUseCase = mock(RecordUserAccessUseCase.class);
 
-		ProblemStatsController controller = new ProblemStatsController(statsUseCase, statsConditionFactory, recordUserAccessUseCase);
+		ProblemStatsController controller = new ProblemStatsController(statsUseCase, statsConditionFactory,
+			recordUserAccessUseCase);
 
 		mvc = MockMvcBuilders.standaloneSetup(controller)
 			.setCustomArgumentResolvers(new TestCurrentUserArgumentResolver())

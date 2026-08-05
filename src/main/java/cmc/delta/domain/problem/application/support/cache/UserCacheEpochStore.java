@@ -1,8 +1,10 @@
 package cmc.delta.domain.problem.application.support.cache;
 
 import cmc.delta.global.transaction.TransactionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+@Slf4j
 public abstract class UserCacheEpochStore {
 
 	private final StringRedisTemplate redis;
@@ -24,6 +26,7 @@ public abstract class UserCacheEpochStore {
 		try {
 			return Long.parseLong(raw);
 		} catch (NumberFormatException e) {
+			log.warn("사용자 캐시 epoch 값이 손상됨. 0으로 초기화 userId={} raw={}", userId, raw);
 			return 0L;
 		}
 	}

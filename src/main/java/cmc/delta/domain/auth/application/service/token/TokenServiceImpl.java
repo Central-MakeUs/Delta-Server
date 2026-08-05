@@ -61,18 +61,14 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		validateAccessProvided(accessToken);
 		validateRefreshProvided(refreshToken);
 		validateRefreshTokenMatchOrThrow(userId, refreshToken, ACTION_LOGOUT);
-		blacklistAccessIfPossible(userId, accessToken, true, ACTION_LOGOUT);
+		blacklistAccessRequired(userId, accessToken, ACTION_LOGOUT);
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
 	}
 
 	@Override
 	public void invalidateAll(long userId, String accessTokenOrNull) {
 		refreshTokenStore.refreshDelete(userId, DEFAULT_SESSION_ID);
-		BlacklistResult br = blacklistAccessIfPossible(
-			userId,
-			accessTokenOrNull,
-			false,
-			ACTION_INVALIDATE_ALL);
+		BlacklistResult br = blacklistAccessBestEffort(userId, accessTokenOrNull, ACTION_INVALIDATE_ALL);
 		auditLogger.invalidateAll(userId, DEFAULT_SESSION_ID, br.blacklisted(), br.ttlSeconds());
 	}
 
@@ -116,34 +112,44 @@ public class TokenServiceImpl implements TokenCommandUseCase {
 		}
 	}
 
-	private BlacklistResult blacklistAccessIfPossible(long userId, String accessTokenOrNull, boolean required,
-		String action) {
-		if (!StringUtils.hasText(accessTokenOrNull)) {
-			if (required)
-				throw new TokenException(ErrorCode.TOKEN_REQUIRED);
-			return BlacklistResult.notBlacklisted();
+	/** 토큰이 없거나 파싱에 실패하면 예외를 던진다(로그아웃 경로). */
+	private void blacklistAccessRequired(long userId, String accessToken, String action) {
+		if (!StringUtils.hasText(accessToken)) {
+			throw new TokenException(ErrorCode.TOKEN_REQUIRED);
 		}
-
 		try {
-			TokenIssuer.AccessTokenInfo info = tokenIssuer.parseAccessTokenInfo(accessTokenOrNull);
-
-			if (!info.remainingTtl().isZero()) {
-				accessBlacklistStore.blacklist(info.jti(), info.remainingTtl());
-				return BlacklistResult.blacklisted(info.remainingTtl().getSeconds());
-			}
-			return BlacklistResult.notBlacklisted();
-
+			blacklistIfTtlRemains(accessToken);
 		} catch (RuntimeException e) {
-			// 토큰 원문/해시 절대 로그 금지. 예외 메시지도 최소화(클래스명만)
-			auditLogger.blacklistFailed(
-				userId,
-				DEFAULT_SESSION_ID,
-				action,
-				e.getClass().getSimpleName());
-			if (required)
-				throw e;
+			auditBlacklistFailed(userId, action, e);
+			throw e;
+		}
+	}
+
+	/** 토큰이 없거나 파싱에 실패해도 진행한다(전체 무효화 경로). */
+	private BlacklistResult blacklistAccessBestEffort(long userId, String accessTokenOrNull, String action) {
+		if (!StringUtils.hasText(accessTokenOrNull)) {
 			return BlacklistResult.notBlacklisted();
 		}
+		try {
+			return blacklistIfTtlRemains(accessTokenOrNull);
+		} catch (RuntimeException e) {
+			auditBlacklistFailed(userId, action, e);
+			return BlacklistResult.notBlacklisted();
+		}
+	}
+
+	private BlacklistResult blacklistIfTtlRemains(String accessToken) {
+		TokenIssuer.AccessTokenInfo info = tokenIssuer.parseAccessTokenInfo(accessToken);
+		if (info.remainingTtl().isZero()) {
+			return BlacklistResult.notBlacklisted();
+		}
+		accessBlacklistStore.blacklist(info.jti(), info.remainingTtl());
+		return BlacklistResult.blacklisted(info.remainingTtl().getSeconds());
+	}
+
+	private void auditBlacklistFailed(long userId, String action, RuntimeException e) {
+		// 토큰 원문/해시 절대 로그 금지. 예외 메시지도 최소화(클래스명만)
+		auditLogger.blacklistFailed(userId, DEFAULT_SESSION_ID, action, e.getClass().getSimpleName());
 	}
 
 	private void requireProvided(String value, ErrorCode errorCode) {
