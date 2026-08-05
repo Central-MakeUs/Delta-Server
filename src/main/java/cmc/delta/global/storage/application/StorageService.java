@@ -30,6 +30,7 @@ public class StorageService {
 
 	private static final String DEFAULT_DIRECTORY = "temp";
 	private static final String DEFAULT_CONTENT_TYPE = "application/octet-stream";
+	private static final String IMAGE_ONLY_MESSAGE = "이미지 파일만 업로드할 수 있습니다.";
 
 	private final PresignedUrlCache presignedUrlCache;
 	private final ObjectStorage objectStorage;
@@ -39,38 +40,8 @@ public class StorageService {
 	private final StorageKeyGenerator keyGenerator;
 
 	public StorageUploadData uploadImage(MultipartFile file, String directory) {
-		long startedAt = System.nanoTime();
-
 		validator.validateUploadFile(file, properties.maxUploadBytes());
-
-		String resolvedDirectory = resolveDirectory(directory);
-		String contentType = resolveContentType(file.getContentType());
-		if (!isImageContentType(contentType)) {
-			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
-		}
-
-		byte[] bytes = readBytes(file);
-
-		// (추가해둔 validator라면) bytes 기반으로도 한 번 더 방어 가능
-		validator.validateUploadBytes(bytes, properties.maxUploadBytes());
-
-		ImageMetadataExtractor.ImageSize imageSize = requireValidImage(bytes);
-
-		String storageKey = keyGenerator.generate(resolvedDirectory, file.getOriginalFilename());
-		objectStorage.put(storageKey, bytes, contentType);
-
-		String viewUrl = createPresignedGetUrl(storageKey, properties.presignGetTtlSeconds());
-		long durationMs = elapsedMs(startedAt);
-
-		logUploadComplete(storageKey, resolvedDirectory, contentType, bytes.length, imageSize, durationMs);
-
-		return new StorageUploadData(
-			storageKey,
-			viewUrl,
-			contentType,
-			bytes.length,
-			imageSize.width(),
-			imageSize.height());
+		return uploadImage(readBytes(file), file.getContentType(), file.getOriginalFilename(), directory);
 	}
 
 	/**
@@ -82,21 +53,25 @@ public class StorageService {
 		validator.validateUploadBytes(bytes, properties.maxUploadBytes());
 
 		String resolvedDirectory = resolveDirectory(directory);
-		String resolvedContentType = resolveContentType(contentType);
-
-		if (!isImageContentType(resolvedContentType)) {
-			throw StorageException.invalidRequest("이미지 파일만 업로드할 수 있습니다.");
-		}
-
+		String resolvedContentType = requireImageContentType(contentType);
 		ImageMetadataExtractor.ImageSize imageSize = requireValidImage(bytes);
 
+		return storeAndPresign(bytes, originalFilename, resolvedDirectory, resolvedContentType, imageSize, startedAt);
+	}
+
+	private StorageUploadData storeAndPresign(
+		byte[] bytes,
+		String originalFilename,
+		String resolvedDirectory,
+		String resolvedContentType,
+		ImageMetadataExtractor.ImageSize imageSize,
+		long startedAt) {
 		String storageKey = keyGenerator.generate(resolvedDirectory, originalFilename);
 		objectStorage.put(storageKey, bytes, resolvedContentType);
 
 		String viewUrl = createPresignedGetUrl(storageKey, properties.presignGetTtlSeconds());
-		long durationMs = elapsedMs(startedAt);
-
-		logUploadComplete(storageKey, resolvedDirectory, resolvedContentType, bytes.length, imageSize, durationMs);
+		logUploadComplete(storageKey, resolvedDirectory, resolvedContentType, bytes.length, imageSize,
+			elapsedMs(startedAt));
 
 		return new StorageUploadData(
 			storageKey,
@@ -105,6 +80,14 @@ public class StorageService {
 			bytes.length,
 			imageSize.width(),
 			imageSize.height());
+	}
+
+	private String requireImageContentType(String contentType) {
+		String resolved = resolveContentType(contentType);
+		if (!isImageContentType(resolved)) {
+			throw StorageException.invalidRequest(IMAGE_ONLY_MESSAGE);
+		}
+		return resolved;
 	}
 
 	public StoragePresignedGetData issueReadUrl(String storageKey, Integer ttlSecondsOrNull) {
@@ -136,9 +119,7 @@ public class StorageService {
 		Set<String> uniqueKeys = new LinkedHashSet<>(storageKeys);
 		Map<String, String> urls = new LinkedHashMap<>(uniqueKeys.size());
 		for (String storageKey : uniqueKeys) {
-			validator.validateStorageKey(storageKey);
-			String url = getOrCreateCachedPresignedGetUrl(storageKey, ttlSeconds);
-			urls.put(storageKey, url);
+			putReadUrl(urls, storageKey, ttlSeconds);
 		}
 
 		long durationMs = elapsedMs(startedAt);
@@ -149,15 +130,19 @@ public class StorageService {
 		return urls;
 	}
 
-	private String getOrCreateCachedPresignedGetUrl(String storageKey, int ttlSeconds) {
-		String cachedUrl = presignedUrlCache.get(storageKey, ttlSeconds);
-		if (cachedUrl != null) {
-			return cachedUrl;
-		}
+	private void putReadUrl(Map<String, String> urls, String storageKey, int ttlSeconds) {
+		validator.validateStorageKey(storageKey);
+		String url = getOrCreateCachedPresignedGetUrl(storageKey, ttlSeconds);
+		urls.put(storageKey, url);
+	}
 
-		String url = createPresignedGetUrl(storageKey, ttlSeconds);
-		presignedUrlCache.put(storageKey, ttlSeconds, url);
-		return url;
+	private String getOrCreateCachedPresignedGetUrl(String storageKey, int ttlSeconds) {
+		return presignedUrlCache.get(storageKey, ttlSeconds)
+			.orElseGet(() -> {
+				String url = createPresignedGetUrl(storageKey, ttlSeconds);
+				presignedUrlCache.put(storageKey, ttlSeconds, url);
+				return url;
+			});
 	}
 
 	public void deleteImage(String storageKey) {

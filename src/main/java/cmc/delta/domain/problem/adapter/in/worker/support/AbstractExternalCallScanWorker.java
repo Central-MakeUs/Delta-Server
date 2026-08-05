@@ -86,16 +86,19 @@ public abstract class AbstractExternalCallScanWorker extends AbstractClaimingSca
 			return;
 		}
 		if (shouldSuppressStacktrace(exception)) {
-			RestClientResponseException rest = (RestClientResponseException)exception;
-			log.warn(
-				"{} 호출 4xx scanId={} reason={} status={}",
-				identity.label(),
-				scanId,
-				logPolicy.reasonCode(decision),
-				rest.getRawStatusCode());
+			logSuppressedHttpFailure(scanId, decision, (RestClientResponseException)exception);
 			return;
 		}
 		log.error("{} 처리 실패 scanId={} reason={}", identity.label(), scanId, logPolicy.reasonCode(decision), exception);
+	}
+
+	private void logSuppressedHttpFailure(Long scanId, FailureDecision decision, RestClientResponseException rest) {
+		log.warn(
+			"{} 호출 4xx scanId={} reason={} status={}",
+			identity.label(),
+			scanId,
+			logPolicy.reasonCode(decision),
+			rest.getRawStatusCode());
 	}
 
 	private boolean shouldSuppressStacktrace(Exception exception) {

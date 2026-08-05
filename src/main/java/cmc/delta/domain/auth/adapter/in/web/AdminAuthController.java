@@ -29,7 +29,8 @@ public class AdminAuthController {
 	@Operation(summary = "어드민 로그인", description = "username(email)과 password로 로그인합니다.")
 	@PostMapping("/login")
 	public ApiResponse<Void> login(
-		@Valid @RequestBody AdminLoginRequest request,
+		@Valid @RequestBody
+		AdminLoginRequest request,
 		HttpServletResponse response) {
 		TokenIssuer.IssuedTokens tokens = adminLoginUseCase.login(request.username(), request.password());
 		tokenHeaderWriter.write(response, tokens);

@@ -4,7 +4,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public final class AiResponseParseUtils {
 
-	private AiResponseParseUtils() {
+	private static final int LOG_SNIPPET_MAX_LENGTH = 1200;
+
+	private AiResponseParseUtils() {}
+
+	public static String abbreviateForLog(String text) {
+		if (text == null || text.isBlank()) {
+			return "";
+		}
+		String compact = text.replace("\n", "\\n").replace("\r", "\\r");
+		if (compact.length() <= LOG_SNIPPET_MAX_LENGTH) {
+			return compact;
+		}
+		return compact.substring(0, LOG_SNIPPET_MAX_LENGTH) + "...";
 	}
 
 	public static String readTextOrNull(JsonNode node, String fieldName) {

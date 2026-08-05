@@ -35,14 +35,11 @@ public final class ReportPromptTemplate {
 		}
 		""";
 
-	private ReportPromptTemplate() {
-	}
+	private ReportPromptTemplate() {}
 
 	public static String render(ReportAggregate aggregate, List<WrongAnswerSample> samples) {
 		StringBuilder sb = new StringBuilder(INSTRUCTION);
-		sb.append("\n[전체 현황] 총 오답 ").append(aggregate.totalCount())
-			.append("개, 해결 ").append(aggregate.solvedCount())
-			.append("개, 미해결 ").append(aggregate.unsolvedCount()).append("개\n");
+		appendOverallStatus(sb, aggregate);
 
 		sb.append("\n[취약 단원 순위]\n");
 		appendWeakAreas(sb, aggregate.weakUnits());
@@ -50,6 +47,17 @@ public final class ReportPromptTemplate {
 		sb.append("\n[취약 유형 순위]\n");
 		appendWeakAreas(sb, aggregate.weakTypes());
 
+		appendSamples(sb, samples);
+		return sb.toString();
+	}
+
+	private static void appendOverallStatus(StringBuilder sb, ReportAggregate aggregate) {
+		sb.append("\n[전체 현황] 총 오답 ").append(aggregate.totalCount())
+			.append("개, 해결 ").append(aggregate.solvedCount())
+			.append("개, 미해결 ").append(aggregate.unsolvedCount()).append("개\n");
+	}
+
+	private static void appendSamples(StringBuilder sb, List<WrongAnswerSample> samples) {
 		sb.append("\n[오답 샘플]\n");
 		int index = 1;
 		for (WrongAnswerSample sample : samples) {
@@ -58,7 +66,6 @@ public final class ReportPromptTemplate {
 				.append("   문제: ").append(truncate(sample.problemMarkdown(), MARKDOWN_LIMIT)).append("\n")
 				.append("   메모: ").append(truncate(sample.memoText(), MEMO_LIMIT)).append("\n");
 		}
-		return sb.toString();
 	}
 
 	private static void appendWeakAreas(StringBuilder sb, List<WeakArea> areas) {

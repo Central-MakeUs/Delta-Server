@@ -17,8 +17,7 @@ final class WorkerPropertiesNormalizer {
 	private static final int MIN_BACKLOG_LOG_MINUTES = 1;
 	private static final int DEFAULT_BACKLOG_LOG_MINUTES = 5;
 
-	private WorkerPropertiesNormalizer() {
-	}
+	private WorkerPropertiesNormalizer() {}
 
 	static long normalizeFixedDelayMs(long value) {
 		return value < MIN_FIXED_DELAY_MS ? DEFAULT_FIXED_DELAY_MS : value;

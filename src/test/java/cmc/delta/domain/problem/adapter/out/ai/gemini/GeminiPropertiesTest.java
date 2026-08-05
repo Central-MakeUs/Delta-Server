@@ -15,8 +15,8 @@ class GeminiPropertiesTest {
 
 		// then
 		assertThat(p.baseUrl()).isEqualTo("https://generativelanguage.googleapis.com");
-		assertThat(p.model()).isEqualTo("gemini-2.5-flash-lite");
-		assertThat(p.solveModel()).isEqualTo("gemini-2.5-flash-lite");
+		assertThat(p.model()).isEqualTo("gemini-3.1-flash-lite");
+		assertThat(p.solveModel()).isEqualTo("gemini-3.1-flash-lite");
 		assertThat(p.apiKey()).isEqualTo("k");
 	}
 

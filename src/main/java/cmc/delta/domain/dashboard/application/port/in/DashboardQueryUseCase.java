@@ -11,7 +11,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface DashboardQueryUseCase {
 
-	DashboardUsersResponse getUsers(Pageable pageable, DashboardUserSortBy sortBy, DashboardSortDirection sortDirection);
+	DashboardUsersResponse getUsers(Pageable pageable, DashboardUserSortBy sortBy,
+		DashboardSortDirection sortDirection);
 
 	DashboardMonthlyAccessResponse getMonthlyAccess(YearMonth yearMonth);
 

@@ -1,9 +1,22 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 class GeminiSolveTextNormalizer {
+
+	private static final Map<Character, Character> ESCAPE_REPLACEMENTS = Map.of(
+		'n', '\n',
+		'r', '\r',
+		't', '\t',
+		'b', '\b',
+		'f', '\f',
+		'"', '"',
+		'\\', '\\',
+		'/', '/');
 
 	String normalizeDisplayText(String value) {
 		if (value == null) {
@@ -38,39 +51,49 @@ class GeminiSolveTextNormalizer {
 				result.append(current);
 				continue;
 			}
-
-			if (index + 1 >= value.length()) {
+			int consumed = consumeEscapeSequence(result, value, index);
+			if (consumed < 0) {
 				return null;
 			}
-
-			char next = value.charAt(++index);
-			switch (next) {
-				case 'n' -> result.append('\n');
-				case 'r' -> result.append('\r');
-				case 't' -> result.append('\t');
-				case 'b' -> result.append('\b');
-				case 'f' -> result.append('\f');
-				case '"' -> result.append('"');
-				case '\\' -> result.append('\\');
-				case '/' -> result.append('/');
-				case 'u' -> {
-					if (index + 4 >= value.length()) {
-						return null;
-					}
-					String hex = value.substring(index + 1, index + 5);
-					try {
-						int codePoint = Integer.parseInt(hex, 16);
-						result.append((char)codePoint);
-					} catch (NumberFormatException exception) {
-						return null;
-					}
-					index += 4;
-				}
-				default -> {
-					return null;
-				}
-			}
+			index += consumed;
 		}
 		return result.toString();
+	}
+
+	// 역슬래시 뒤 이스케이프가 소비한 문자 수를 돌려주고, 복원 불가능하면 음수를 돌려준다.
+	private int consumeEscapeSequence(StringBuilder result, String value, int backslashIndex) {
+		if (backslashIndex + 1 >= value.length()) {
+			return -1;
+		}
+		return appendDecodedEscape(result, value, backslashIndex + 1);
+	}
+
+	// 복원한 이스케이프가 소비한 문자 수를 돌려주고, 복원 불가능하면 음수를 돌려준다.
+	private int appendDecodedEscape(StringBuilder result, String value, int escapeIndex) {
+		char next = value.charAt(escapeIndex);
+		if (next == 'u') {
+			return decodeUnicodeEscape(result, value, escapeIndex);
+		}
+		Character replacement = ESCAPE_REPLACEMENTS.get(next);
+		if (replacement == null) {
+			return -1;
+		}
+		result.append(replacement.charValue());
+		return 1;
+	}
+
+	private int decodeUnicodeEscape(StringBuilder result, String value, int escapeIndex) {
+		if (escapeIndex + 4 >= value.length()) {
+			return -1;
+		}
+		String hex = value.substring(escapeIndex + 1, escapeIndex + 5);
+		try {
+			int codePoint = Integer.parseInt(hex, 16);
+			result.append((char)codePoint);
+		} catch (NumberFormatException exception) {
+			log.debug("Gemini 풀이 유니코드 이스케이프 복원 실패 hex={}", hex);
+			return -1;
+		}
+		return 5;
 	}
 }

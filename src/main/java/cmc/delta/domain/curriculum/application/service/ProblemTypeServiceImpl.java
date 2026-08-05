@@ -24,7 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
-	private static final int ONE = 1;
+	private static final int SORT_ORDER_STEP = 1;
+	private static final String EMPTY_BODY_MESSAGE = "요청 본문이 비어있습니다.";
 	private static final String CUSTOM_TYPE_PREFIX = "T_C_";
 	private static final String UUID_HYPHEN = "-";
 	private static final String EMPTY = "";
@@ -43,7 +44,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
 	@Override
 	public ProblemTypeItemResponse createCustomType(Long userId, CreateCustomProblemTypeCommand command) {
-		CreateCustomProblemTypeCommand validated = requireCreateCommand(command);
+		CreateCustomProblemTypeCommand validated = requireBody(command);
 		String name = validator.requireName(validated.name());
 		ensureCustomNameAvailable(userId, name);
 		ProblemType newType = buildCustomType(userId, name);
@@ -54,7 +55,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 
 	@Override
 	public void setActive(Long userId, String typeId, SetProblemTypeActiveCommand command) {
-		SetProblemTypeActiveCommand validated = requireSetActiveCommand(command);
+		SetProblemTypeActiveCommand validated = requireBody(command);
 		ProblemType type = loadOwnedCustomType(userId, typeId);
 		changeActive(type, validated.active());
 		bumpStatsCache(userId);
@@ -63,7 +64,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	@Override
 	public ProblemTypeItemResponse updateCustomType(Long userId, String typeId,
 		UpdateCustomProblemTypeCommand command) {
-		UpdateCustomProblemTypeCommand validated = requireUpdateCommand(command);
+		UpdateCustomProblemTypeCommand validated = requireBody(command);
 		UpdateChangeSet changeSet = extractChangeSet(validated);
 		ProblemType type = loadOwnedCustomType(userId, typeId);
 		applyNameChange(userId, type, changeSet);
@@ -89,23 +90,9 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		return new ProblemTypeListResponse(items);
 	}
 
-	private CreateCustomProblemTypeCommand requireCreateCommand(CreateCustomProblemTypeCommand command) {
+	private <T> T requireBody(T command) {
 		if (command == null) {
-			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
-		}
-		return command;
-	}
-
-	private SetProblemTypeActiveCommand requireSetActiveCommand(SetProblemTypeActiveCommand command) {
-		if (command == null) {
-			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
-		}
-		return command;
-	}
-
-	private UpdateCustomProblemTypeCommand requireUpdateCommand(UpdateCustomProblemTypeCommand command) {
-		if (command == null) {
-			throw ProblemTypeException.invalid("요청 본문이 비어있습니다.");
+			throw ProblemTypeException.invalid(EMPTY_BODY_MESSAGE);
 		}
 		return command;
 	}
@@ -120,7 +107,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 	}
 
 	private ProblemType buildCustomType(Long userId, String name) {
-		int sortOrder = problemTypeRepositoryPort.findMaxSortOrderVisibleForUser(userId) + ONE;
+		int sortOrder = problemTypeRepositoryPort.findMaxSortOrderVisibleForUser(userId) + SORT_ORDER_STEP;
 		String id = generateCustomTypeId();
 		User userRef = userRepositoryPort.getReferenceById(userId);
 		return new ProblemType(id, name, sortOrder, true, userRef, true);
@@ -151,7 +138,7 @@ public class ProblemTypeServiceImpl implements ProblemTypeUseCase {
 		if (!changeSet.hasNameChange()) {
 			return;
 		}
-		String newName = validator.requireNameWhenPresent(changeSet.rawName());
+		String newName = validator.requireName(changeSet.rawName());
 		if (!newName.equals(type.getName())) {
 			validator.ensureNoDuplicateCustomName(userId, newName);
 		}

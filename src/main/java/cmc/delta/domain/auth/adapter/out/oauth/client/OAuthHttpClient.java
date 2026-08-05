@@ -36,21 +36,7 @@ public class OAuthHttpClient {
 		headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
 
 		HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(form, headers);
-		long start = System.nanoTime();
-
-		try {
-			ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.POST, request, responseType);
-			logOk(providerName, operation, response.getStatusCode(), start);
-			return response.getBody();
-
-		} catch (HttpStatusCodeException e) {
-			logFail(providerName, operation, e.getStatusCode(), start);
-			throw exceptionMapper.mapHttpStatus(providerName, operation, e);
-
-		} catch (ResourceAccessException e) {
-			logFail(providerName, operation, null, start);
-			throw exceptionMapper.mapTimeout(providerName, operation, e);
-		}
+		return execute(providerName, operation, url, HttpMethod.POST, request, responseType);
 	}
 
 	public <T> T get(
@@ -62,10 +48,20 @@ public class OAuthHttpClient {
 		headers.setAccept(java.util.List.of(MediaType.APPLICATION_JSON));
 
 		HttpEntity<Void> request = new HttpEntity<>(headers);
+		return execute(providerName, operation, url, HttpMethod.GET, request, responseType);
+	}
+
+	private <T> T execute(
+		String providerName,
+		String operation,
+		String url,
+		HttpMethod method,
+		HttpEntity<?> request,
+		Class<T> responseType) {
 		long start = System.nanoTime();
 
 		try {
-			ResponseEntity<T> response = restTemplate.exchange(url, HttpMethod.GET, request, responseType);
+			ResponseEntity<T> response = restTemplate.exchange(url, method, request, responseType);
 			logOk(providerName, operation, response.getStatusCode(), start);
 			return response.getBody();
 

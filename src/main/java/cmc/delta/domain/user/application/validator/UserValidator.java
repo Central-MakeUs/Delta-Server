@@ -1,7 +1,6 @@
 package cmc.delta.domain.user.application.validator;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
-import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.application.exception.UserException;
@@ -23,18 +22,9 @@ public class UserValidator {
 		require(request.termsAgreed());
 	}
 
-	public void validate(UserNameUpdateRequest request) {
-		requireNotNull(request);
-		requireText(request.name());
-	}
-
 	public void validate(UserNicknameUpdateRequest request) {
 		requireNotNull(request);
 		requireText(request.nickname());
-	}
-
-	public void validateNickname(String nickname) {
-		requireText(nickname);
 	}
 
 	private void requireNotNull(Object value) {

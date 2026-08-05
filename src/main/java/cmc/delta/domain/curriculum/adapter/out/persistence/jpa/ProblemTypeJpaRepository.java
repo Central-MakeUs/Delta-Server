@@ -94,7 +94,8 @@ public interface ProblemTypeJpaRepository extends JpaRepository<ProblemType, Str
 		  and t.createdByUser.id = :userId
 		order by t.sortOrder asc, t.id asc
 		""")
-	List<ProblemType> findActiveCustomByUserId(@Param("userId") Long userId);
+	List<ProblemType> findActiveCustomByUserId(@Param("userId")
+	Long userId);
 
 	List<ProblemType> findByIdIn(List<String> typeIds);
 

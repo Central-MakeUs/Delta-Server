@@ -3,7 +3,6 @@ package cmc.delta.domain.user.application.validator;
 import static org.assertj.core.api.Assertions.*;
 
 import cmc.delta.domain.auth.application.port.in.provisioning.SocialUserProvisionCommand;
-import cmc.delta.domain.user.adapter.in.dto.request.UserNameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.global.error.ErrorCode;
@@ -60,20 +59,6 @@ class UserValidatorTest {
 	@DisplayName("온보딩 검증: 약관 미동의면 INVALID_REQUEST")
 	void validateOnboarding_whenTermsNotAgreed_thenThrowsInvalidRequest() {
 		UserOnboardingRequest req = new UserOnboardingRequest(NICKNAME, false);
-
-		assertInvalidRequest(() -> validator.validate(req));
-	}
-
-	@Test
-	@DisplayName("이름 수정 검증: request가 null이면 INVALID_REQUEST")
-	void validateNameUpdate_whenRequestNull_thenThrowsInvalidRequest() {
-		assertInvalidRequest(() -> validator.validate((UserNameUpdateRequest)null));
-	}
-
-	@Test
-	@DisplayName("이름 수정 검증: name이 blank면 INVALID_REQUEST")
-	void validateNameUpdate_whenNameBlank_thenThrowsInvalidRequest() {
-		UserNameUpdateRequest req = new UserNameUpdateRequest(BLANK);
 
 		assertInvalidRequest(() -> validator.validate(req));
 	}

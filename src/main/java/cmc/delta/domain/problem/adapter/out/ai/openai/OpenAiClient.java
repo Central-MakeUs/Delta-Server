@@ -1,21 +1,5 @@
 package cmc.delta.domain.problem.adapter.out.ai.openai;
 
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientResponseException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import cmc.delta.domain.problem.adapter.out.ai.AiCurriculumResponseParser;
 import cmc.delta.domain.problem.adapter.out.ai.AiResponseParseUtils;
 import cmc.delta.domain.problem.adapter.out.ai.CurriculumPromptTemplate;
@@ -26,7 +10,22 @@ import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
 import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolvePrompt;
 import cmc.delta.domain.problem.application.port.out.ai.dto.ProblemAiSolveResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
+@Slf4j
 @Component
 @EnableConfigurationProperties(OpenAiProperties.class)
 public class OpenAiClient implements AiClient, ProblemSolveAiClient {
@@ -63,10 +62,13 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			String rawResponseJson = requestOpenAi(buildCurriculumRequestBody(promptText));
 			return parseCurriculumResponse(rawResponseJson);
 		} catch (RestClientResponseException e) {
+			log.warn("OpenAI 분류 HTTP 실패 status={}", e.getRawStatusCode());
 			throw OpenAiAiException.externalCallFailed(e);
 		} catch (OpenAiAiException e) {
+			log.warn("OpenAI 분류 실패 reason={}", e.getMessage());
 			throw e;
 		} catch (Exception e) {
+			log.warn("OpenAI 분류 예외 reason={}", e.getMessage(), e);
 			throw OpenAiAiException.responseParseFailed(e);
 		}
 	}
@@ -75,17 +77,24 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 	public ProblemAiSolveResult solveProblem(ProblemAiSolvePrompt prompt) {
 		requireEnabled();
 		try {
-			String promptText = SolvePromptTemplate.render();
-			String rawResponseJson = requestOpenAi(
-				buildSolveRequestBody(promptText, prompt.problemImageBytes(), prompt.problemImageMimeType()));
-			return parseSolveResponse(rawResponseJson);
+			return requestAndParseSolve(prompt);
 		} catch (RestClientResponseException e) {
+			log.warn("OpenAI 풀이 HTTP 실패 status={}", e.getRawStatusCode());
 			throw OpenAiAiException.externalCallFailed(e);
 		} catch (OpenAiAiException e) {
+			log.warn("OpenAI 풀이 실패 reason={}", e.getMessage());
 			throw e;
 		} catch (Exception e) {
+			log.warn("OpenAI 풀이 예외 reason={}", e.getMessage(), e);
 			throw OpenAiAiException.responseParseFailed(e);
 		}
+	}
+
+	private ProblemAiSolveResult requestAndParseSolve(ProblemAiSolvePrompt prompt) {
+		String promptText = SolvePromptTemplate.render();
+		String rawResponseJson = requestOpenAi(
+			buildSolveRequestBody(promptText, prompt.problemImageBytes(), prompt.problemImageMimeType()));
+		return parseSolveResponse(rawResponseJson);
 	}
 
 	private void requireEnabled() {
@@ -121,14 +130,7 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			throw OpenAiAiException.promptBuildFailed(new IllegalArgumentException("Problem image bytes are empty"));
 		}
 
-		String safeMimeType = (imageMimeType == null || imageMimeType.isBlank()) ? "image/jpeg" : imageMimeType;
-		String imageDataUrl = "data:" + safeMimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
-
-		Map<String, Object> userMessage = new LinkedHashMap<>();
-		userMessage.put("role", "user");
-		userMessage.put("content", List.of(
-			Map.of("type", "text", "text", promptText),
-			Map.of("type", "image_url", "image_url", Map.of("url", imageDataUrl))));
+		Map<String, Object> userMessage = buildSolveUserMessage(promptText, imageBytes, imageMimeType);
 
 		Map<String, Object> body = new LinkedHashMap<>();
 		body.put("model", properties.solveModel());
@@ -138,6 +140,18 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 			Map.of("role", "system", "content", "Return only one JSON object."),
 			userMessage));
 		return body;
+	}
+
+	private Map<String, Object> buildSolveUserMessage(String promptText, byte[] imageBytes, String imageMimeType) {
+		String safeMimeType = (imageMimeType == null || imageMimeType.isBlank()) ? "image/jpeg" : imageMimeType;
+		String imageDataUrl = "data:" + safeMimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
+
+		Map<String, Object> userMessage = new LinkedHashMap<>();
+		userMessage.put("role", "user");
+		userMessage.put("content", List.of(
+			Map.of("type", "text", "text", promptText),
+			Map.of("type", "image_url", "image_url", Map.of("url", imageDataUrl))));
+		return userMessage;
 	}
 
 	private AiCurriculumResult parseCurriculumResponse(String rawResponseJson) {
@@ -208,7 +222,10 @@ public class OpenAiClient implements AiClient, ProblemSolveAiClient {
 		if (!contentNode.isArray()) {
 			return null;
 		}
+		return concatTextItems(contentNode);
+	}
 
+	private String concatTextItems(JsonNode contentNode) {
 		StringBuilder textBuilder = new StringBuilder();
 		for (JsonNode itemNode : contentNode) {
 			if (!"text".equals(itemNode.path("type").asText(""))) {

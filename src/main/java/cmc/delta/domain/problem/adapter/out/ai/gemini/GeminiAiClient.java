@@ -1,9 +1,16 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
+import cmc.delta.domain.problem.adapter.out.ai.AiCurriculumResponseParser;
+import cmc.delta.domain.problem.adapter.out.ai.CurriculumPromptTemplate;
+import cmc.delta.domain.problem.application.port.out.ai.AiClient;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
+import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.http.HttpHeaders;
@@ -11,16 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import cmc.delta.domain.problem.adapter.out.ai.AiCurriculumResponseParser;
-import cmc.delta.domain.problem.adapter.out.ai.CurriculumPromptTemplate;
-import cmc.delta.domain.problem.application.port.out.ai.AiClient;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
-import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumResult;
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
@@ -52,25 +49,41 @@ public class GeminiAiClient implements AiClient {
 	public AiCurriculumResult classifyCurriculum(AiCurriculumPrompt prompt) {
 		long startedAtNanos = System.nanoTime();
 		try {
-			String promptText = buildPromptText(prompt);
-			Map<String, Object> requestBody = buildRequestBody(promptText);
-			String rawResponseJson = callApi(requestBody);
-			AiCurriculumResult result = parseResponse(rawResponseJson);
-			log.debug("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
-			return result;
+			return requestAndParseClassify(prompt, startedAtNanos);
 		} catch (RestClientResponseException e) {
-			log.warn("Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
-				props.model(), e.getRawStatusCode(), elapsedMillis(startedAtNanos));
+			logClassifyHttpFailure(e, startedAtNanos);
 			throw GeminiAiException.externalCallFailed(e);
 		} catch (GeminiAiException e) {
-			log.warn("Gemini 분류 실패 model={} reason={} durationMs={}",
-				props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
+			logClassifyFailure(e, startedAtNanos);
 			throw e;
 		} catch (Exception e) {
-			log.warn("Gemini 분류 예외 model={} reason={} durationMs={}",
-				props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
+			logClassifyUnexpectedFailure(e, startedAtNanos);
 			throw GeminiAiException.responseParseFailed(e);
 		}
+	}
+
+	private AiCurriculumResult requestAndParseClassify(AiCurriculumPrompt prompt, long startedAtNanos) {
+		String promptText = buildPromptText(prompt);
+		Map<String, Object> requestBody = buildRequestBody(promptText);
+		String rawResponseJson = callApi(requestBody);
+		AiCurriculumResult result = parseResponse(rawResponseJson);
+		log.debug("Gemini 분류 완료 model={} durationMs={}", props.model(), elapsedMillis(startedAtNanos));
+		return result;
+	}
+
+	private void logClassifyHttpFailure(RestClientResponseException e, long startedAtNanos) {
+		log.warn("Gemini 분류 HTTP 실패 model={} status={} durationMs={}",
+			props.model(), e.getRawStatusCode(), elapsedMillis(startedAtNanos));
+	}
+
+	private void logClassifyFailure(GeminiAiException e, long startedAtNanos) {
+		log.warn("Gemini 분류 실패 model={} reason={} durationMs={}",
+			props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
+	}
+
+	private void logClassifyUnexpectedFailure(Exception e, long startedAtNanos) {
+		log.warn("Gemini 분류 예외 model={} reason={} durationMs={}",
+			props.model(), e.getMessage(), elapsedMillis(startedAtNanos));
 	}
 
 	private String callApi(Map<String, Object> requestBody) {
@@ -120,14 +133,7 @@ public class GeminiAiClient implements AiClient {
 	private String extractModelJsonText(String rawResponseJson) {
 		try {
 			JsonNode root = objectMapper.readTree(rawResponseJson == null ? "{}" : rawResponseJson);
-			JsonNode textNode = root.path("candidates")
-				.path(0)
-				.path("content")
-				.path("parts")
-				.path(0)
-				.path("text");
-
-			String modelText = textNode.isMissingNode() ? null : textNode.asText(null);
+			String modelText = readFirstPartText(root);
 			if (modelText == null || modelText.isBlank()) {
 				throw GeminiAiException.emptyText();
 			}
@@ -137,6 +143,16 @@ public class GeminiAiClient implements AiClient {
 		} catch (Exception e) {
 			throw GeminiAiException.responseParseFailed(e);
 		}
+	}
+
+	private String readFirstPartText(JsonNode root) {
+		JsonNode textNode = root.path("candidates")
+			.path(0)
+			.path("content")
+			.path("parts")
+			.path(0)
+			.path("text");
+		return textNode.isMissingNode() ? null : textNode.asText(null);
 	}
 
 	private long elapsedMillis(long startedAtNanos) {

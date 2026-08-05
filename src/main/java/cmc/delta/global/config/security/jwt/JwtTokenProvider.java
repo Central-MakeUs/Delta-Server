@@ -63,14 +63,7 @@ public class JwtTokenProvider {
 		try {
 			Claims claims = parseVerifiedClaims(token);
 			validateTokenType(claims, expectedTyp, invalidCode);
-
-			Long userId = parseUserId(claims.getSubject(), invalidCode);
-			String role = claims.get(CLAIM_ROLE, String.class);
-			String jti = claims.getId();
-			Instant expiresAt = toInstant(claims.getExpiration(), invalidCode);
-
-			validateRequiredFields(role, jti, expiresAt, invalidCode);
-			return factory.create(new UserPrincipal(userId, role), jti, expiresAt);
+			return buildParsedToken(claims, invalidCode, factory);
 
 		} catch (ExpiredJwtException e) {
 			throw new JwtAuthenticationException(expiredCode);
@@ -79,6 +72,16 @@ public class JwtTokenProvider {
 		} catch (JwtException | IllegalArgumentException e) {
 			throw new JwtAuthenticationException(invalidCode);
 		}
+	}
+
+	private <T> T buildParsedToken(Claims claims, ErrorCode invalidCode, TokenFactory<T> factory) {
+		Long userId = parseUserId(claims.getSubject(), invalidCode);
+		String role = claims.get(CLAIM_ROLE, String.class);
+		String jti = claims.getId();
+		Instant expiresAt = toInstant(claims.getExpiration(), invalidCode);
+
+		validateRequiredFields(role, jti, expiresAt, invalidCode);
+		return factory.create(new UserPrincipal(userId, role), jti, expiresAt);
 	}
 
 	@FunctionalInterface

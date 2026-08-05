@@ -24,10 +24,6 @@ public abstract class AbstractAiException extends BusinessException {
 		return new ExternalCallFailureData(provider, reason, null);
 	}
 
-	public boolean isRateLimited() {
-		return httpStatus() != null && httpStatus() == HttpStatus.TOO_MANY_REQUESTS.value();
-	}
-
 	public boolean isFallbackEligibleStatus() {
 		Integer status = httpStatus();
 		if (status == null) {

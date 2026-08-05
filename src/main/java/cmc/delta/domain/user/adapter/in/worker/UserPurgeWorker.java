@@ -7,18 +7,17 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.storage.port.out.StoragePort;
+import cmc.delta.global.transaction.TransactionUtils;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
-import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @Slf4j
@@ -61,16 +60,8 @@ public class UserPurgeWorker {
 		Set<String> keysToDelete = collectStorageKeys(userId);
 
 		workerTxTemplate.executeWithoutResult(status -> {
-			Optional<User> optional = userRepositoryPort.findById(userId);
-			if (optional.isEmpty()) {
-				return;
-			}
-			User user = optional.get();
-			if (user.getStatus() != UserStatus.WITHDRAWN) {
-				return;
-			}
-			Instant withdrawnAt = user.getWithdrawnAt();
-			if (withdrawnAt == null || !withdrawnAt.isBefore(cutoff)) {
+			User user = userRepositoryPort.findById(userId).orElse(null);
+			if (user == null || !isPurgeable(user, cutoff)) {
 				return;
 			}
 
@@ -78,6 +69,15 @@ public class UserPurgeWorker {
 			afterCommit(() -> deleteStorageKeysBestEffort(userId, keysToDelete));
 			log.debug("event=user.purge_db_deleted userId={} keys={}", userId, keysToDelete.size());
 		});
+	}
+
+	// 배치 조회 후 상태가 바뀌었을 수 있으므로 트랜잭션 안에서 다시 검증한다.
+	private boolean isPurgeable(User user, Instant cutoff) {
+		if (user.getStatus() != UserStatus.WITHDRAWN) {
+			return false;
+		}
+		Instant withdrawnAt = user.getWithdrawnAt();
+		return withdrawnAt != null && withdrawnAt.isBefore(cutoff);
 	}
 
 	private Set<String> collectStorageKeys(Long userId) {

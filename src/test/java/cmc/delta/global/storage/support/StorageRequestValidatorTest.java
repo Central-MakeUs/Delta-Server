@@ -3,8 +3,8 @@ package cmc.delta.global.storage.support;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import cmc.delta.global.storage.exception.StorageException;
 import cmc.delta.global.error.ErrorCode;
+import cmc.delta.global.storage.exception.StorageException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -189,7 +189,7 @@ class StorageRequestValidatorTest {
 	@Test
 	@DisplayName("validateUploadBytes: 정상 바이트이면 예외 없음")
 	void validateUploadBytes_whenValid_doesNotThrow() {
-		assertThatCode(() -> sut.validateUploadBytes(new byte[]{1, 2, 3}, 1024)).doesNotThrowAnyException();
+		assertThatCode(() -> sut.validateUploadBytes(new byte[] {1, 2, 3}, 1024)).doesNotThrowAnyException();
 	}
 
 	@Test

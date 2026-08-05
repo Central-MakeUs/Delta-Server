@@ -1,167 +1,122 @@
 package cmc.delta.domain.auth.adapter.out.oauth.apple;
 
+import cmc.delta.domain.auth.adapter.out.oauth.oidc.AbstractOidcIdTokenVerifier;
+import cmc.delta.domain.auth.adapter.out.oauth.oidc.OidcJwkSetLoader;
+import cmc.delta.domain.auth.adapter.out.oauth.oidc.OidcVerifyFailureFactory;
 import cmc.delta.global.error.exception.BusinessException;
-import com.nimbusds.jose.JWSAlgorithm;
-import com.nimbusds.jose.crypto.RSASSAVerifier;
-import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.SignedJWT;
 import java.net.URL;
-import java.text.ParseException;
 import java.time.Clock;
-import java.time.Instant;
-import java.util.Date;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Component
-public class AppleIdTokenVerifier {
+public class AppleIdTokenVerifier extends AbstractOidcIdTokenVerifier {
 
-	private static final String ISSUER = "https://appleid.apple.com";
+	private static final Set<String> ALLOWED_ISSUERS = Set.of("https://appleid.apple.com");
 	private static final String JWK_URL = "https://appleid.apple.com/auth/keys";
-	private static final long JWK_CACHE_TTL_SECONDS = 600L;
+
+	private static final OidcVerifyFailureFactory FAILURES = new OidcVerifyFailureFactory() {
+		@Override
+		public BusinessException idTokenEmpty() {
+			return AppleOAuthException.idTokenEmpty();
+		}
+
+		@Override
+		public BusinessException idTokenParseFailed(Throwable cause) {
+			return AppleOAuthException.idTokenParseFailed(cause);
+		}
+
+		@Override
+		public BusinessException claimReadFailed(Throwable cause) {
+			return AppleOAuthException.claimReadFailed(cause);
+		}
+
+		@Override
+		public BusinessException issuerInvalid() {
+			return AppleOAuthException.issuerInvalid();
+		}
+
+		@Override
+		public BusinessException audienceInvalid() {
+			return AppleOAuthException.audienceInvalid();
+		}
+
+		@Override
+		public BusinessException tokenExpired() {
+			return AppleOAuthException.tokenExpired();
+		}
+
+		@Override
+		public BusinessException kidEmpty() {
+			return AppleOAuthException.kidEmpty();
+		}
+
+		@Override
+		public BusinessException publicKeyNotFound() {
+			return AppleOAuthException.publicKeyNotFound();
+		}
+
+		@Override
+		public BusinessException publicKeyTypeNotRsa(String keyType) {
+			return AppleOAuthException.publicKeyTypeNotRsa(keyType);
+		}
+
+		@Override
+		public BusinessException algorithmNotRs256() {
+			return AppleOAuthException.algorithmNotRs256();
+		}
+
+		@Override
+		public BusinessException signatureVerifyFailed() {
+			return AppleOAuthException.signatureVerifyFailed();
+		}
+
+		@Override
+		public BusinessException verifyUnexpectedError(Throwable cause) {
+			return AppleOAuthException.verifyUnexpectedError(cause);
+		}
+
+		@Override
+		public BusinessException jwkLoadFailed(Throwable cause) {
+			return AppleOAuthException.jwkLoadFailed(cause);
+		}
+	};
 
 	private final AppleOAuthProperties props;
-	private final Clock clock;
-	private final JwkSetLoader jwkSetLoader;
-
-	private volatile JWKSet cachedJwkSet;
-	private volatile long cachedAtEpochSec;
 
 	@Autowired
 	public AppleIdTokenVerifier(AppleOAuthProperties props) {
 		this(props, Clock.systemUTC(), url -> JWKSet.load(new URL(url)));
 	}
 
-	AppleIdTokenVerifier(AppleOAuthProperties props, Clock clock, JwkSetLoader jwkSetLoader) {
+	AppleIdTokenVerifier(AppleOAuthProperties props, Clock clock, OidcJwkSetLoader jwkSetLoader) {
+		super(clock, jwkSetLoader, ALLOWED_ISSUERS, JWK_URL);
 		this.props = props;
-		this.clock = clock;
-		this.jwkSetLoader = jwkSetLoader;
 	}
 
 	public AppleIdClaims verifyAndExtract(String idToken) {
-		if (!StringUtils.hasText(idToken)) {
-			throw AppleOAuthException.idTokenEmpty();
-		}
+		SignedJWT jwt = parseAndVerify(idToken);
 
-		SignedJWT jwt = parse(idToken);
-
-		validateClaims(jwt);
-		verifySignature(jwt);
-
-		String sub = getStringClaim(jwt, "sub");
-		String email = getStringClaim(jwt, "email");
-
+		String sub = findStringClaim(jwt, CLAIM_SUB).orElse(null);
 		if (!StringUtils.hasText(sub)) {
 			throw AppleOAuthException.subEmpty();
 		}
 
-		return new AppleIdClaims(sub, email);
+		return new AppleIdClaims(sub, findStringClaim(jwt, CLAIM_EMAIL).orElse(null));
 	}
 
-	private SignedJWT parse(String idToken) {
-		try {
-			return SignedJWT.parse(idToken);
-		} catch (ParseException e) {
-			throw AppleOAuthException.idTokenParseFailed(e);
-		}
+	@Override
+	protected OidcVerifyFailureFactory failures() {
+		return FAILURES;
 	}
 
-	private void validateClaims(SignedJWT jwt) {
-		try {
-			String iss = jwt.getJWTClaimsSet().getIssuer();
-			if (!ISSUER.equals(iss)) {
-				throw AppleOAuthException.issuerInvalid();
-			}
-
-			if (jwt.getJWTClaimsSet().getAudience() == null
-				|| !jwt.getJWTClaimsSet().getAudience().contains(props.clientId())) {
-				throw AppleOAuthException.audienceInvalid();
-			}
-
-			Date exp = jwt.getJWTClaimsSet().getExpirationTime();
-			if (exp == null || exp.toInstant().isBefore(Instant.now(clock))) {
-				throw AppleOAuthException.tokenExpired();
-			}
-
-		} catch (ParseException e) {
-			throw AppleOAuthException.claimReadFailed(e);
-		}
-	}
-
-	private void verifySignature(SignedJWT jwt) {
-		try {
-			String kid = jwt.getHeader().getKeyID();
-			if (!StringUtils.hasText(kid)) {
-				throw AppleOAuthException.kidEmpty();
-			}
-
-			JWKSet jwkSet = loadJwkSet();
-			JWK jwk = jwkSet.getKeyByKeyId(kid);
-			if (jwk == null) {
-				invalidateCache();
-				jwkSet = loadJwkSet();
-				jwk = jwkSet.getKeyByKeyId(kid);
-			}
-			if (jwk == null) {
-				throw AppleOAuthException.publicKeyNotFound();
-			}
-
-			if (!(jwk instanceof RSAKey)) {
-				throw AppleOAuthException.publicKeyTypeNotRsa(String.valueOf(jwk.getKeyType()));
-			}
-
-			if (!JWSAlgorithm.RS256.equals(jwt.getHeader().getAlgorithm())) {
-				throw AppleOAuthException.algorithmNotRs256();
-			}
-
-			RSAKey rsaKey = (RSAKey)jwk;
-			boolean ok = jwt.verify(new RSASSAVerifier(rsaKey.toRSAPublicKey()));
-			if (!ok) {
-				throw AppleOAuthException.signatureVerifyFailed();
-			}
-
-		} catch (BusinessException e) {
-			throw e;
-		} catch (Exception e) {
-			throw AppleOAuthException.verifyUnexpectedError(e);
-		}
-	}
-
-	private String getStringClaim(SignedJWT jwt, String name) {
-		try {
-			Object v = jwt.getJWTClaimsSet().getClaim(name);
-			return (v == null) ? null : String.valueOf(v);
-		} catch (ParseException e) {
-			return null;
-		}
-	}
-
-	private JWKSet loadJwkSet() {
-		long now = Instant.now(clock).getEpochSecond();
-		if (cachedJwkSet != null && (now - cachedAtEpochSec) < JWK_CACHE_TTL_SECONDS) {
-			return cachedJwkSet;
-		}
-		try {
-			JWKSet jwkSet = jwkSetLoader.load(JWK_URL);
-			cachedJwkSet = jwkSet;
-			cachedAtEpochSec = now;
-			return jwkSet;
-		} catch (Exception e) {
-			throw AppleOAuthException.jwkLoadFailed(e);
-		}
-	}
-
-	@FunctionalInterface
-	interface JwkSetLoader {
-		JWKSet load(String url) throws Exception;
-	}
-
-	private void invalidateCache() {
-		cachedJwkSet = null;
-		cachedAtEpochSec = 0L;
+	@Override
+	protected String expectedAudience() {
+		return props.clientId();
 	}
 
 	public static record AppleIdClaims(String sub, String email) {

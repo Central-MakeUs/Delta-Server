@@ -1,8 +1,6 @@
 package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
+import cmc.delta.global.config.http.ExternalHttpClientFactory;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,19 +10,15 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class GeminiRestClientConfig {
 
+	private static final Timeout RESPONSE_TIMEOUT = Timeout.ofSeconds(90);
+
+	/** 이 빈을 분류·풀이·리포트 클라이언트가 함께 쓰므로 세 워커의 동시성 합보다 넉넉히 잡는다. */
+	private static final int MAX_CONNECTIONS = 16;
+
 	@Bean
 	public RestClient geminiRestClient(GeminiProperties props) {
-		RequestConfig requestConfig = RequestConfig.custom()
-			.setConnectTimeout(Timeout.ofSeconds(3))
-			.setResponseTimeout(Timeout.ofSeconds(90))
-			.build();
-
-		CloseableHttpClient httpClient = HttpClients.custom()
-			.disableAutomaticRetries()
-			.setDefaultRequestConfig(requestConfig)
-			.build();
-
-		HttpComponentsClientHttpRequestFactory rf = new HttpComponentsClientHttpRequestFactory(httpClient);
+		HttpComponentsClientHttpRequestFactory rf = new HttpComponentsClientHttpRequestFactory(
+			ExternalHttpClientFactory.create(RESPONSE_TIMEOUT, MAX_CONNECTIONS));
 
 		return RestClient.builder()
 			.baseUrl(props.baseUrl())

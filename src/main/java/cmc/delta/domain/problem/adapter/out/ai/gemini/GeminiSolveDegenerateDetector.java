@@ -2,7 +2,6 @@ package cmc.delta.domain.problem.adapter.out.ai.gemini;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.stereotype.Component;
 
 @Component
@@ -21,35 +20,37 @@ class GeminiSolveDegenerateDetector {
 		if (text.length() > MAX_ACCEPTABLE_SOLUTION_TEXT_LENGTH) {
 			return true;
 		}
+		return hasExcessiveRepeatedLines(text);
+	}
 
-		String[] lines = text.split("\\n");
+	private boolean hasExcessiveRepeatedLines(String text) {
+		Map<String, Integer> lineCounts = countLongLineOccurrences(text);
+		if (lineCounts.values().stream().anyMatch(count -> count >= MAX_SAME_LINE_OCCURRENCES)) {
+			return true;
+		}
+		int longLineCount = lineCounts.values().stream().mapToInt(Integer::intValue).sum();
+		int repeatedLongLineCount = longLineCount - lineCounts.size();
+		return isRepeatedLineRatioTooHigh(longLineCount, repeatedLongLineCount);
+	}
+
+	private Map<String, Integer> countLongLineOccurrences(String text) {
 		Map<String, Integer> lineCounts = new HashMap<>();
-		int longLineCount = 0;
-		int repeatedLongLineCount = 0;
-
-		for (String line : lines) {
+		for (String line : text.split("\\n")) {
 			String key = normalizeLineKey(line);
 			if (key == null || key.length() < REPEATED_LINE_MIN_LENGTH) {
 				continue;
 			}
-			longLineCount += 1;
-			int nextCount = lineCounts.getOrDefault(key, 0) + 1;
-			lineCounts.put(key, nextCount);
-			if (nextCount > 1) {
-				repeatedLongLineCount += 1;
-			}
-			if (nextCount >= MAX_SAME_LINE_OCCURRENCES) {
-				return true;
-			}
+			lineCounts.merge(key, 1, Integer::sum);
 		}
+		return lineCounts;
+	}
 
-		if (longLineCount >= REPEATED_LINE_RATIO_MIN_LINES) {
-			int repeatedRatio = repeatedLongLineCount * 100 / longLineCount;
-			if (repeatedRatio >= REPEATED_LINE_RATIO_PERCENT) {
-				return true;
-			}
+	private boolean isRepeatedLineRatioTooHigh(int longLineCount, int repeatedLongLineCount) {
+		if (longLineCount < REPEATED_LINE_RATIO_MIN_LINES) {
+			return false;
 		}
-		return false;
+		int repeatedRatio = repeatedLongLineCount * 100 / longLineCount;
+		return repeatedRatio >= REPEATED_LINE_RATIO_PERCENT;
 	}
 
 	private String normalizeLineKey(String line) {

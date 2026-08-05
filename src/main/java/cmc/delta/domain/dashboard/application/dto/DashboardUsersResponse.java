@@ -7,6 +7,5 @@ public record DashboardUsersResponse(
 	int page,
 	int size,
 	long totalElements,
-	int totalPages
-) {
+	int totalPages) {
 }

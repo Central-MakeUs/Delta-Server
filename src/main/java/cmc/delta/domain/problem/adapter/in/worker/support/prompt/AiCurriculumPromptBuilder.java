@@ -1,9 +1,5 @@
 package cmc.delta.domain.problem.adapter.in.worker.support.prompt;
 
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import cmc.delta.domain.curriculum.adapter.out.persistence.jpa.UnitJpaRepository;
 import cmc.delta.domain.curriculum.application.port.out.ProblemTypeRepositoryPort;
 import cmc.delta.domain.curriculum.model.ProblemType;
@@ -11,6 +7,8 @@ import cmc.delta.domain.curriculum.model.Unit;
 import cmc.delta.domain.problem.application.port.out.ai.dto.AiCurriculumPrompt;
 import cmc.delta.domain.problem.application.port.out.ocr.dto.OcrSignalSummary;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
+import org.springframework.stereotype.Component;
 
 /**
  * 과목·단원은 앱 실행 시 메모리에 캐싱되며, 변경 시 재시작이 필요합니다.

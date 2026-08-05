@@ -111,22 +111,9 @@ public class ProblemAiSolutionTask extends BaseTimeEntity {
 		LocalDateTime requestedAt) {
 		ProblemAiSolutionTask task = new ProblemAiSolutionTask();
 		task.problem = problem;
-		task.promptVersion = promptVersion;
-		task.inputHash = inputHash;
-		task.problemMarkdownSnapshot = problemMarkdownSnapshot;
-		task.answerFormat = answerFormat;
-		task.answerValue = answerValue;
-		task.answerChoiceNo = answerChoiceNo;
-		task.status = ProblemAiSolutionStatus.PENDING;
-		task.requestedAt = requestedAt;
-		task.startedAt = null;
-		task.completedAt = null;
-		task.solutionLatex = null;
-		task.solutionText = null;
-		task.failureReason = null;
-		task.attemptCount = ZERO;
-		task.nextRetryAt = requestedAt;
-		task.clearLock();
+		// 신규 생성과 재요청은 같은 초기 상태를 공유한다. 필드 추가 시 한 곳만 고치면 되도록 위임한다.
+		task.requestAgain(
+			promptVersion, inputHash, problemMarkdownSnapshot, answerFormat, answerValue, answerChoiceNo, requestedAt);
 		return task;
 	}
 
@@ -147,12 +134,27 @@ public class ProblemAiSolutionTask extends BaseTimeEntity {
 		String answerValue,
 		Integer answerChoiceNo,
 		LocalDateTime requestedAt) {
+		applyRequestSnapshot(promptVersion, inputHash, problemMarkdownSnapshot, answerFormat, answerValue,
+			answerChoiceNo);
+		resetSolveState(requestedAt);
+	}
+
+	private void applyRequestSnapshot(
+		String promptVersion,
+		String inputHash,
+		String problemMarkdownSnapshot,
+		AnswerFormat answerFormat,
+		String answerValue,
+		Integer answerChoiceNo) {
 		this.promptVersion = promptVersion;
 		this.inputHash = inputHash;
 		this.problemMarkdownSnapshot = problemMarkdownSnapshot;
 		this.answerFormat = answerFormat;
 		this.answerValue = answerValue;
 		this.answerChoiceNo = answerChoiceNo;
+	}
+
+	private void resetSolveState(LocalDateTime requestedAt) {
 		this.status = ProblemAiSolutionStatus.PENDING;
 		this.requestedAt = requestedAt;
 		this.startedAt = null;
@@ -180,18 +182,6 @@ public class ProblemAiSolutionTask extends BaseTimeEntity {
 		this.startedAt = startedAt;
 		this.completedAt = null;
 		this.failureReason = null;
-	}
-
-	public void markRetryableFailure(String reason, LocalDateTime now, long delaySeconds, int maxAttempts) {
-		this.attemptCount += 1;
-		this.failureReason = reason;
-		if (this.attemptCount >= maxAttempts) {
-			markTerminalFailure(reason, now);
-			return;
-		}
-		this.status = ProblemAiSolutionStatus.PENDING;
-		this.nextRetryAt = now.plusSeconds(Math.max(ZERO, delaySeconds));
-		clearLock();
 	}
 
 	public void markTerminalFailure(String reason, LocalDateTime now) {

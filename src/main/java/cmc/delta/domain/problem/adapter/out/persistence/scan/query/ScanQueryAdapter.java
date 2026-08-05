@@ -10,6 +10,8 @@ import cmc.delta.domain.problem.application.port.out.scan.query.dto.ScanListRow;
 import cmc.delta.domain.problem.model.asset.QAsset;
 import cmc.delta.domain.problem.model.enums.AssetType;
 import cmc.delta.domain.problem.model.scan.QProblemScan;
+import com.querydsl.core.types.ConstructorExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
@@ -26,31 +28,8 @@ public class ScanQueryAdapter implements ScanQueryPort {
 	@Override
 	public Optional<ScanListRow> findListRow(Long userId, Long scanId) {
 		QProblemScan scan = QProblemScan.problemScan;
-		QAsset asset = QAsset.asset;
 
-		QUnit unit = new QUnit("unit");
-		QProblemType type = new QProblemType("type");
-
-		ScanListRow row = queryFactory
-			.select(constructor(
-				ScanListRow.class,
-				scan.id,
-				scan.user.id,
-				scan.status,
-				asset.id,
-				asset.storageKey,
-				unit.id,
-				unit.name,
-				type.id,
-				type.name,
-				scan.needsReview,
-				scan.failReason))
-			.from(scan)
-			.join(asset).on(
-				asset.scan.id.eq(scan.id)
-					.and(asset.assetType.eq(AssetType.ORIGINAL)))
-			.leftJoin(scan.predictedUnit, unit)
-			.leftJoin(scan.predictedType, type)
+		ScanListRow row = baseListRowQuery()
 			.where(
 				scan.id.eq(scanId),
 				scan.user.id.eq(userId))
@@ -67,34 +46,48 @@ public class ScanQueryAdapter implements ScanQueryPort {
 	@Override
 	public List<ScanListRow> findListRowsByGroupId(Long userId, Long groupId) {
 		QProblemScan scan = QProblemScan.problemScan;
+
+		return baseListRowQuery()
+			.where(
+				scan.scanGroup.id.eq(groupId),
+				scan.user.id.eq(userId))
+			.fetch();
+	}
+
+	private JPAQuery<ScanListRow> baseListRowQuery() {
+		QProblemScan scan = QProblemScan.problemScan;
 		QAsset asset = QAsset.asset;
 
 		QUnit unit = new QUnit("unit");
 		QProblemType type = new QProblemType("type");
 
 		return queryFactory
-			.select(constructor(
-				ScanListRow.class,
-				scan.id,
-				scan.user.id,
-				scan.status,
-				asset.id,
-				asset.storageKey,
-				unit.id,
-				unit.name,
-				type.id,
-				type.name,
-				scan.needsReview,
-				scan.failReason))
+			.select(listRowProjection(scan, asset, unit, type))
 			.from(scan)
 			.join(asset).on(
 				asset.scan.id.eq(scan.id)
 					.and(asset.assetType.eq(AssetType.ORIGINAL)))
 			.leftJoin(scan.predictedUnit, unit)
-			.leftJoin(scan.predictedType, type)
-			.where(
-				scan.scanGroup.id.eq(groupId),
-				scan.user.id.eq(userId))
-			.fetch();
+			.leftJoin(scan.predictedType, type);
+	}
+
+	private ConstructorExpression<ScanListRow> listRowProjection(
+		QProblemScan scan,
+		QAsset asset,
+		QUnit unit,
+		QProblemType type) {
+		return constructor(
+			ScanListRow.class,
+			scan.id,
+			scan.user.id,
+			scan.status,
+			asset.id,
+			asset.storageKey,
+			unit.id,
+			unit.name,
+			type.id,
+			type.name,
+			scan.needsReview,
+			scan.failReason);
 	}
 }

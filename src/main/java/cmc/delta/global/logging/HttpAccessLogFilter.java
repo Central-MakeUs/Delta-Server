@@ -64,17 +64,10 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 		Timer.builder(METRIC_NAME)
 			.description("HTTP request duration from access log filter")
 			.tag("method", ctx.method())
-			.tag("uri", resolveUriTag(ctx.path()))
+			.tag("uri", ctx.metricUri())
 			.tag("status", String.valueOf(ctx.status()))
 			.register(meterRegistry)
 			.record(ctx.durationMs(), TimeUnit.MILLISECONDS);
-	}
-
-	private String resolveUriTag(String path) {
-		if (path == null || path.isBlank()) {
-			return URI_UNKNOWN;
-		}
-		return path;
 	}
 
 	private boolean shouldSkipLogging(String path) {
@@ -93,6 +86,7 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 		return new AccessLogContext(
 			request.getMethod(),
 			buildSafePath(request),
+			resolveMetricUri(request),
 			response.getStatus(),
 			durationMs,
 			resolveClientIp(request),
@@ -106,6 +100,18 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 			return pattern;
 		}
 		return request.getRequestURI();
+	}
+
+	/**
+	 * 메트릭 태그에는 매칭된 핸들러 패턴만 사용한다.
+	 * 원본 URI를 태그로 쓰면 스캐너의 임의 경로마다 Timer가 무한히 등록되어 메모리가 증가한다.
+	 */
+	private String resolveMetricUri(HttpServletRequest request) {
+		Object bestPattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+		if (bestPattern instanceof String pattern && !pattern.isBlank()) {
+			return pattern;
+		}
+		return URI_UNKNOWN;
 	}
 
 	private void writeAccessLog(AccessLogContext ctx) {
@@ -151,18 +157,11 @@ public class HttpAccessLogFilter extends OncePerRequestFilter {
 		if (ua == null || ua.isBlank()) {
 			return LoggingConstants.Header.UNKNOWN;
 		}
-		return sanitize(ua, USER_AGENT_MAX_LEN);
-	}
-
-	private String sanitize(String raw, int maxLen) {
-		String s = raw.replace("\n", " ").replace("\r", " ").trim();
-		if (s.length() > maxLen) {
-			return s.substring(0, maxLen);
-		}
-		return s;
+		return LogSanitizer.sanitize(ua, USER_AGENT_MAX_LEN);
 	}
 
 	private record AccessLogContext(
-		String method, String path, int status, long durationMs, String clientIp, String userAgent) {
+		String method, String path, String metricUri, int status, long durationMs, String clientIp,
+		String userAgent) {
 	}
 }
