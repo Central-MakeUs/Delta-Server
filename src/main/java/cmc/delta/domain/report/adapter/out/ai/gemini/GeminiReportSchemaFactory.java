@@ -5,8 +5,7 @@ import java.util.Map;
 
 final class GeminiReportSchemaFactory {
 
-	private GeminiReportSchemaFactory() {
-	}
+	private GeminiReportSchemaFactory() {}
 
 	static Map<String, Object> responseSchema() {
 		Map<String, Object> unitComment = Map.of(

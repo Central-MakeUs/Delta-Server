@@ -25,7 +25,8 @@ public interface ReportJpaRepository extends JpaRepository<WrongAnswerReport, Lo
 			 where r.status = :status
 			 order by r.requestedAt asc
 		""")
-	List<WrongAnswerReport> findPendingForUpdate(@Param("status") ReportStatus status, Pageable pageable);
+	List<WrongAnswerReport> findPendingForUpdate(@Param("status")
+	ReportStatus status, Pageable pageable);
 
 	@Override
 	default Optional<WrongAnswerReport> findLatestByUserId(Long userId) {

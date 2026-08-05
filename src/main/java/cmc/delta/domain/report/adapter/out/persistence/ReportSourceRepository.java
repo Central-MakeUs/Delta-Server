@@ -22,7 +22,8 @@ public interface ReportSourceRepository extends Repository<Problem, Long>, Repor
 	long countByUser_IdAndCompletedAtIsNotNull(Long userId);
 
 	@Query("select max(p.updatedAt) from Problem p where p.user.id = :userId")
-	LocalDateTime findLastUpdatedAt(@Param("userId") Long userId);
+	LocalDateTime findLastUpdatedAt(@Param("userId")
+	Long userId);
 
 	@Query("""
 			select new cmc.delta.domain.report.application.dto.WrongAnswerSample(
@@ -33,7 +34,8 @@ public interface ReportSourceRepository extends Repository<Problem, Long>, Repor
 			 where p.user.id = :userId
 			 order by case when p.completedAt is null then 0 else 1 end asc, p.createdAt desc
 		""")
-	List<WrongAnswerSample> findSamples(@Param("userId") Long userId, Pageable pageable);
+	List<WrongAnswerSample> findSamples(@Param("userId")
+	Long userId, Pageable pageable);
 
 	@Override
 	default ReportSourceSignature loadSignature(Long userId) {
