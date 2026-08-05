@@ -1,10 +1,9 @@
 package cmc.delta.domain.user.application.port.out;
 
-import java.util.Optional;
-
 import cmc.delta.domain.user.application.exception.UserException;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.domain.user.model.UserWithProvider;
+import java.util.Optional;
 
 public interface UserRepositoryPort {
 	Optional<User> findById(Long id);

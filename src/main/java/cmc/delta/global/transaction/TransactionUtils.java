@@ -5,8 +5,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 public final class TransactionUtils {
 
-	private TransactionUtils() {
-	}
+	private TransactionUtils() {}
 
 	/**
 	 * 현재 트랜잭션이 커밋된 후 runnable을 실행한다.
@@ -17,12 +16,7 @@ public final class TransactionUtils {
 			runnable.run();
 			return;
 		}
-		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-			@Override
-			public void afterCommit() {
-				runnable.run();
-			}
-		});
+		registerAfterCommit(runnable);
 	}
 
 	/**
@@ -33,6 +27,10 @@ public final class TransactionUtils {
 		if (!TransactionSynchronizationManager.isSynchronizationActive()) {
 			return;
 		}
+		registerAfterCommit(runnable);
+	}
+
+	private static void registerAfterCommit(Runnable runnable) {
 		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
 			@Override
 			public void afterCommit() {

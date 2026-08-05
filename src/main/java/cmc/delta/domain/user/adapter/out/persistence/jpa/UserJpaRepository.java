@@ -21,7 +21,8 @@ public interface UserJpaRepository extends JpaRepository<User, Long> {
 			  left join SocialAccount s on s.user = u
 			 where u.id = :userId
 		""")
-	Optional<UserWithProvider> findWithProviderById(@Param("userId") Long userId);
+	Optional<UserWithProvider> findWithProviderById(@Param("userId")
+	Long userId);
 
 	@Query("""
 			select u.id

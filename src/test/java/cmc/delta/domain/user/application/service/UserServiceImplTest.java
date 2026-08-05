@@ -2,6 +2,7 @@ package cmc.delta.domain.user.application.service;
 
 import static org.assertj.core.api.Assertions.*;
 
+import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.adapter.in.dto.request.UserNicknameUpdateRequest;
 import cmc.delta.domain.user.adapter.in.dto.request.UserOnboardingRequest;
 import cmc.delta.domain.user.adapter.in.dto.response.UserMeData;
@@ -9,7 +10,6 @@ import cmc.delta.domain.user.application.support.FakeUserRepositoryPort;
 import cmc.delta.domain.user.application.support.UserFixtures;
 import cmc.delta.domain.user.application.validator.UserValidator;
 import cmc.delta.domain.user.model.User;
-import cmc.delta.domain.auth.model.SocialProvider;
 import cmc.delta.domain.user.model.enums.UserStatus;
 import cmc.delta.global.error.ErrorCode;
 import cmc.delta.global.error.exception.BusinessException;

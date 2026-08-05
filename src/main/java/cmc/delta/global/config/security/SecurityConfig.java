@@ -16,6 +16,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -77,15 +78,20 @@ public class SecurityConfig {
 			.exceptionHandling(e -> e
 				.authenticationEntryPoint(restAuthenticationEntryPoint)
 				.accessDeniedHandler(restAccessDeniedHandler))
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
-				.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
-				.requestMatchers(HttpMethod.POST, "/api/v1/admin/auth/login").permitAll()
-				.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-				.anyRequest().authenticated());
+			.authorizeHttpRequests(this::configureAuthorizationRules);
 
 		return http.build();
+	}
+
+	private void configureAuthorizationRules(
+		AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry auth) {
+		auth
+			.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+			.requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
+			.requestMatchers(HttpMethod.POST, PUBLIC_POST_PATHS).permitAll()
+			.requestMatchers(HttpMethod.POST, "/api/v1/admin/auth/login").permitAll()
+			.requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+			.anyRequest().authenticated();
 	}
 
 	@Bean
@@ -97,15 +103,25 @@ public class SecurityConfig {
 	public CorsConfigurationSource corsConfigurationSource() {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
+		CorsConfiguration appleCallback = buildAppleCallbackCorsConfiguration();
+		source.registerCorsConfiguration("/api/v1/auth/apple/**", appleCallback);
+		source.registerCorsConfiguration("/api/v1/auth/apple", appleCallback);
+
+		CorsConfiguration api = buildApiCorsConfiguration();
+		source.registerCorsConfiguration("/**", api);
+		return source;
+	}
+
+	private CorsConfiguration buildAppleCallbackCorsConfiguration() {
 		CorsConfiguration appleCallback = new CorsConfiguration();
 		appleCallback.setAllowCredentials(false);
 		appleCallback.setAllowedOriginPatterns(List.of("*"));
 		appleCallback.setAllowedMethods(List.of("POST", "OPTIONS"));
 		appleCallback.setAllowedHeaders(List.of("*"));
+		return appleCallback;
+	}
 
-		source.registerCorsConfiguration("/api/v1/auth/apple/**", appleCallback);
-		source.registerCorsConfiguration("/api/v1/auth/apple", appleCallback);
-
+	private CorsConfiguration buildApiCorsConfiguration() {
 		CorsConfiguration api = new CorsConfiguration();
 		api.setAllowCredentials(true);
 		api.setAllowedOriginPatterns(List.of(
@@ -118,8 +134,6 @@ public class SecurityConfig {
 		api.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
 		api.setAllowedHeaders(List.of("*"));
 		api.setExposedHeaders(List.of("Authorization", "X-Refresh-Token", "X-Trace-Id"));
-
-		source.registerCorsConfiguration("/**", api);
-		return source;
+		return api;
 	}
 }

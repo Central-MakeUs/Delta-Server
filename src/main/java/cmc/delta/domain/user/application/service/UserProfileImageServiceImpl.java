@@ -8,10 +8,10 @@ import cmc.delta.domain.user.application.port.out.UserRepositoryPort;
 import cmc.delta.domain.user.model.User;
 import cmc.delta.global.api.storage.dto.StoragePresignedGetData;
 import cmc.delta.global.api.storage.dto.StorageUploadData;
+import cmc.delta.global.transaction.TransactionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import cmc.delta.global.transaction.TransactionUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -41,14 +41,25 @@ public class UserProfileImageServiceImpl implements UserProfileImageUseCase {
 
 		user.updateProfileImage(newKey);
 
-		StoragePresignedGetData presigned = storagePort.issueReadUrl(newKey, null);
+		UserProfileImageResult result = toProfileImageResult(newKey);
 
-		afterCommit(() -> deleteOldBestEffort(oldKey, newKey));
+		registerOldImageCleanup(oldKey, newKey);
+
+		return result;
+	}
+
+	private UserProfileImageResult toProfileImageResult(String storageKey) {
+		StoragePresignedGetData presigned = storagePort.issueReadUrl(storageKey, null);
 
 		return new UserProfileImageResult(
-			newKey,
+			storageKey,
 			presigned.url(),
 			presigned.expiresInSeconds());
+	}
+
+	// 커밋 이후에만 이전 이미지를 지워 트랜잭션 롤백 시 파일 유실을 막는다.
+	private void registerOldImageCleanup(String oldKey, String newKey) {
+		afterCommit(() -> deleteOldBestEffort(oldKey, newKey));
 	}
 
 	@Override
