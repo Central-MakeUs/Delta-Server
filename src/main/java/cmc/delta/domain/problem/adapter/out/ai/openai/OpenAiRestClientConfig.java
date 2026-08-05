@@ -1,8 +1,6 @@
 package cmc.delta.domain.problem.adapter.out.ai.openai;
 
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
+import cmc.delta.global.config.http.ExternalHttpClientFactory;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,19 +10,15 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class OpenAiRestClientConfig {
 
+	private static final Timeout RESPONSE_TIMEOUT = Timeout.ofSeconds(90);
+
+	/** Gemini 429 폴백 경로에서만 쓰여 호출량이 적다. */
+	private static final int MAX_CONNECTIONS = 8;
+
 	@Bean
 	public RestClient openAiRestClient(OpenAiProperties properties) {
-		RequestConfig requestConfig = RequestConfig.custom()
-			.setConnectTimeout(Timeout.ofSeconds(3))
-			.setResponseTimeout(Timeout.ofSeconds(90))
-			.build();
-
-		CloseableHttpClient httpClient = HttpClients.custom()
-			.disableAutomaticRetries()
-			.setDefaultRequestConfig(requestConfig)
-			.build();
-
-		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
+		HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(
+			ExternalHttpClientFactory.create(RESPONSE_TIMEOUT, MAX_CONNECTIONS));
 
 		return RestClient.builder()
 			.baseUrl(properties.baseUrl())
