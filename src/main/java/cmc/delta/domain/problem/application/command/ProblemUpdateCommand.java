@@ -10,8 +10,4 @@ public record ProblemUpdateCommand(
 	boolean hasAnswerChange,
 	boolean hasAnswerFormatChange,
 	boolean hasMemoChange) {
-
-	public boolean hasNoUpdates() {
-		return !hasAnswerChange && !hasMemoChange;
-	}
 }

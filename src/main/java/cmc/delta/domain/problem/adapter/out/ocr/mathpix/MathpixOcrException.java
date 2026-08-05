@@ -36,9 +36,4 @@ public class MathpixOcrException extends BusinessException {
 		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_RESPONSE_PARSE_FAILED, null);
 		return new MathpixOcrException(ErrorCode.OCR_PROCESSING_FAILED, REASON_RESPONSE_PARSE_FAILED, data, cause);
 	}
-
-	public static MathpixOcrException emptyResponseText() {
-		ExternalCallFailureData data = new ExternalCallFailureData(PROVIDER, REASON_EMPTY_RESPONSE_TEXT, null);
-		return new MathpixOcrException(ErrorCode.OCR_PROCESSING_FAILED, REASON_EMPTY_RESPONSE_TEXT, data, null);
-	}
 }
