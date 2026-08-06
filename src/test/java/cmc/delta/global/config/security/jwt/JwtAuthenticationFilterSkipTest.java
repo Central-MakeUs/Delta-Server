@@ -42,6 +42,7 @@ class JwtAuthenticationFilterSkipTest {
 			"/api/v1/auth/apple",
 			"/api/v1/auth/apple/exchange",
 			"/api/v1/auth/reissue",
+			"/api/v1/app-version",
 			"/apple/callback");
 	}
 
