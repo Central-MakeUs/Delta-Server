@@ -75,4 +75,11 @@ public class OAuthClientException extends BusinessException {
 			cause);
 	}
 
+	public static OAuthClientException providerInvalidResponse(String providerName, String operation) {
+		return new OAuthClientException(
+			ErrorCode.OAUTH_INVALID_RESPONSE,
+			providerName + " " + operation + " 응답이 올바르지 않습니다.",
+			null);
+	}
+
 }
