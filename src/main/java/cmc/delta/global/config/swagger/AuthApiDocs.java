@@ -25,6 +25,27 @@ public final class AuthApiDocs {
 		  - email, nickname, isNewUser
 		""";
 
+	public static final String KAKAO_ACCESS_TOKEN_LOGIN = """
+		프론트에서 발급받은 카카오 액세스 토큰으로 로그인합니다.
+
+		요청:
+		- POST /api/v1/auth/kakao/token
+		- body: { "accessToken": "카카오 액세스 토큰" }
+
+		동작:
+		- 카카오 액세스 토큰 유효성 검증 → 유저 프로필 조회
+		- (provider=KAKAO, providerUserId) 기준으로 소셜 계정 연동/신규 생성
+		- 서비스 Access/Refresh 토큰을 응답 헤더로 내려줍니다.
+
+		응답:
+		- header:
+		  - Authorization: Bearer {accessToken}
+		  - X-Refresh-Token: {refreshToken} (있을 때만)
+		  - Access-Control-Expose-Headers: Authorization, X-Refresh-Token, X-Trace-Id
+		- body.data:
+		  - email, nickname, isNewUser
+		""";
+
 	public static final String APPLE_FORM_POST_CALLBACK = """
 		애플 로그인 콜백(form_post) 처리 후 로그인합니다. (서버 콜백 전용)
 

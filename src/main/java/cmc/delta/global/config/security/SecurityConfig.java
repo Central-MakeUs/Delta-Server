@@ -44,6 +44,7 @@ public class SecurityConfig {
 
 	private static final String[] PUBLIC_POST_PATHS = {
 		"/api/v1/auth/kakao",
+		"/api/v1/auth/kakao/token",
 		"/api/v1/auth/google",
 		"/api/v1/auth/apple",
 		"/api/v1/auth/apple/exchange",
@@ -52,6 +53,7 @@ public class SecurityConfig {
 
 	public static final String[] JWT_SKIP_PATHS = {
 		"/api/v1/auth/kakao",
+		"/api/v1/auth/kakao/token",
 		"/api/v1/auth/google",
 		"/api/v1/auth/apple",
 		"/api/v1/auth/apple/exchange",

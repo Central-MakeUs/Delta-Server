@@ -13,9 +13,11 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 
 	private static final String PROVIDER_NAME = "kakao";
 	private static final String OP_TOKEN = OAuthClientException.OP_TOKEN_EXCHANGE;
+	private static final String OP_TOKEN_VALIDATION = "액세스 토큰 검증";
 	private static final String OP_USER = OAuthClientException.OP_PROFILE_FETCH;
 
 	private static final String TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+	private static final String TOKEN_INFO_URL = "https://kapi.kakao.com/v1/user/access_token_info";
 	private static final String USER_URL = "https://kapi.kakao.com/v2/user/me";
 	private static final String GRANT_TYPE_AUTHORIZATION_CODE = "authorization_code";
 
@@ -56,6 +58,21 @@ public class KakaoOAuthClient implements SocialOAuthClient {
 			form.add("client_secret", properties.clientSecret());
 		}
 		return form;
+	}
+
+	public void validateAccessToken(String providerAccessToken) {
+		HttpHeaders headers = buildBearerHeaders(providerAccessToken);
+
+		KakaoAccessTokenInfoResponse body = oauthHttpClient.get(
+			PROVIDER_NAME,
+			OP_TOKEN_VALIDATION,
+			TOKEN_INFO_URL,
+			headers,
+			KakaoAccessTokenInfoResponse.class);
+
+		if (body == null || body.id() <= 0 || body.expiresIn() <= 0) {
+			throw OAuthClientException.providerInvalidResponse(PROVIDER_NAME, OP_TOKEN_VALIDATION);
+		}
 	}
 
 	@Override

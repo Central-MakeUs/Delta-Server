@@ -56,6 +56,35 @@ class SocialAuthFacadeTest {
 	}
 
 	@Test
+	@DisplayName("카카오 액세스 토큰 로그인: 유저정보→프로비저닝→토큰발급 후 LoginResult를 반환")
+	void loginKakaoWithAccessToken_ok() {
+		KakaoOAuthService kakao = mock(KakaoOAuthService.class);
+		AppleOAuthService apple = mock(AppleOAuthService.class);
+		GoogleOAuthService google = mock(GoogleOAuthService.class);
+		UserProvisioningUseCase provisioning = mock(UserProvisioningUseCase.class);
+		TokenCommandUseCase tokenUseCase = mock(TokenCommandUseCase.class);
+
+		when(kakao.fetchUserInfoByAccessToken("kakao-access-token"))
+			.thenReturn(new SocialUserInfo("pid", "e@e.com", "nick"));
+		when(provisioning.provisionSocialUser(any()))
+			.thenReturn(new UserProvisioningUseCase.ProvisioningResult(7L, "e@e.com", "nick", UserRole.USER, false));
+		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
+		when(tokenUseCase.issue(any())).thenReturn(tokens);
+
+		SocialAuthFacade sut = new SocialAuthFacade(kakao, apple, google, provisioning, tokenUseCase);
+
+		SocialLoginCommandUseCase.LoginResult out = sut.loginKakaoWithAccessToken("kakao-access-token");
+
+		ArgumentCaptor<SocialUserProvisionCommand> commandCaptor = ArgumentCaptor
+			.forClass(SocialUserProvisionCommand.class);
+		verify(provisioning).provisionSocialUser(commandCaptor.capture());
+		assertThat(commandCaptor.getValue())
+			.isEqualTo(new SocialUserProvisionCommand(SocialProvider.KAKAO, "pid", "e@e.com", "nick"));
+		assertThat(out.tokens()).isEqualTo(tokens);
+		assertThat(out.data().isNewUser()).isFalse();
+	}
+
+	@Test
 	@DisplayName("애플 로그인: code/userJson을 애플 서비스에 전달하고 LoginResult를 반환")
 	void loginApple_ok() {
 		KakaoOAuthService kakao = mock(KakaoOAuthService.class);
