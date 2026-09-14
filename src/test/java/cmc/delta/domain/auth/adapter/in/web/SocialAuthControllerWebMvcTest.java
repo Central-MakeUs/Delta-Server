@@ -61,6 +61,35 @@ class SocialAuthControllerWebMvcTest {
 	}
 
 	@Test
+	@DisplayName("POST /auth/kakao/token: JSON 바인딩(accessToken) + usecase 호출 + 토큰 헤더 작성")
+	void kakaoToken_ok_bindsBody() throws Exception {
+		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");
+		when(socialLoginCommandUseCase.loginKakaoWithAccessToken("kakao-access-token"))
+			.thenReturn(
+				new SocialLoginCommandUseCase.LoginResult(new SocialLoginData("e@e.com", "nick", true), tokens));
+
+		mvc.perform(post("/api/v1/auth/kakao/token")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"accessToken\":\"kakao-access-token\"}"))
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+
+		verify(socialLoginCommandUseCase).loginKakaoWithAccessToken("kakao-access-token");
+		verify(tokenHeaderWriter).write(any(), eq(tokens));
+	}
+
+	@Test
+	@DisplayName("POST /auth/kakao/token: accessToken이 비어있으면 400")
+	void kakaoToken_whenAccessTokenBlank_thenBadRequest() throws Exception {
+		mvc.perform(post("/api/v1/auth/kakao/token")
+			.contentType(MediaType.APPLICATION_JSON)
+			.content("{\"accessToken\":\" \"}"))
+			.andExpect(status().isBadRequest());
+
+		verifyNoInteractions(socialLoginCommandUseCase, tokenHeaderWriter);
+	}
+
+	@Test
 	@DisplayName("POST /auth/apple: form(code/user) 바인딩 + usecase 호출 + 리다이렉트(303)")
 	void apple_ok_bindsParams() throws Exception {
 		TokenIssuer.IssuedTokens tokens = new TokenIssuer.IssuedTokens("a", "r", "Bearer");

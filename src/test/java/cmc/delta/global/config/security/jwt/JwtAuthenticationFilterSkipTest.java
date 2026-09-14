@@ -38,6 +38,7 @@ class JwtAuthenticationFilterSkipTest {
 	static Stream<String> skipPaths() {
 		return Stream.of(
 			"/api/v1/auth/kakao",
+			"/api/v1/auth/kakao/token",
 			"/api/v1/auth/google",
 			"/api/v1/auth/apple",
 			"/api/v1/auth/apple/exchange",
