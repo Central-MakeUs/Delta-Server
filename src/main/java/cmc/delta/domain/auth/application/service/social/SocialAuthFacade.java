@@ -30,6 +30,13 @@ public class SocialAuthFacade implements SocialLoginCommandUseCase {
 	}
 
 	@Override
+	public LoginResult loginKakaoWithAccessToken(String accessToken) {
+		SocialUserInfo userInfo = kakaoOAuthService.fetchUserInfoByAccessToken(accessToken);
+		return loginWithProvisionedUser(SocialProvider.KAKAO, userInfo.providerUserId(), userInfo.email(),
+			userInfo.nickname());
+	}
+
+	@Override
 	public LoginResult loginApple(String code, String userJson) {
 		SocialUserInfo userInfo = appleOAuthService.fetchUserInfoByCode(code, userJson);
 		return loginWithProvisionedUser(SocialProvider.APPLE, userInfo.providerUserId(), userInfo.email(),

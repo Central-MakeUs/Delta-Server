@@ -5,6 +5,8 @@ import cmc.delta.domain.auth.application.port.out.TokenIssuer;
 public interface SocialLoginCommandUseCase {
 	LoginResult loginKakao(String code);
 
+	LoginResult loginKakaoWithAccessToken(String accessToken);
+
 	LoginResult loginApple(String code, String userJson);
 
 	LoginResult loginGoogle(String code);

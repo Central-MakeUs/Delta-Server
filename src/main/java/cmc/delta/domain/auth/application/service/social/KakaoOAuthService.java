@@ -13,7 +13,16 @@ public class KakaoOAuthService {
 
 	public SocialUserInfo fetchUserInfoByCode(String code) {
 		SocialOAuthClient.OAuthToken oauthToken = kakaoOAuthClient.exchangeCode(code);
-		SocialOAuthClient.OAuthProfile profile = kakaoOAuthClient.fetchProfile(oauthToken.accessToken());
+		return fetchUserInfo(oauthToken.accessToken());
+	}
+
+	public SocialUserInfo fetchUserInfoByAccessToken(String accessToken) {
+		kakaoOAuthClient.validateAccessToken(accessToken);
+		return fetchUserInfo(accessToken);
+	}
+
+	private SocialUserInfo fetchUserInfo(String accessToken) {
+		SocialOAuthClient.OAuthProfile profile = kakaoOAuthClient.fetchProfile(accessToken);
 
 		String providerUserId = SocialProfileUtils.requireProvided(profile.providerUserId(), "소셜 사용자 식별자가 비어있습니다.");
 		String email = SocialProfileUtils.requireProvided(profile.email(), "소셜 이메일 제공 동의가 필요합니다.");
